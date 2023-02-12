@@ -2,7 +2,8 @@
   "scripts": {
     "release": "bash build_release.sh",
     "coverage": "bash build_coverage.sh",
-    "schema": "nps schema"
+    "schema": "nps schema",
+    "use": "bash use_chain.sh "
   },
   "dependencies": {
     "@terra-money/terra.js": "^3.0.8",

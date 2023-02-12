@@ -15,7 +15,7 @@ use eris::hub::{
     UnbondRequestsByUserResponseItemDetails,
 };
 
-use eris_chain_adapter::types::{chain, main_denom, test_config};
+use eris_chain_adapter::types::{chain, main_denom, test_chain_config};
 use eris_chain_shared::chain_trait::ChainInterface;
 use eris_chain_shared::test_trait::TestInterface;
 use itertools::Itertools;
@@ -60,7 +60,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             stages_preset: None,
             delegation_strategy: None,
             vote_operator: None,
-            chain_config: test_config().default_chain_config(),
+            chain_config: test_chain_config(),
         },
     )
     .unwrap();

@@ -1,2 +1,3 @@
 pub mod adapters;
-pub mod types;
+pub mod whitewhale_chain;
+pub mod whitewhale_types;

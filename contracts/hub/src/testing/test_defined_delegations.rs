@@ -9,7 +9,7 @@ use eris::hub::{
     StakeToken, StateResponse, WantedDelegationsResponse, WantedDelegationsShare,
 };
 
-use eris_chain_adapter::types::{chain, main_denom, test_config};
+use eris_chain_adapter::types::{chain, main_denom, test_chain_config};
 use eris_chain_shared::chain_trait::ChainInterface;
 use eris_chain_shared::test_trait::TestInterface;
 
@@ -49,7 +49,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
                 shares_bps: vec![("alice".into(), 6000), ("bob".into(), 4000)],
             }),
             vote_operator: None,
-            chain_config: test_config().default_chain_config(),
+            chain_config: test_chain_config(),
         },
     )
     .unwrap();

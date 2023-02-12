@@ -10,7 +10,9 @@ use eris::hub::{
     CallbackMsg, ConfigResponse, DelegationStrategy, ExecuteMsg, FeeConfig, InstantiateMsg,
     PendingBatch, QueryMsg, StateResponse,
 };
-use eris_chain_adapter::types::{main_denom, test_config, DenomType, StageType, WithdrawType};
+use eris_chain_adapter::types::{
+    main_denom, test_chain_config, DenomType, StageType, WithdrawType,
+};
 use eris_chain_shared::test_trait::TestInterface;
 use eris_kujira::adapters::bow_vault::BowExecuteMsg;
 use eris_kujira::adapters::bw_vault::BlackwhaleExecuteMsg;
@@ -62,7 +64,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             )]]),
             vote_operator: Some("vote_operator".to_string()),
             delegation_strategy: Some(DelegationStrategy::Uniform),
-            chain_config: test_config().default_chain_config(),
+            chain_config: test_chain_config(),
         },
     )
     .unwrap();

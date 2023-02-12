@@ -18,7 +18,7 @@ eris-kujira = { path = "../eris-kujira" }
 eris-whitewhale = { path = "../eris-whitewhale" }
 
 [features]
-whitewhale = []
-kujira = []
+X-whitewhale-X = []
+X-kujira-X = []
 
-default = ["kujira"]
+default = ["X-kujira-X"]
