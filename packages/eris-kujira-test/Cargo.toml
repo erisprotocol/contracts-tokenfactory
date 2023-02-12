@@ -1,0 +1,31 @@
+[package]
+name = "eris-kujira-test"
+version = "1.2.2"
+authors = ["devs <devs@erisprotocol.com>"]
+edition = "2018"
+description = "Liquid staking protocol for the cosmos"
+license = "GPL-3.0-or-later"
+homepage = "https://www.erisprotocol.com"
+repository = "https://github.com/erisprotocol/contracts-kujira"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cosmwasm-std =  { version = "1.1.3", features = ["stargate"] }
+cosmwasm-schema = "1.1.3"
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+kujira = "0.7.13"
+eris-staking-hub-tokenfactory = { path = "../../contracts/hub" }
+eris = { path = "../eris"}
+eris-kujira = { path = "../eris-kujira"}
+eris-chain-shared = { path = "../eris-chain-shared"}
+eris-chain-adapter = { path = "../eris-chain-adapter"}
+
+[dev-dependencies]
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+cosmwasm-schema = "1.1.3"
