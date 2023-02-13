@@ -25,21 +25,11 @@ pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubCha
     where
         F: FnOnce() -> StdResult<THubChainConfig>;
 
-    fn use_multi_stages_swap(&self) -> bool;
-
-    fn create_multi_stages_swap_msgs<F>(
-        &self,
-        get_chain_config: F,
-        stages: Vec<Vec<(TStageType, TDenomType)>>,
-        balances: Vec<Coin>,
-    ) -> StdResult<Vec<CosmosMsg<TCustom>>>
-    where
-        F: FnOnce() -> StdResult<THubChainConfig>;
-
     fn create_single_stage_swap_msgs<F>(
         &self,
         get_chain_config: F,
-        stage: (TStageType, TDenomType),
+        stage_type: TStageType,
+        denom: TDenomType,
         balance: &Coin,
     ) -> StdResult<CosmosMsg<TCustom>>
     where

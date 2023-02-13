@@ -1,14 +1,14 @@
-use cosmwasm_std::testing::{mock_env, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Deps, Env, OwnedDeps,
-    QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
+    coin, from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Decimal, Deps, Env,
+    OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
-use eris_chain_adapter::types::{chain, main_denom, CustomMsgType};
+use eris_chain_adapter::types::{chain, main_denom, test_chain_config, CustomMsgType};
 use serde::de::DeserializeOwned;
 
-use eris::hub::{CallbackMsg, ExecuteMsg, QueryMsg, StakeToken};
+use eris::hub::{CallbackMsg, ExecuteMsg, InstantiateMsg, QueryMsg, StakeToken};
 
-use crate::contract::query;
+use crate::contract::{instantiate, query};
 use crate::state::State;
 use eris_chain_shared::chain_trait::ChainInterface;
 
@@ -88,4 +88,41 @@ pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsg
         .unwrap(),
         funds: vec![],
     }))
+}
+
+//--------------------------------------------------------------------------------------------------
+// Test setup
+//--------------------------------------------------------------------------------------------------
+
+pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
+    let mut deps = mock_dependencies();
+
+    let res = instantiate(
+        deps.as_mut(),
+        mock_env_at_timestamp(10000),
+        mock_info("deployer", &[]),
+        InstantiateMsg {
+            owner: "owner".to_string(),
+            denom: "stake".to_string(),
+            epoch_period: 259200,   // 3 * 24 * 60 * 60 = 3 days
+            unbond_period: 1814400, // 21 * 24 * 60 * 60 = 21 days
+            validators: vec!["alice".to_string(), "bob".to_string(), "charlie".to_string()],
+            protocol_fee_contract: "fee".to_string(),
+            protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
+            operator: "operator".to_string(),
+            delegation_strategy: None,
+            vote_operator: None,
+            chain_config: test_chain_config(),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(res.messages.len(), 1);
+
+    assert_eq!(
+        res.messages[0].msg,
+        chain().create_denom_msg(get_stake_full_denom(), "stake".to_string())
+    );
+
+    deps
 }

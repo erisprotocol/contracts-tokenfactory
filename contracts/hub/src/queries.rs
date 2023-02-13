@@ -30,7 +30,8 @@ pub fn config(deps: Deps) -> StdResult<ConfigResponse> {
         unbond_period: state.unbond_period.load(deps.storage)?,
         validators: state.validators.load(deps.storage)?,
         fee_config: state.fee_config.load(deps.storage)?,
-        stages_preset: state.stages_preset.load(deps.storage)?,
+        stages_preset: state.stages_preset.may_load(deps.storage)?.unwrap_or_default(),
+        withdrawls_preset: state.withdrawls_preset.may_load(deps.storage)?.unwrap_or_default(),
         allow_donations: state.allow_donations.may_load(deps.storage)?.unwrap_or(false),
         delegation_strategy: match state
             .delegation_strategy

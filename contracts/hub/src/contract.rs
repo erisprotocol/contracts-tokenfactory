@@ -90,6 +90,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
             delegation_strategy,
             vote_operator,
             chain_config,
+            withdrawls_preset,
         } => execute::update_config(
             deps,
             info.sender,
@@ -97,6 +98,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
             protocol_reward_fee,
             operator,
             stages_preset,
+            withdrawls_preset,
             allow_donations,
             delegation_strategy,
             vote_operator,
@@ -141,9 +143,6 @@ fn callback(
         CallbackMsg::WithdrawLps {
             withdrawals,
         } => execute::withdraw_lps(deps, env, withdrawals),
-        CallbackMsg::MultiStagesSwap {
-            stages,
-        } => execute::multi_stages_swap(deps, env, stages),
         CallbackMsg::SingleStageSwap {
             stage,
         } => execute::single_stage_swap(deps, env, stage),

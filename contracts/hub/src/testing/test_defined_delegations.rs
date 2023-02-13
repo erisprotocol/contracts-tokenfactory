@@ -11,7 +11,6 @@ use eris::hub::{
 
 use eris_chain_adapter::types::{chain, main_denom, test_chain_config};
 use eris_chain_shared::chain_trait::ChainInterface;
-use eris_chain_shared::test_trait::TestInterface;
 
 use crate::contract::{execute, instantiate};
 use crate::error::ContractError;
@@ -44,7 +43,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             protocol_fee_contract: "fee".to_string(),
             protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
             operator: "operator".to_string(),
-            stages_preset: None,
             delegation_strategy: Some(eris::hub::DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 6000), ("bob".into(), 4000)],
             }),
@@ -123,6 +121,7 @@ fn proper_instantiation() {
             },
             operator: "operator".to_string(),
             stages_preset: vec![],
+            withdrawls_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 6000), ("bob".into(), 4000)],
@@ -159,6 +158,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("abc".into(), 1000)],
@@ -179,6 +179,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000), ("alice".into(), 1000)],
@@ -199,6 +200,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000)],
@@ -219,6 +221,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000), ("charlie".into(), 9000)],

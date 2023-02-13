@@ -22,7 +22,7 @@ eris-chain-shared = { path = "../../packages/eris-chain-shared" }
 itertools = "0.10"
 thiserror = { version = "1.0" }
 protobuf = "3"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 cosmwasm-schema = "1.1.3"

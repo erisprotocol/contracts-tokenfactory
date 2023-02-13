@@ -24,9 +24,7 @@ pub mod types {
 
     #[inline(always)]
     pub fn test_chain_config() -> HubChainConfigInput {
-        HubChainConfigInput {
-            fin_multi: "fin_multi".to_string(),
-        }
+        HubChainConfigInput {}
     }
 }
 

@@ -16,8 +16,6 @@ impl
     > for KujiraTest
 {
     fn default_chain_config(&self) -> HubChainConfigInput {
-        HubChainConfigInput {
-            fin_multi: "fin_multi".to_string(),
-        }
+        HubChainConfigInput {}
     }
 }

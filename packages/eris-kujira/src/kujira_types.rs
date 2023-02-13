@@ -3,8 +3,6 @@ use cosmwasm_std::{Addr, Api, StdResult};
 use eris_chain_shared::chain_trait::Validateable;
 use kujira::{denom::Denom, msg::KujiraMsg};
 
-use crate::adapters::fin_multi::FinMulti;
-
 #[cw_serde]
 pub enum WithdrawType {
     BlackWhale {
@@ -49,19 +47,13 @@ pub type DenomType = Denom;
 pub type CustomMsgType = KujiraMsg;
 
 #[cw_serde]
-pub struct HubChainConfigInput {
-    pub fin_multi: String,
-}
+pub struct HubChainConfigInput {}
 
 impl Validateable<HubChainConfig> for HubChainConfigInput {
-    fn validate(&self, api: &dyn Api) -> StdResult<HubChainConfig> {
-        Ok(HubChainConfig {
-            fin_multi: FinMulti(api.addr_validate(&self.fin_multi)?),
-        })
+    fn validate(&self, _api: &dyn Api) -> StdResult<HubChainConfig> {
+        Ok(HubChainConfig {})
     }
 }
 
 #[cw_serde]
-pub struct HubChainConfig {
-    pub fin_multi: FinMulti,
-}
+pub struct HubChainConfig {}

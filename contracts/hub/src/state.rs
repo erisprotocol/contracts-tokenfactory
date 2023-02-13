@@ -5,7 +5,8 @@ use eris::hub::{
     Batch, DelegationStrategy, FeeConfig, PendingBatch, StakeToken, UnbondRequest,
     WantedDelegationsShare,
 };
-use eris_chain_adapter::types::{DenomType, HubChainConfig, StageType};
+use eris_chain_adapter::types::{DenomType, HubChainConfig, StageType, WithdrawType};
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{error::ContractError, types::BooleanKey};
 
@@ -16,6 +17,9 @@ pub struct State<'a> {
     pub operator: Item<'a, Addr>,
     /// Stages that must be used by permissionless users
     pub stages_preset: Item<'a, Vec<Vec<(StageType, DenomType)>>>,
+    /// Withdraws that must be used by permissionless users
+    pub withdrawls_preset: Item<'a, Vec<(WithdrawType, DenomType)>>,
+
     /// Pending ownership transfer, awaiting acceptance by the new owner
     pub new_owner: Item<'a, Addr>,
     /// Denom and supply of the Liquid Staking token
@@ -73,6 +77,7 @@ impl Default for State<'static> {
             new_owner: Item::new("new_owner"),
             operator: Item::new("operator"),
             stages_preset: Item::new("stages_preset"),
+            withdrawls_preset: Item::new("withdrawls_preset"),
             stake_token: Item::new("stake_token"),
             epoch_period: Item::new("epoch_period"),
             unbond_period: Item::new("unbond_period"),
@@ -127,6 +132,32 @@ impl<'a> State<'a> {
         } else {
             Err(ContractError::UnauthorizedSenderNotVoteOperator {})
         }
+    }
+
+    pub fn get_or_preset<T>(
+        &self,
+        storage: &dyn Storage,
+        stages: Option<Vec<T>>,
+        preset: &Item<'static, Vec<T>>,
+        sender: &Addr,
+    ) -> Result<Option<Vec<T>>, ContractError>
+    where
+        T: Serialize + DeserializeOwned,
+    {
+        let stages = if let Some(stages) = stages {
+            if stages.is_empty() {
+                None
+            } else {
+                // only operator is allowed to send custom stages. Otherwise the contract would be able to interact with "bad contracts"
+                // to fully decentralize, it would be required, that there is a whitelist of withdraw and swap contracts in the contract or somewhere else
+                self.assert_operator(storage, sender)?;
+                Some(stages)
+            }
+        } else {
+            // otherwise use configured stages
+            preset.may_load(storage)?
+        };
+        Ok(stages)
     }
 }
 

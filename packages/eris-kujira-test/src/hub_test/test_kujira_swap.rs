@@ -16,7 +16,7 @@ use eris_chain_adapter::types::{
 use eris_chain_shared::test_trait::TestInterface;
 use eris_kujira::adapters::bow_vault::BowExecuteMsg;
 use eris_kujira::adapters::bw_vault::BlackwhaleExecuteMsg;
-use eris_kujira::adapters::fin_multi::FinMultiExecuteMsg;
+use eris_kujira::adapters::fin::Fin;
 use kujira::msg::{DenomMsg, KujiraMsg};
 
 use eris_staking_hub_tokenfactory::contract::{execute, instantiate};
@@ -56,15 +56,32 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             protocol_fee_contract: "fee".to_string(),
             protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
             operator: "operator".to_string(),
+            vote_operator: Some("vote_operator".to_string()),
+            delegation_strategy: Some(DelegationStrategy::Uniform),
+            chain_config: test_chain_config(),
+        },
+    )
+    .unwrap();
+
+    execute(
+        deps.as_mut(),
+        mock_env_at_timestamp(10000),
+        mock_info("owner", &[]),
+        ExecuteMsg::UpdateConfig {
+            protocol_fee_contract: None,
+            protocol_reward_fee: None,
+            operator: None,
             stages_preset: Some(vec![vec![(
                 StageType::Fin {
                     addr: Addr::unchecked("fin1"),
                 },
                 "test".into(),
             )]]),
-            vote_operator: Some("vote_operator".to_string()),
-            delegation_strategy: Some(DelegationStrategy::Uniform),
-            chain_config: test_chain_config(),
+            withdrawls_preset: None,
+            allow_donations: None,
+            delegation_strategy: None,
+            vote_operator: None,
+            chain_config: None,
         },
     )
     .unwrap();
@@ -104,6 +121,7 @@ fn proper_instantiation() {
             },
             operator: "operator".to_string(),
             stages_preset: vec![vec![(StageType::fin("fin1"), "test".into())]],
+            withdrawls_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Uniform,
             vote_operator: Some("vote_operator".into())
@@ -230,13 +248,13 @@ fn harvesting_with_options() {
         res.messages[4],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::MultiStagesSwap {
-                stages: vec![vec![(
+            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
+                stage: vec![(
                     StageType::Fin {
                         addr: Addr::unchecked("fin1")
                     },
                     "test".into()
-                )]],
+                )],
             }))
             .unwrap(),
             funds: vec![]
@@ -333,8 +351,8 @@ fn swap() -> StdResult<()> {
         deps.as_mut(),
         mock_env(),
         mock_info("operator", &[]),
-        ExecuteMsg::Callback(CallbackMsg::MultiStagesSwap {
-            stages: vec![vec![(StageType::fin("fin1"), "test".into())]],
+        ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
+            stage: vec![(StageType::fin("fin1"), "test".into())],
         }),
     )
     .unwrap_err();
@@ -343,51 +361,68 @@ fn swap() -> StdResult<()> {
     deps.querier.set_bank_balances(&[
         coin(100, "test"),
         coin(200, "abc"),
+        coin(100, "rest"),
+        coin(200, "test2"),
         coin(1000, "not_relevant"),
     ]);
 
     let stages = vec![
         vec![(StageType::fin("fin1"), "test".into())],
-        vec![(StageType::fin("fin2"), "abc".into()), (StageType::fin("fin3"), "test2".into())],
-        vec![(StageType::fin("fin4"), "abc".into())],
+        vec![
+            (StageType::fin("fin2"), "abc".into()),
+            (StageType::fin("fin3"), "test2".into()),
+            (StageType::fin("fin5"), "anything".into()),
+        ],
+        vec![(StageType::fin("fin4"), "rest".into())],
     ];
 
     let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info(MOCK_CONTRACT_ADDR, &[]),
-        ExecuteMsg::Callback(CallbackMsg::MultiStagesSwap {
-            stages: stages.clone(),
+        ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
+            stage: stages[0].clone(),
         }),
     )
     .unwrap();
-
     assert_eq!(res.messages.len(), 1);
-
-    let fin_swaps: Vec<Vec<(Addr, DenomType)>> = stages
-        .into_iter()
-        .map(|stage| {
-            stage
-                .into_iter()
-                .map(|(stage_type, denom)| match stage_type {
-                    StageType::Fin {
-                        addr,
-                    } => (addr, denom),
-                })
-                .collect()
-        })
-        .collect();
-
     assert_eq!(
-        res.messages[0],
-        SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: "fin_multi".to_string(),
-            funds: vec![coin(100, "test"), coin(200, "abc")],
-            msg: to_binary(&FinMultiExecuteMsg {
-                recipient: None,
-                stages: fin_swaps
-            })?,
-        }))
+        res.messages[0].msg,
+        Fin(Addr::unchecked("fin1")).swap_msg(&coin(100, "test")).unwrap()
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(MOCK_CONTRACT_ADDR, &[]),
+        ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
+            stage: stages[1].clone(),
+        }),
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 2);
+    assert_eq!(
+        res.messages[0].msg,
+        Fin(Addr::unchecked("fin2")).swap_msg(&coin(200, "abc")).unwrap()
+    );
+    assert_eq!(
+        res.messages[1].msg,
+        Fin(Addr::unchecked("fin3")).swap_msg(&coin(200, "test2")).unwrap()
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(MOCK_CONTRACT_ADDR, &[]),
+        ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
+            stage: stages[2].clone(),
+        }),
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 1);
+    assert_eq!(
+        res.messages[0].msg,
+        Fin(Addr::unchecked("fin4")).swap_msg(&coin(100, "rest")).unwrap()
     );
 
     Ok(())

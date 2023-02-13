@@ -1,27 +1,25 @@
 use std::ops::Sub;
 use std::str::FromStr;
 
-use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
     coin, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, DistributionMsg, Event, Fraction,
-    GovMsg, Order, OwnedDeps, StdError, StdResult, SubMsg, Uint128, VoteOption, WasmMsg,
+    GovMsg, Order, StdError, StdResult, SubMsg, Uint128, VoteOption, WasmMsg,
 };
 use eris::DecimalCheckedOps;
 
 use eris::hub::{
-    Batch, CallbackMsg, ConfigResponse, DelegationStrategy, ExecuteMsg, FeeConfig, InstantiateMsg,
-    PendingBatch, QueryMsg, StakeToken, StateResponse, UnbondRequest,
-    UnbondRequestsByBatchResponseItem, UnbondRequestsByUserResponseItem,
-    UnbondRequestsByUserResponseItemDetails,
+    Batch, CallbackMsg, ConfigResponse, DelegationStrategy, ExecuteMsg, FeeConfig, PendingBatch,
+    QueryMsg, StakeToken, StateResponse, UnbondRequest, UnbondRequestsByBatchResponseItem,
+    UnbondRequestsByUserResponseItem, UnbondRequestsByUserResponseItemDetails,
 };
 
-use eris_chain_adapter::types::{chain, main_denom, test_chain_config};
+use eris_chain_adapter::types::{chain, main_denom};
 use eris_chain_shared::chain_trait::ChainInterface;
-use eris_chain_shared::test_trait::TestInterface;
 use itertools::Itertools;
 use protobuf::SpecialFields;
 
-use crate::contract::{execute, instantiate};
+use crate::contract::execute;
 use crate::error::ContractError;
 use crate::helpers::{dedupe, parse_received_fund};
 use crate::math::{
@@ -30,50 +28,11 @@ use crate::math::{
 use crate::protos::proto::{self, MsgVoteWeighted, WeightedVoteOption};
 use crate::state::State;
 use crate::testing::helpers::{
-    check_received_coin, get_stake_full_denom, query_helper_env, set_total_stake_supply,
+    check_received_coin, get_stake_full_denom, query_helper_env, set_total_stake_supply, setup_test,
 };
 use crate::types::{Coins, Delegation, Redelegation, SendFee, Undelegation};
 
-use super::custom_querier::CustomQuerier;
 use super::helpers::{mock_dependencies, mock_env_at_timestamp, query_helper};
-
-//--------------------------------------------------------------------------------------------------
-// Test setup
-//--------------------------------------------------------------------------------------------------
-
-fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
-    let mut deps = mock_dependencies();
-
-    let res = instantiate(
-        deps.as_mut(),
-        mock_env_at_timestamp(10000),
-        mock_info("deployer", &[]),
-        InstantiateMsg {
-            owner: "owner".to_string(),
-            denom: "stake".to_string(),
-            epoch_period: 259200,   // 3 * 24 * 60 * 60 = 3 days
-            unbond_period: 1814400, // 21 * 24 * 60 * 60 = 21 days
-            validators: vec!["alice".to_string(), "bob".to_string(), "charlie".to_string()],
-            protocol_fee_contract: "fee".to_string(),
-            protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
-            operator: "operator".to_string(),
-            stages_preset: None,
-            delegation_strategy: None,
-            vote_operator: None,
-            chain_config: test_chain_config(),
-        },
-    )
-    .unwrap();
-
-    assert_eq!(res.messages.len(), 1);
-
-    assert_eq!(
-        res.messages[0].msg,
-        chain().create_denom_msg(get_stake_full_denom(), "stake".to_string())
-    );
-
-    deps
-}
 
 //--------------------------------------------------------------------------------------------------
 // Execution
@@ -97,8 +56,10 @@ fn proper_instantiation() {
                 protocol_fee_contract: Addr::unchecked("fee"),
                 protocol_reward_fee: Decimal::from_ratio(1u128, 100u128)
             },
+
             operator: "operator".to_string(),
             stages_preset: vec![],
+            withdrawls_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Uniform,
             vote_operator: None
@@ -301,6 +262,7 @@ fn donating() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: Some(true),
             delegation_strategy: None,
             vote_operator: None,
@@ -1519,6 +1481,7 @@ fn update_fee() {
             protocol_reward_fee: Some(Decimal::from_ratio(11u128, 100u128)),
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: None,
             delegation_strategy: None,
             vote_operator: None,
@@ -1537,6 +1500,7 @@ fn update_fee() {
             protocol_reward_fee: Some(Decimal::from_ratio(11u128, 100u128)),
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: None,
             delegation_strategy: None,
             vote_operator: None,
@@ -1555,6 +1519,7 @@ fn update_fee() {
             protocol_reward_fee: Some(Decimal::from_ratio(10u128, 100u128)),
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             allow_donations: None,
             delegation_strategy: None,
             vote_operator: None,
@@ -1606,6 +1571,7 @@ fn vote() {
             vote_operator: Some("vote_operator".to_string()),
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             chain_config: None,
         },
     )
@@ -1674,6 +1640,7 @@ fn vote_weighted() {
             vote_operator: Some("vote_operator".to_string()),
             operator: None,
             stages_preset: None,
+            withdrawls_preset: None,
             chain_config: None,
         },
     )

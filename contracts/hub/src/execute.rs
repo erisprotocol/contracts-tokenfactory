@@ -109,15 +109,6 @@ pub fn instantiate(deps: DepsMut, env: Env, msg: InstantiateMsg) -> ContractResu
         },
     )?;
 
-    // needs to be validated after stake token has been set
-    validate_no_utoken_or_ustake_swap(
-        &msg.stages_preset,
-        &state,
-        deps.storage,
-        Some(full_denom.clone()),
-    )?;
-    state.stages_preset.save(deps.storage, &msg.stages_preset.unwrap_or_default())?;
-
     Ok(Response::new().add_message(chain().create_denom_msg(full_denom, sub_denom)))
 }
 
@@ -190,7 +181,7 @@ pub fn harvest(
 ) -> ContractResult {
     let state = State::default();
 
-    // 1. withdraw delegation rewards
+    // 1. Withdraw delegation rewards
     let withdraw_submsgs: Vec<CosmosMsg<CustomMsgType>> =
         query_all_delegations(&deps.querier, &env.contract.address)?
             .into_iter()
@@ -201,63 +192,31 @@ pub fn harvest(
             })
             .collect::<Vec<_>>();
 
-    let withdraw_lps_callback = if let Some(withdrawals) = withdrawals {
-        if withdrawals.is_empty() {
-            None
-        } else {
-            Some(CallbackMsg::WithdrawLps {
-                withdrawals,
-            })
-        }
-    } else {
-        None
-    };
+    // 2. Prepare LP withdrawals / deconstruction
+    let withdrawals =
+        state.get_or_preset(deps.storage, withdrawals, &state.withdrawls_preset, &sender)?;
+    let withdrawal_msg = withdrawals.map(|withdrawals| CallbackMsg::WithdrawLps {
+        withdrawals,
+    });
 
-    let stages = if let Some(stages) = stages {
-        // only operator is allowed to send custom stages
-        state.assert_operator(deps.storage, &sender)?;
-        if stages.is_empty() {
-            None
-        } else {
-            Some(stages)
-        }
-    } else {
-        // otherwise use configured stages
-        state.stages_preset.may_load(deps.storage)?
-    };
+    // 3. Prepare swap stages
+    let stages = state.get_or_preset(deps.storage, stages, &state.stages_preset, &sender)?;
     validate_no_utoken_or_ustake_swap(&stages, &state, deps.storage, None)?;
-
-    let (swap_msg, swap_msgs) = if let Some(stages) = stages {
-        if !stages.is_empty() {
-            if chain().use_multi_stages_swap() {
-                let swap_msg = CallbackMsg::MultiStagesSwap {
-                    stages,
-                };
-                (Some(swap_msg), None)
-            } else {
-                let swap_msgs = stages
-                    .into_iter()
-                    .map(|stage| CallbackMsg::SingleStageSwap {
-                        stage,
-                    })
-                    .collect_vec();
-                (None, Some(swap_msgs))
-            }
-        } else {
-            (None, None)
-        }
-    } else {
-        (None, None)
-    };
+    let swap_msgs = stages.map(|stages| {
+        stages
+            .into_iter()
+            .map(|stage| CallbackMsg::SingleStageSwap {
+                stage,
+            })
+            .collect_vec()
+    });
 
     Ok(Response::new()
-        // 1. withdraw delegation rewards
+        // 1. Withdraw delegation rewards
         .add_messages(withdraw_submsgs)
-        // 2. claim funds
-        .add_optional_callback(&env, withdraw_lps_callback)?
-        // 3a) multi stage swap
-        .add_optional_callback(&env, swap_msg)?
-        // 3b) multiple single stage swaps
+        // 2. Withdraw / Destruct LPs
+        .add_optional_callback(&env, withdrawal_msg)?
+        // 3 swap - multiple single stage swaps
         .add_optional_callbacks(&env, swap_msgs)?
         // 4. apply received total utoken to unlocked_coins
         .add_message(check_received_coin_msg(
@@ -279,7 +238,6 @@ pub fn withdraw_lps(
 ) -> ContractResult {
     let mut withdraw_msgs: Vec<CosmosMsg<CustomMsgType>> = vec![];
     let balances = get_balances_hashmap(&deps, env)?;
-
     let get_chain_config = || State::default().chain_config.load(deps.storage);
 
     for (withdraw_type, denom) in withdrawals {
@@ -299,30 +257,12 @@ pub fn withdraw_lps(
     Ok(Response::new().add_messages(withdraw_msgs).add_attribute("action", "erishub/withdraw_lps"))
 }
 
+/// queries all balances and converts it to a hashmap
 fn get_balances_hashmap(deps: &DepsMut, env: Env) -> Result<HashMap<String, Coin>, ContractError> {
     let balances = deps.querier.query_all_balances(env.contract.address)?;
     let balances: HashMap<_, _> =
         balances.into_iter().map(|item| (item.denom.clone(), item)).collect();
     Ok(balances)
-}
-
-/// swaps all unlocked coins to token
-pub fn multi_stages_swap(
-    deps: DepsMut,
-    env: Env,
-    stages: Vec<Vec<(StageType, DenomType)>>,
-) -> ContractResult {
-    let state = State::default();
-    // validation already in harvest
-    let balances = deps.querier.query_all_balances(env.contract.address)?;
-
-    let get_chain_config = || state.chain_config.load(deps.storage);
-    let single_swap_msgs =
-        chain().create_multi_stages_swap_msgs(get_chain_config, stages, balances)?;
-
-    Ok(Response::new()
-        .add_messages(single_swap_msgs)
-        .add_attribute("action", "erishub/multi_stages_swap"))
 }
 
 /// swaps all unlocked coins to token
@@ -344,11 +284,8 @@ pub fn single_stage_swap(
         if let Some(balance) = balance {
             if !balance.amount.is_zero() {
                 // create a single swap message add add to submsgs
-                let msg = chain.create_single_stage_swap_msgs(
-                    get_chain_config,
-                    (stage, denom),
-                    balance,
-                )?;
+                let msg =
+                    chain.create_single_stage_swap_msgs(get_chain_config, stage, denom, balance)?;
                 response = response.add_message(msg)
             }
         }
@@ -1045,6 +982,7 @@ pub fn update_config(
     protocol_reward_fee: Option<Decimal>,
     operator: Option<String>,
     stages_preset: Option<Vec<Vec<(StageType, DenomType)>>>,
+    withdrawls_preset: Option<Vec<(WithdrawType, DenomType)>>,
     allow_donations: Option<bool>,
     delegation_strategy: Option<DelegationStrategy>,
     vote_operator: Option<String>,
@@ -1085,6 +1023,10 @@ pub fn update_config(
 
     if let Some(stages_preset) = stages_preset {
         state.stages_preset.save(deps.storage, &stages_preset)?;
+    }
+
+    if let Some(withdrawls_preset) = withdrawls_preset {
+        state.withdrawls_preset.save(deps.storage, &withdrawls_preset)?;
     }
 
     if let Some(delegation_strategy) = delegation_strategy {

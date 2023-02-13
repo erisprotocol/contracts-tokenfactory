@@ -116,8 +116,6 @@ pub struct InstantiateMsg {
 
     /// Account who can call harvest
     pub operator: String,
-    /// Stages that should be used in the permissionless harvest function
-    pub stages_preset: Option<Vec<Vec<(StageType, DenomType)>>>,
 
     /// Name of the liquid staking token
     pub denom: String,
@@ -207,6 +205,8 @@ pub enum ExecuteMsg {
         operator: Option<String>,
         /// Sets the stages preset
         stages_preset: Option<Vec<Vec<(StageType, DenomType)>>>,
+        /// Sets the withdrawls preset
+        withdrawls_preset: Option<Vec<(WithdrawType, DenomType)>>,
         /// Specifies wether donations are allowed.
         allow_donations: Option<bool>,
         /// Strategy how delegations should be handled
@@ -229,12 +229,7 @@ pub enum CallbackMsg {
     WithdrawLps {
         withdrawals: Vec<(WithdrawType, DenomType)>,
     },
-    /// Both swap methods will convert all non utoken (ukuji) and ustake (ampKUJI) to utoken or ustake.
-    /// MultiStagesSwap executes a multi stage swap with a single external call
-    MultiStagesSwap {
-        stages: Vec<Vec<(StageType, DenomType)>>,
-    },
-    // SingleStageSwap is executed multiple times to execute each stage.
+    // SingleStageSwap is executed multiple times to execute each swap stage. A stage consists of multiple swaps
     SingleStageSwap {
         stage: Vec<(StageType, DenomType)>,
     },
@@ -335,6 +330,8 @@ pub struct ConfigResponse {
     pub operator: String,
     /// Stages that must be used by permissionless users
     pub stages_preset: Vec<Vec<(StageType, DenomType)>>,
+    /// Withdrawls that must be used by permissionless users
+    pub withdrawls_preset: Vec<(WithdrawType, DenomType)>,
     /// Specifies wether donations are allowed.
     pub allow_donations: bool,
 

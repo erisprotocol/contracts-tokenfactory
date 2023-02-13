@@ -3,7 +3,7 @@ use eris_chain_shared::chain_trait::ChainInterface;
 use kujira::msg::DenomMsg;
 
 use crate::{
-    adapters::{bow_vault::BowVault, bw_vault::BlackWhaleVault},
+    adapters::{bow_vault::BowVault, bw_vault::BlackWhaleVault, fin::Fin},
     kujira_types::{CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType},
 };
 
@@ -61,47 +61,48 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         }
     }
 
-    fn use_multi_stages_swap(&self) -> bool {
-        true
-    }
+    // fn create_multi_stages_swap_msgs<F>(
+    //     &self,
+    //     get_chain_config: F,
+    //     stages: Vec<Vec<(StageType, DenomType)>>,
+    //     balances: Vec<Coin>,
+    // ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>>
+    // where
+    //     F: FnOnce() -> StdResult<HubChainConfig>,
+    // {
+    //     let config = get_chain_config()?;
 
-    fn create_multi_stages_swap_msgs<F>(
-        &self,
-        get_chain_config: F,
-        stages: Vec<Vec<(StageType, DenomType)>>,
-        balances: Vec<Coin>,
-    ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>>
-    where
-        F: FnOnce() -> StdResult<HubChainConfig>,
-    {
-        let config = get_chain_config()?;
+    //     let fin_swaps: Vec<Vec<(Addr, DenomType)>> = stages
+    //         .into_iter()
+    //         .map(|stage| {
+    //             stage
+    //                 .into_iter()
+    //                 .map(|(stage_type, denom)| match stage_type {
+    //                     StageType::Fin {
+    //                         addr,
+    //                     } => (addr, denom),
+    //                 })
+    //                 .collect()
+    //         })
+    //         .collect();
 
-        let fin_swaps: Vec<Vec<(Addr, DenomType)>> = stages
-            .into_iter()
-            .map(|stage| {
-                stage
-                    .into_iter()
-                    .map(|(stage_type, denom)| match stage_type {
-                        StageType::Fin {
-                            addr,
-                        } => (addr, denom),
-                    })
-                    .collect()
-            })
-            .collect();
-
-        Ok(vec![config.fin_multi.swap_msg(fin_swaps, balances)?])
-    }
+    //     Ok(vec![config.fin_multi.swap_msg(fin_swaps, balances)?])
+    // }
 
     fn create_single_stage_swap_msgs<F>(
         &self,
         _get_chain_config: F,
-        _stages: (StageType, DenomType),
-        _balance: &Coin,
+        stage_type: StageType,
+        _denom: DenomType,
+        balance: &Coin,
     ) -> StdResult<CosmosMsg<CustomMsgType>>
     where
         F: FnOnce() -> StdResult<HubChainConfig>,
     {
-        Err(cosmwasm_std::StdError::generic_err("not supported on kujira"))
+        match stage_type {
+            StageType::Fin {
+                addr,
+            } => Fin(addr).swap_msg(balance),
+        }
     }
 }
