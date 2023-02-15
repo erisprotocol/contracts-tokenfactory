@@ -1,59 +1,91 @@
-use cosmwasm_std::{Addr, Coin, CosmosMsg, StdResult, Uint128};
+use cosmwasm_std::{coins, Addr, CosmosMsg, StdResult, Uint128};
 use eris_chain_shared::chain_trait::ChainInterface;
 
-use crate::whitewhale_types::{CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType};
+use crate::{
+    adapters::whitewhaledex::WhiteWhalePair,
+    denom::{MsgBurn, MsgCreateDenom, MsgMint},
+    whitewhale_types::{CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType},
+};
 
-pub struct WhiteWhaleChain {}
+pub struct WhiteWhaleChain {
+    pub contract: Addr,
+}
 
 impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig>
     for WhiteWhaleChain
 {
-    fn create_denom_msg(&self, _full_denom: String, _subdenom: String) -> CosmosMsg<CustomMsgType> {
-        panic!("todo");
+    fn create_denom_msg(&self, _full_denom: String, subdenom: String) -> CosmosMsg<CustomMsgType> {
+        MsgCreateDenom {
+            sender: self.contract.to_string(),
+            subdenom,
+        }
+        .into()
     }
 
-    fn create_mint_msg(
+    fn create_mint_msgs(
         &self,
-        _full_denom: String,
-        _amount: Uint128,
-        _recipient: Addr,
-    ) -> CosmosMsg<CustomMsgType> {
-        panic!("todo");
+        full_denom: String,
+        amount: Uint128,
+        recipient: Addr,
+    ) -> Vec<CosmosMsg<CustomMsgType>> {
+        vec![
+            MsgMint {
+                sender: self.contract.to_string(),
+                amount: Some(crate::denom::Coin {
+                    denom: full_denom.to_string(),
+                    amount: amount.to_string(),
+                }),
+            }
+            .into(),
+            CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
+                to_address: recipient.to_string(),
+                amount: coins(amount.u128(), full_denom),
+            }),
+        ]
     }
 
-    fn create_burn_msg(&self, _full_denom: String, _amount: Uint128) -> CosmosMsg<CustomMsgType> {
-        panic!("todo");
+    fn create_burn_msg(&self, full_denom: String, amount: Uint128) -> CosmosMsg<CustomMsgType> {
+        MsgBurn {
+            sender: self.contract.to_string(),
+            amount: Some(crate::denom::Coin {
+                denom: full_denom,
+                amount: amount.to_string(),
+            }),
+        }
+        .into()
     }
 
     fn create_withdraw_msg<F>(
         &self,
         _get_chain_config: F,
-        _withdraw_type: WithdrawType,
-        _denom: DenomType,
-        _coin: &Coin,
+        withdraw_type: WithdrawType,
+        denom: DenomType,
+        amount: Uint128,
     ) -> StdResult<Option<CosmosMsg<CustomMsgType>>>
     where
         F: FnOnce() -> StdResult<HubChainConfig>,
     {
-        panic!("todo");
-
-        // match withdraw_type {
-        //     WithdrawType::Dex {
-        //         addr,
-        //     } => Ok(Some(BlackWhaleVault(addr).withdraw_msg(denom, coin.amount)?)),
-        // }
+        match withdraw_type {
+            WithdrawType::Dex {
+                addr,
+            } => Ok(Some(WhiteWhalePair(addr).withdraw_msg(denom, amount)?)),
+        }
     }
 
     fn create_single_stage_swap_msgs<F>(
         &self,
         _get_chain_config: F,
-        _stage_type: StageType,
-        _denom: DenomType,
-        _balance: &Coin,
+        stage_type: StageType,
+        denom: DenomType,
+        amount: Uint128,
     ) -> StdResult<CosmosMsg<CustomMsgType>>
     where
         F: FnOnce() -> StdResult<HubChainConfig>,
     {
-        panic!("todo");
+        match stage_type {
+            StageType::Dex {
+                addr,
+            } => WhiteWhalePair(addr).swap_msg(denom, amount),
+        }
     }
 }

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Api, Coin, CosmosMsg, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, CosmosMsg, StdResult, Uint128};
 
 pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubChainConfig> {
     fn get_token_denom(&self, contract_addr: impl Into<String>, sub_denom: String) -> String {
@@ -6,12 +6,13 @@ pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubCha
     }
 
     fn create_denom_msg(&self, full_denom: String, sub_denom: String) -> CosmosMsg<TCustom>;
-    fn create_mint_msg(
+    // this can sometimes be multiple messages to mint + transfer
+    fn create_mint_msgs(
         &self,
         full_denom: String,
         amount: Uint128,
         recipient: Addr,
-    ) -> CosmosMsg<TCustom>;
+    ) -> Vec<CosmosMsg<TCustom>>;
 
     fn create_burn_msg(&self, full_denom: String, amount: Uint128) -> CosmosMsg<TCustom>;
 
@@ -20,7 +21,7 @@ pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubCha
         get_chain_config: F,
         withdraw_type: TWithdrawType,
         denom: TDenomType,
-        coin: &Coin,
+        amount: Uint128,
     ) -> StdResult<Option<CosmosMsg<TCustom>>>
     where
         F: FnOnce() -> StdResult<THubChainConfig>;
@@ -30,7 +31,7 @@ pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubCha
         get_chain_config: F,
         stage_type: TStageType,
         denom: TDenomType,
-        balance: &Coin,
+        amount: Uint128,
     ) -> StdResult<CosmosMsg<TCustom>>
     where
         F: FnOnce() -> StdResult<THubChainConfig>;

@@ -14,7 +14,7 @@ use eris::hub::{
     UnbondRequestsByUserResponseItem, UnbondRequestsByUserResponseItemDetails,
 };
 
-use eris_chain_adapter::types::{chain, main_denom};
+use eris_chain_adapter::types::main_denom;
 use eris_chain_shared::chain_trait::ChainInterface;
 use itertools::Itertools;
 use protobuf::SpecialFields;
@@ -28,7 +28,8 @@ use crate::math::{
 use crate::protos::proto::{self, MsgVoteWeighted, WeightedVoteOption};
 use crate::state::State;
 use crate::testing::helpers::{
-    check_received_coin, get_stake_full_denom, query_helper_env, set_total_stake_supply, setup_test,
+    chain_test, check_received_coin, get_stake_full_denom, query_helper_env,
+    set_total_stake_supply, setup_test,
 };
 use crate::types::{Coins, Delegation, Redelegation, SendFee, Undelegation};
 
@@ -109,18 +110,22 @@ fn bonding() {
     )
     .unwrap();
 
-    assert_eq!(res.messages.len(), 3);
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
-    assert_eq!(
-        res.messages[1].msg,
-        chain().create_mint_msg(
-            get_stake_full_denom(),
-            Uint128::new(1000000),
-            Addr::unchecked("user_1")
-        )
+    let mint_msgs = chain_test().create_mint_msgs(
+        get_stake_full_denom(),
+        Uint128::new(1000000),
+        Addr::unchecked("user_1"),
     );
+    assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
-    assert_eq!(res.messages[2], check_received_coin(100, 0));
+    let mut index = 0;
+    assert_eq!(res.messages[index], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
+    index += 1;
+    for msg in mint_msgs {
+        assert_eq!(res.messages[index].msg, msg);
+        index += 1;
+    }
+
+    assert_eq!(res.messages[index], check_received_coin(100, 0));
     deps.querier.set_bank_balances(&[coin(12345 + 222, main_denom())]);
 
     assert_eq!(
@@ -152,17 +157,22 @@ fn bonding() {
     )
     .unwrap();
 
-    assert_eq!(res.messages.len(), 3);
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("charlie", 12345).to_cosmos_msg()));
-    assert_eq!(
-        res.messages[1].msg,
-        chain().create_mint_msg(
-            get_stake_full_denom(),
-            Uint128::new(12043),
-            Addr::unchecked("user_3")
-        )
+    let mint_msgs = chain_test().create_mint_msgs(
+        get_stake_full_denom(),
+        Uint128::new(12043),
+        Addr::unchecked("user_3"),
     );
-    assert_eq!(res.messages[2], check_received_coin(222, 0));
+    assert_eq!(res.messages.len(), 2 + mint_msgs.len());
+
+    let mut index = 0;
+    assert_eq!(res.messages[index], SubMsg::new(Delegation::new("charlie", 12345).to_cosmos_msg()));
+    index += 1;
+    for msg in mint_msgs {
+        assert_eq!(res.messages[index].msg, msg);
+        index += 1;
+    }
+
+    assert_eq!(res.messages[index], check_received_coin(222, 0));
 
     // Check the state after bonding
     deps.querier.set_staking_delegations(&[
@@ -204,18 +214,22 @@ fn donating() {
     )
     .unwrap();
 
-    assert_eq!(res.messages.len(), 3);
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
-    assert_eq!(
-        res.messages[1].msg,
-        chain().create_mint_msg(
-            get_stake_full_denom(),
-            Uint128::new(1000000),
-            Addr::unchecked("user_1")
-        )
+    let mint_msgs = chain_test().create_mint_msgs(
+        get_stake_full_denom(),
+        Uint128::new(1000000),
+        Addr::unchecked("user_1"),
     );
+    assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
-    assert_eq!(res.messages[2], check_received_coin(100, 0));
+    let mut index = 0;
+    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
+    index += 1;
+    for msg in mint_msgs {
+        assert_eq!(res.messages[index].msg, msg);
+        index += 1;
+    }
+
+    assert_eq!(res.messages[index], check_received_coin(100, 0));
     deps.querier.set_bank_balances(&[coin(100, main_denom())]);
 
     // Bond when there are existing delegations, and Token:Stake exchange rate is >1
@@ -483,7 +497,7 @@ fn reinvesting() {
         Decimal::from_ratio(1u128, 100u128).checked_mul_uint(total).expect("expects fee result");
     let burnt = total.saturating_sub(fee);
 
-    assert_eq!(res.messages[2].msg, chain().create_burn_msg(get_stake_full_denom(), burnt));
+    assert_eq!(res.messages[2].msg, chain_test().create_burn_msg(get_stake_full_denom(), burnt));
     assert_eq!(
         res.messages[3].msg,
         SendFee::new(Addr::unchecked("fee"), fee.u128(), get_stake_full_denom()).to_cosmos_msg()
@@ -670,7 +684,7 @@ fn submitting_batch() {
     assert_eq!(res.messages[2], SubMsg::new(Undelegation::new("charlie", 31732).to_cosmos_msg()));
     assert_eq!(
         res.messages[3].msg,
-        chain().create_burn_msg(get_stake_full_denom(), Uint128::new(92876))
+        chain_test().create_burn_msg(get_stake_full_denom(), Uint128::new(92876))
     );
     assert_eq!(res.messages[4], check_received_coin(0, 0));
 

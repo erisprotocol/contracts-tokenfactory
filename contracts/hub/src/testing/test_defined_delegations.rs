@@ -9,13 +9,13 @@ use eris::hub::{
     StakeToken, StateResponse, WantedDelegationsResponse, WantedDelegationsShare,
 };
 
-use eris_chain_adapter::types::{chain, main_denom, test_chain_config};
+use eris_chain_adapter::types::{main_denom, test_chain_config};
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::contract::{execute, instantiate};
 use crate::error::ContractError;
 use crate::state::State;
-use crate::testing::helpers::{check_received_coin, get_stake_full_denom};
+use crate::testing::helpers::{chain_test, check_received_coin, get_stake_full_denom};
 use crate::types::{Delegation, Redelegation};
 
 use super::custom_querier::CustomQuerier;
@@ -55,7 +55,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
     assert_eq!(res.messages.len(), 1);
     assert_eq!(
         res.messages[0].msg,
-        chain().create_denom_msg(get_stake_full_denom(), "stake".to_string())
+        chain_test().create_denom_msg(get_stake_full_denom(), "stake".to_string())
     );
 
     let res = execute(
@@ -251,18 +251,22 @@ fn bonding() {
     )
     .unwrap();
 
-    assert_eq!(res.messages.len(), 3);
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
-    assert_eq!(
-        res.messages[1].msg,
-        chain().create_mint_msg(
-            get_stake_full_denom(),
-            Uint128::new(1000000),
-            Addr::unchecked("user_1")
-        )
+    let mint_msgs = chain_test().create_mint_msgs(
+        get_stake_full_denom(),
+        Uint128::new(1000000),
+        Addr::unchecked("user_1"),
     );
+    assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
-    assert_eq!(res.messages[2], check_received_coin(100, 0));
+    let mut index = 0;
+    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
+    index += 1;
+    for msg in mint_msgs {
+        assert_eq!(res.messages[index].msg, msg);
+        index += 1;
+    }
+
+    assert_eq!(res.messages[index], check_received_coin(100, 0));
     deps.querier.set_bank_balances(&[coin(12345 + 222, main_denom())]);
 
     assert_eq!(
@@ -294,17 +298,22 @@ fn bonding() {
     )
     .unwrap();
 
-    assert_eq!(res.messages.len(), 3);
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("charlie", 12345).to_cosmos_msg()));
-    assert_eq!(
-        res.messages[1].msg,
-        chain().create_mint_msg(
-            get_stake_full_denom(),
-            Uint128::new(12043),
-            Addr::unchecked("user_3")
-        )
+    let mint_msgs = chain_test().create_mint_msgs(
+        get_stake_full_denom(),
+        Uint128::new(12043),
+        Addr::unchecked("user_3"),
     );
-    assert_eq!(res.messages[2], check_received_coin(222, 0));
+    assert_eq!(res.messages.len(), 2 + mint_msgs.len());
+
+    let mut index = 0;
+    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("charlie", 12345).to_cosmos_msg()));
+    index += 1;
+    for msg in mint_msgs {
+        assert_eq!(res.messages[index].msg, msg);
+        index += 1;
+    }
+
+    assert_eq!(res.messages[index], check_received_coin(222, 0));
 
     // Check the state after bonding
     deps.querier.set_staking_delegations(&[

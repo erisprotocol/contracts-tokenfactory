@@ -3,7 +3,10 @@ use cosmwasm_std::{
     coin, from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Decimal, Deps, Env,
     OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
-use eris_chain_adapter::types::{chain, main_denom, test_chain_config, CustomMsgType};
+use eris_chain_adapter::types::{
+    chain, main_denom, test_chain_config, CustomMsgType, DenomType, HubChainConfig, StageType,
+    WithdrawType,
+};
 use serde::de::DeserializeOwned;
 
 use eris::hub::{CallbackMsg, ExecuteMsg, InstantiateMsg, QueryMsg, StakeToken};
@@ -58,7 +61,7 @@ pub(super) fn query_helper_env<T: DeserializeOwned>(
 
 pub(super) fn get_stake_full_denom() -> String {
     // pub const STAKE_DENOM: &str = "factory/cosmos2contract/stake";
-    chain().get_token_denom(MOCK_CONTRACT_ADDR, "stake".into())
+    chain(&mock_env()).get_token_denom(MOCK_CONTRACT_ADDR, "stake".into())
 }
 
 pub(super) fn set_total_stake_supply(
@@ -121,8 +124,13 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
 
     assert_eq!(
         res.messages[0].msg,
-        chain().create_denom_msg(get_stake_full_denom(), "stake".to_string())
+        chain_test().create_denom_msg(get_stake_full_denom(), "stake".to_string())
     );
 
     deps
+}
+
+pub fn chain_test(
+) -> impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig> {
+    chain(&mock_env())
 }

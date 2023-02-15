@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, StdResult};
+use cosmwasm_std::{Addr, Api, Coin, StdResult};
 use eris_chain_shared::chain_trait::Validateable;
 use kujira::{denom::Denom, msg::KujiraMsg};
 
@@ -43,8 +43,8 @@ impl StageType {
 }
 
 pub type DenomType = Denom;
-
 pub type CustomMsgType = KujiraMsg;
+pub type CoinType = Coin;
 
 #[cw_serde]
 pub struct HubChainConfigInput {}

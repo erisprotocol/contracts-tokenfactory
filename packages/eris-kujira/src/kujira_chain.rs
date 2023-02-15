@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Coin, CosmosMsg, StdResult, Uint128};
+use cosmwasm_std::{coin, Addr, CosmosMsg, StdResult, Uint128};
 use eris_chain_shared::chain_trait::ChainInterface;
 use kujira::msg::DenomMsg;
 
@@ -19,18 +19,18 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         .into()
     }
 
-    fn create_mint_msg(
+    fn create_mint_msgs(
         &self,
         full_denom: String,
         amount: Uint128,
         recipient: Addr,
-    ) -> CosmosMsg<CustomMsgType> {
-        DenomMsg::Mint {
+    ) -> Vec<CosmosMsg<CustomMsgType>> {
+        vec![DenomMsg::Mint {
             denom: full_denom.into(),
             amount,
             recipient,
         }
-        .into()
+        .into()]
     }
 
     fn create_burn_msg(&self, full_denom: String, amount: Uint128) -> CosmosMsg<CustomMsgType> {
@@ -46,7 +46,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         _get_chain_config: F,
         withdraw_type: WithdrawType,
         denom: DenomType,
-        coin: &Coin,
+        amount: Uint128,
     ) -> StdResult<Option<CosmosMsg<CustomMsgType>>>
     where
         F: FnOnce() -> StdResult<HubChainConfig>,
@@ -54,47 +54,19 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         match withdraw_type {
             WithdrawType::BlackWhale {
                 addr,
-            } => Ok(Some(BlackWhaleVault(addr).withdraw_msg(denom, coin.amount)?)),
+            } => Ok(Some(BlackWhaleVault(addr).withdraw_msg(denom, amount)?)),
             WithdrawType::Bow {
                 addr,
-            } => Ok(Some(BowVault(addr).withdraw_msg(denom, coin.amount)?)),
+            } => Ok(Some(BowVault(addr).withdraw_msg(denom, amount)?)),
         }
     }
-
-    // fn create_multi_stages_swap_msgs<F>(
-    //     &self,
-    //     get_chain_config: F,
-    //     stages: Vec<Vec<(StageType, DenomType)>>,
-    //     balances: Vec<Coin>,
-    // ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>>
-    // where
-    //     F: FnOnce() -> StdResult<HubChainConfig>,
-    // {
-    //     let config = get_chain_config()?;
-
-    //     let fin_swaps: Vec<Vec<(Addr, DenomType)>> = stages
-    //         .into_iter()
-    //         .map(|stage| {
-    //             stage
-    //                 .into_iter()
-    //                 .map(|(stage_type, denom)| match stage_type {
-    //                     StageType::Fin {
-    //                         addr,
-    //                     } => (addr, denom),
-    //                 })
-    //                 .collect()
-    //         })
-    //         .collect();
-
-    //     Ok(vec![config.fin_multi.swap_msg(fin_swaps, balances)?])
-    // }
 
     fn create_single_stage_swap_msgs<F>(
         &self,
         _get_chain_config: F,
         stage_type: StageType,
-        _denom: DenomType,
-        balance: &Coin,
+        denom: DenomType,
+        amount: Uint128,
     ) -> StdResult<CosmosMsg<CustomMsgType>>
     where
         F: FnOnce() -> StdResult<HubChainConfig>,
@@ -102,7 +74,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         match stage_type {
             StageType::Fin {
                 addr,
-            } => Fin(addr).swap_msg(balance),
+            } => Fin(addr).swap_msg(&coin(amount.u128(), denom.to_string())),
         }
     }
 }

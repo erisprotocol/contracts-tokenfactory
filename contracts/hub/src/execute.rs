@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use cosmwasm_std::{
     attr, to_binary, Addr, Attribute, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, DistributionMsg,
     Env, Event, Order, Response, StdError, StdResult, Storage, Uint128, WasmMsg,
@@ -12,7 +10,8 @@ use eris::hub::{
     StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, main_denom, CustomMsgType, DenomType, HubChainConfigInput, StageType, WithdrawType,
+    chain, get_balances_hashmap, main_denom, CustomMsgType, DenomType, HubChainConfigInput,
+    StageType, WithdrawType,
 };
 use itertools::Itertools;
 
@@ -43,6 +42,7 @@ pub fn instantiate(deps: DepsMut, env: Env, msg: InstantiateMsg) -> ContractResu
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let state = State::default();
+    let chain = chain(&env);
 
     if msg.protocol_reward_fee.gt(&get_reward_fee_cap()) {
         return Err(ContractError::ProtocolRewardFeeTooHigh {});
@@ -100,7 +100,7 @@ pub fn instantiate(deps: DepsMut, env: Env, msg: InstantiateMsg) -> ContractResu
     state.chain_config.save(deps.storage, &msg.chain_config.validate(deps.api)?)?;
 
     let sub_denom = msg.denom;
-    let full_denom = chain().get_token_denom(env.contract.address, sub_denom.clone());
+    let full_denom = chain.get_token_denom(env.contract.address, sub_denom.clone());
     state.stake_token.save(
         deps.storage,
         &StakeToken {
@@ -109,7 +109,7 @@ pub fn instantiate(deps: DepsMut, env: Env, msg: InstantiateMsg) -> ContractResu
         },
     )?;
 
-    Ok(Response::new().add_message(chain().create_denom_msg(full_denom, sub_denom)))
+    Ok(Response::new().add_message(chain.create_denom_msg(full_denom, sub_denom)))
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -154,19 +154,19 @@ pub fn bond(
         .add_attribute("token_bonded", token_to_bond)
         .add_attribute("ustake_minted", ustake_to_mint);
 
-    let mint_msg: Option<CosmosMsg<CustomMsgType>> = if donate {
+    let mint_msgs: Option<Vec<CosmosMsg<CustomMsgType>>> = if donate {
         None
     } else {
         // create mint message and add to stored total supply
         stake.total_supply = stake.total_supply.checked_add(ustake_to_mint)?;
         state.stake_token.save(deps.storage, &stake)?;
 
-        Some(chain().create_mint_msg(stake.denom.clone(), ustake_to_mint, receiver))
+        Some(chain(&env).create_mint_msgs(stake.denom.clone(), ustake_to_mint, receiver))
     };
 
     Ok(Response::new()
         .add_message(new_delegation.to_cosmos_msg())
-        .add_optional_message(mint_msg)
+        .add_optional_messages(mint_msgs)
         .add_message(check_received_coin_msg(&deps, &env, stake, Some(token_to_bond))?)
         .add_event(event)
         .add_attribute("action", "erishub/bond"))
@@ -237,16 +237,18 @@ pub fn withdraw_lps(
     withdrawals: Vec<(WithdrawType, DenomType)>,
 ) -> ContractResult {
     let mut withdraw_msgs: Vec<CosmosMsg<CustomMsgType>> = vec![];
-    let balances = get_balances_hashmap(&deps, env)?;
+    let chain = chain(&env);
+    let get_denoms = || withdrawals.iter().map(|a| a.1.clone()).collect_vec();
+    let balances = get_balances_hashmap(&deps, env, get_denoms)?;
     let get_chain_config = || State::default().chain_config.load(deps.storage);
 
     for (withdraw_type, denom) in withdrawals {
         let balance = balances.get(&denom.to_string());
 
-        if let Some(coin) = balance {
-            if !coin.amount.is_zero() {
+        if let Some(balance) = balance {
+            if !balance.is_zero() {
                 let msg =
-                    chain().create_withdraw_msg(get_chain_config, withdraw_type, denom, coin)?;
+                    chain.create_withdraw_msg(get_chain_config, withdraw_type, denom, *balance)?;
                 if let Some(msg) = msg {
                     withdraw_msgs.push(msg);
                 }
@@ -257,14 +259,6 @@ pub fn withdraw_lps(
     Ok(Response::new().add_messages(withdraw_msgs).add_attribute("action", "erishub/withdraw_lps"))
 }
 
-/// queries all balances and converts it to a hashmap
-fn get_balances_hashmap(deps: &DepsMut, env: Env) -> Result<HashMap<String, Coin>, ContractError> {
-    let balances = deps.querier.query_all_balances(env.contract.address)?;
-    let balances: HashMap<_, _> =
-        balances.into_iter().map(|item| (item.denom.clone(), item)).collect();
-    Ok(balances)
-}
-
 /// swaps all unlocked coins to token
 pub fn single_stage_swap(
     deps: DepsMut,
@@ -272,20 +266,25 @@ pub fn single_stage_swap(
     stage: Vec<(StageType, DenomType)>,
 ) -> ContractResult {
     let state = State::default();
-    let mut response = Response::new().add_attribute("action", "erishub/single_stage_swap");
-    let balances = get_balances_hashmap(&deps, env)?;
-
+    let chain = chain(&env);
     let get_chain_config = || state.chain_config.load(deps.storage);
-    let chain = chain();
+    let get_denoms = || stage.iter().map(|a| a.1.clone()).collect_vec();
+    let balances = get_balances_hashmap(&deps, env, get_denoms)?;
+
+    let mut response = Response::new().add_attribute("action", "erishub/single_stage_swap");
     // iterate all specified swaps of the stage
     for (stage, denom) in stage {
         let balance = balances.get(&denom.to_string());
         // check if the swap also has a balance in the contract
         if let Some(balance) = balance {
-            if !balance.amount.is_zero() {
+            if !balance.is_zero() {
                 // create a single swap message add add to submsgs
-                let msg =
-                    chain.create_single_stage_swap_msgs(get_chain_config, stage, denom, balance)?;
+                let msg = chain.create_single_stage_swap_msgs(
+                    get_chain_config,
+                    stage,
+                    denom,
+                    *balance,
+                )?;
                 response = response.add_message(msg)
             }
         }
@@ -394,7 +393,7 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
 
             stake.total_supply = stake.total_supply.checked_sub(remaining)?;
             state.stake_token.save(deps.storage, &stake)?;
-            msgs.push(chain().create_burn_msg(stake.denom.clone(), remaining));
+            msgs.push(chain(&env).create_burn_msg(stake.denom.clone(), remaining));
             true
         } else {
             // we can ignore other coins as we will only store utoken and ustake there
@@ -634,7 +633,7 @@ pub fn submit_batch(deps: DepsMut, env: Env) -> ContractResult {
     stake.total_supply = stake.total_supply.checked_sub(pending_batch.ustake_to_burn)?;
     state.stake_token.save(deps.storage, &stake)?;
     let burn_msg: CosmosMsg<CustomMsgType> =
-        chain().create_burn_msg(stake.denom.clone(), pending_batch.ustake_to_burn);
+        chain(&env).create_burn_msg(stake.denom.clone(), pending_batch.ustake_to_burn);
 
     let event = Event::new("erishub/unbond_submitted")
         .add_attribute("id", pending_batch.id.to_string())

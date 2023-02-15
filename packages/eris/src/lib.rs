@@ -36,6 +36,7 @@ mod extensions {
 
     pub trait CustomResponse<T>: Sized {
         fn add_optional_message(self, msg: Option<CosmosMsg<T>>) -> Self;
+        fn add_optional_messages(self, msg: Option<Vec<CosmosMsg<T>>>) -> Self;
         fn add_callback(self, env: &Env, msg: CallbackMsg) -> StdResult<Self>;
         fn add_optional_callback(self, env: &Env, msg: Option<CallbackMsg>) -> StdResult<Self>;
         fn add_optional_callbacks(
@@ -49,6 +50,12 @@ mod extensions {
         fn add_optional_message(self, msg: Option<CosmosMsg<CustomMsgType>>) -> Self {
             match msg {
                 Some(msg) => self.add_message(msg),
+                None => self,
+            }
+        }
+        fn add_optional_messages(self, msg: Option<Vec<CosmosMsg<CustomMsgType>>>) -> Self {
+            match msg {
+                Some(msgs) => self.add_messages(msgs),
                 None => self,
             }
         }

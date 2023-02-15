@@ -3,7 +3,9 @@ use cosmwasm_std::{
     coin, from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Deps, Env, OwnedDeps,
     QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
-use eris_chain_adapter::types::{chain, main_denom, CustomMsgType};
+use eris_chain_adapter::types::{
+    chain, main_denom, CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType,
+};
 use serde::de::DeserializeOwned;
 
 use eris::hub::{CallbackMsg, ExecuteMsg, QueryMsg, StakeToken};
@@ -58,7 +60,7 @@ pub(super) fn query_helper_env<T: DeserializeOwned>(
 
 pub(super) fn get_stake_full_denom() -> String {
     // pub const STAKE_DENOM: &str = "factory/cosmos2contract/stake";
-    chain().get_token_denom(MOCK_CONTRACT_ADDR, "stake".into())
+    chain_test().get_token_denom(MOCK_CONTRACT_ADDR, "stake".into())
 }
 
 pub(super) fn set_total_stake_supply(
@@ -88,4 +90,9 @@ pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsg
         .unwrap(),
         funds: vec![],
     }))
+}
+
+pub fn chain_test(
+) -> impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig> {
+    chain(&mock_env())
 }
