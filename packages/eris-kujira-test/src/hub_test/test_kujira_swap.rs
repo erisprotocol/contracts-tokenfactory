@@ -10,9 +10,7 @@ use eris::hub::{
     CallbackMsg, ConfigResponse, DelegationStrategy, ExecuteMsg, FeeConfig, InstantiateMsg,
     PendingBatch, QueryMsg, StateResponse,
 };
-use eris_chain_adapter::types::{
-    main_denom, test_chain_config, DenomType, StageType, WithdrawType,
-};
+use eris_chain_adapter::types::{test_chain_config, DenomType, StageType, WithdrawType};
 use eris_chain_shared::test_trait::TestInterface;
 use eris_kujira::adapters::bow_vault::BowExecuteMsg;
 use eris_kujira::adapters::bw_vault::BlackwhaleExecuteMsg;
@@ -25,7 +23,7 @@ use eris_staking_hub_tokenfactory::error::ContractError;
 use eris_staking_hub_tokenfactory::types::Delegation;
 
 use crate::hub_test::helpers::{
-    check_received_coin, mock_dependencies, mock_env_at_timestamp, query_helper,
+    check_received_coin, mock_dependencies, mock_env_at_timestamp, query_helper, MOCK_UTOKEN,
 };
 
 use super::custom_querier::CustomQuerier;
@@ -59,6 +57,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             vote_operator: Some("vote_operator".to_string()),
             delegation_strategy: Some(DelegationStrategy::Uniform),
             chain_config: test_chain_config(),
+            utoken: MOCK_UTOKEN.to_string(),
         },
     )
     .unwrap();
@@ -159,9 +158,9 @@ fn harvesting_with_options() {
 
     // Assume users have bonded a total of 1,000,000 utoken and minted the same amount of ustake
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 341666),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 341666, MOCK_UTOKEN),
     ]);
     // deps.querier.set_cw20_total_supply("stake_token", 1000000);
 
@@ -182,12 +181,12 @@ fn harvesting_with_options() {
         mock_env(),
         mock_info("operator", &[]),
         ExecuteMsg::Harvest {
-            stages: Some(vec![vec![(StageType::fin("fin1"), main_denom().into())]]),
+            stages: Some(vec![vec![(StageType::fin("fin1"), MOCK_UTOKEN.into())]]),
             withdrawals: Some(vec![(WithdrawType::bw("bw1"), BW_DENOM1.into())]),
         },
     )
     .unwrap_err();
-    assert_eq!(res, ContractError::SwapFromNotAllowed(main_denom().into()));
+    assert_eq!(res, ContractError::SwapFromNotAllowed(MOCK_UTOKEN.into()));
 
     let res = execute(
         deps.as_mut(),

@@ -33,6 +33,8 @@ pub enum ExecuteMsg {
         max_spread: Option<Decimal>,
         to: Option<String>,
     },
+    /// Withdraws liquidity
+    WithdrawLiquidity {},
 }
 
 #[cw_serde]
@@ -103,6 +105,11 @@ impl WhiteWhalePair {
                     amount,
                     msg: to_binary(&Cw20HookMsg::WithdrawLiquidity {})?,
                 })?,
+            })),
+            cw_asset::AssetInfoBase::Native(native) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: self.0.to_string(),
+                funds: coins(amount.u128(), native),
+                msg: to_binary(&ExecuteMsg::WithdrawLiquidity {})?,
             })),
             _ => Err(StdError::generic_err("WhiteWhalePair.withdraw_msg: not supported")),
         }

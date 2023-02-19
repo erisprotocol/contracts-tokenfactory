@@ -9,7 +9,6 @@ use eris::{
     helpers::bps::BasicPoints,
     hub::{DelegationStrategy, WantedDelegationsShare},
 };
-use eris_chain_adapter::types::main_denom;
 use itertools::Itertools;
 
 use crate::{state::State, types::Delegation};
@@ -20,13 +19,19 @@ pub(crate) fn query_delegation(
     validator: &str,
     delegator_addr: &Addr,
 ) -> StdResult<Delegation> {
-    Ok(Delegation {
-        validator: validator.to_string(),
-        amount: querier
-            .query_delegation(delegator_addr, validator)?
-            .map(|fd| fd.amount.amount.u128())
-            .unwrap_or(0),
-    })
+    let delegation = querier.query_delegation(delegator_addr, validator)?;
+
+    Ok(delegation
+        .map(|fd| Delegation {
+            validator: validator.to_string(),
+            amount: fd.amount.amount.u128(),
+            denom: fd.amount.denom,
+        })
+        .unwrap_or(Delegation {
+            validator: validator.to_string(),
+            amount: 0,
+            denom: "".into(),
+        }))
 }
 
 /// Query the amounts of Luna a staker is delegating to each of the validators specified
@@ -44,14 +49,16 @@ pub(crate) fn query_delegations(
 pub(crate) fn query_all_delegations(
     querier: &QuerierWrapper,
     delegator_addr: &Addr,
+    ustake: &String,
 ) -> StdResult<Vec<Delegation>> {
     let result: Vec<_> = querier
         .query_all_delegations(delegator_addr)?
         .into_iter()
-        .filter(|d| d.amount.denom == main_denom() && !d.amount.amount.is_zero())
+        .filter(|d| d.amount.denom == *ustake && !d.amount.amount.is_zero())
         .map(|d| Delegation {
             validator: d.validator,
             amount: d.amount.amount.u128(),
+            denom: d.amount.denom,
         })
         .collect();
 
@@ -60,7 +67,7 @@ pub(crate) fn query_all_delegations(
 
 /// Find the amount of a denom sent along a message, assert it is non-zero, and no other denom were
 /// sent together
-pub(crate) fn parse_received_fund(funds: &[Coin], denom: &str) -> StdResult<Uint128> {
+pub(crate) fn validate_received_funds(funds: &[Coin], denom: &str) -> StdResult<Uint128> {
     if funds.len() != 1 {
         return Err(StdError::generic_err(format!(
             "must deposit exactly one coin; received {}",

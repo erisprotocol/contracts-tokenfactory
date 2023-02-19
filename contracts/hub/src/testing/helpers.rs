@@ -4,8 +4,7 @@ use cosmwasm_std::{
     OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
 use eris_chain_adapter::types::{
-    chain, main_denom, test_chain_config, CustomMsgType, DenomType, HubChainConfig, StageType,
-    WithdrawType,
+    chain, test_chain_config, CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType,
 };
 use serde::de::DeserializeOwned;
 
@@ -16,6 +15,8 @@ use crate::state::State;
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use super::custom_querier::CustomQuerier;
+
+pub const MOCK_UTOKEN: &str = "utoken";
 
 pub(super) fn err_unsupported_query<T: std::fmt::Debug>(request: T) -> QuerierResult {
     SystemResult::Err(SystemError::InvalidRequest {
@@ -74,6 +75,7 @@ pub(super) fn set_total_stake_supply(
         .save(
             deps.as_mut().storage,
             &StakeToken {
+                utoken: MOCK_UTOKEN.to_string(),
                 denom: get_stake_full_denom(),
                 total_supply: Uint128::new(total_supply),
             },
@@ -85,7 +87,7 @@ pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsg
     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: MOCK_CONTRACT_ADDR.to_string(),
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
-            snapshot: coin(amount, main_denom()),
+            snapshot: coin(amount, MOCK_UTOKEN),
             snapshot_stake: coin(amount_stake, get_stake_full_denom()),
         }))
         .unwrap(),
@@ -107,6 +109,7 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
         InstantiateMsg {
             owner: "owner".to_string(),
             denom: "stake".to_string(),
+            utoken: MOCK_UTOKEN.to_string(),
             epoch_period: 259200,   // 3 * 24 * 60 * 60 = 3 days
             unbond_period: 1814400, // 21 * 24 * 60 * 60 = 21 days
             validators: vec!["alice".to_string(), "bob".to_string(), "charlie".to_string()],

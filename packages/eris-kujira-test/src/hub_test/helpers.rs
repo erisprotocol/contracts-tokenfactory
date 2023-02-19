@@ -4,7 +4,7 @@ use cosmwasm_std::{
     QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
 use eris_chain_adapter::types::{
-    chain, main_denom, CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType,
+    chain, CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType,
 };
 use serde::de::DeserializeOwned;
 
@@ -15,6 +15,8 @@ use eris_staking_hub_tokenfactory::contract::query;
 use eris_staking_hub_tokenfactory::state::State;
 
 use super::custom_querier::CustomQuerier;
+
+pub const MOCK_UTOKEN: &str = "ukuji";
 
 pub(super) fn err_unsupported_query<T: std::fmt::Debug>(request: T) -> QuerierResult {
     SystemResult::Err(SystemError::InvalidRequest {
@@ -73,6 +75,7 @@ pub(super) fn set_total_stake_supply(
         .save(
             deps.as_mut().storage,
             &StakeToken {
+                utoken: MOCK_UTOKEN.into(),
                 denom: "factory/cosmos2contract/stake".into(),
                 total_supply: Uint128::new(total_supply),
             },
@@ -84,7 +87,7 @@ pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsg
     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: MOCK_CONTRACT_ADDR.to_string(),
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
-            snapshot: coin(amount, main_denom()),
+            snapshot: coin(amount, MOCK_UTOKEN),
             snapshot_stake: coin(amount_stake, "factory/cosmos2contract/stake"),
         }))
         .unwrap(),

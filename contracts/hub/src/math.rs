@@ -69,6 +69,7 @@ pub(crate) fn compute_undelegations(
     utoken_to_unbond: Uint128,
     current_delegations: &[Delegation],
     validators: Vec<String>,
+    utoken: &str,
 ) -> StdResult<Vec<Undelegation>> {
     let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
     let utoken_to_distribute = utoken_staked - utoken_to_unbond.u128();
@@ -78,7 +79,8 @@ pub(crate) fn compute_undelegations(
 
     let mut new_undelegations: Vec<Undelegation> = vec![];
     let mut utoken_available = utoken_to_unbond.u128();
-    for (_, d) in merge_with_validators(current_delegations, validators).iter().enumerate() {
+    for (_, d) in merge_with_validators(current_delegations, validators, utoken).iter().enumerate()
+    {
         let utoken_for_validator =
             get_utoken_for_validator(&utoken_per_validator, d, &mut add, &mut remove);
 
@@ -93,7 +95,11 @@ pub(crate) fn compute_undelegations(
             utoken_available -= utoken_to_undelegate;
 
             if utoken_to_undelegate > 0 {
-                new_undelegations.push(Undelegation::new(&d.validator, utoken_to_undelegate));
+                new_undelegations.push(Undelegation::new(
+                    &d.validator,
+                    utoken_to_undelegate,
+                    utoken.to_string(),
+                ));
             }
 
             if utoken_available == 0 {
@@ -117,6 +123,7 @@ pub(crate) fn compute_redelegations_for_removal(
     delegation_to_remove: &Delegation,
     current_delegations: &[Delegation],
     validators: Vec<String>,
+    utoken: &str,
 ) -> StdResult<Vec<Redelegation>> {
     let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
     let utoken_to_distribute = utoken_staked + delegation_to_remove.amount;
@@ -126,7 +133,8 @@ pub(crate) fn compute_redelegations_for_removal(
 
     let mut new_redelegations: Vec<Redelegation> = vec![];
     let mut utoken_available = delegation_to_remove.amount;
-    for (_, d) in merge_with_validators(current_delegations, validators).iter().enumerate() {
+    for (_, d) in merge_with_validators(current_delegations, validators, utoken).iter().enumerate()
+    {
         let utoken_for_validator =
             get_utoken_for_validator(&utoken_per_validator, d, &mut add, &mut remove);
 
@@ -144,6 +152,7 @@ pub(crate) fn compute_redelegations_for_removal(
                 &delegation_to_remove.validator,
                 &d.validator,
                 utoken_to_redelegate,
+                utoken.to_string(),
             ));
         }
 
@@ -158,6 +167,7 @@ pub(crate) fn compute_redelegations_for_removal(
 fn merge_with_validators(
     current_delegations: &[Delegation],
     validators: Vec<String>,
+    utoken: &str,
 ) -> Vec<Delegation> {
     let hash: HashSet<_> = current_delegations.iter().map(|d| d.validator.to_string()).collect();
 
@@ -168,6 +178,7 @@ fn merge_with_validators(
             delegations.push(Delegation {
                 validator: val,
                 amount: 0,
+                denom: utoken.to_string(),
             })
         }
     }
@@ -205,6 +216,7 @@ pub(crate) fn compute_redelegations_for_rebalancing(
     storage: &dyn Storage,
     current_delegations: &[Delegation],
     validators: Vec<String>,
+    utoken: &String,
 ) -> StdResult<Vec<Redelegation>> {
     let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
 
@@ -217,18 +229,25 @@ pub(crate) fn compute_redelegations_for_rebalancing(
     // redelegated _to_ them. They will be put in `dst_validators` vector
     let mut src_delegations: Vec<Delegation> = vec![];
     let mut dst_delegations: Vec<Delegation> = vec![];
-    for (_, d) in merge_with_validators(current_delegations, validators).iter().enumerate() {
+    for (_, d) in merge_with_validators(current_delegations, validators, utoken).iter().enumerate()
+    {
         let utoken_for_validator =
             get_utoken_for_validator(&utoken_per_validator, d, &mut add, &mut remove);
 
         match d.amount.cmp(&utoken_for_validator) {
             Ordering::Greater => {
-                src_delegations
-                    .push(Delegation::new(&d.validator, d.amount - utoken_for_validator));
+                src_delegations.push(Delegation::new(
+                    &d.validator,
+                    d.amount - utoken_for_validator,
+                    utoken.clone(),
+                ));
             },
             Ordering::Less => {
-                dst_delegations
-                    .push(Delegation::new(&d.validator, utoken_for_validator - d.amount));
+                dst_delegations.push(Delegation::new(
+                    &d.validator,
+                    utoken_for_validator - d.amount,
+                    utoken.clone(),
+                ));
             },
             Ordering::Equal => (),
         }
@@ -256,6 +275,7 @@ pub(crate) fn compute_redelegations_for_rebalancing(
             &src_delegation.validator,
             &dst_delegation.validator,
             utoken_to_redelegate,
+            utoken,
         ));
     }
 
@@ -270,8 +290,9 @@ pub(crate) fn get_utoken_per_validator_prepared(
     querier: &QuerierWrapper,
     contract: &Addr,
     goal: Option<WantedDelegationsShare>,
+    utoken: String,
 ) -> StdResult<UtokenPerValidator> {
-    let current_delegations = query_all_delegations(querier, contract)?;
+    let current_delegations = query_all_delegations(querier, contract, &utoken)?;
     let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
     let validators = state.validators.load(storage)?;
     get_utoken_per_validator(state, storage, utoken_staked, &validators, goal)

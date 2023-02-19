@@ -10,9 +10,7 @@ use eris::hub::{
     CallbackMsg, ConfigResponse, DelegationStrategy, ExecuteMsg, FeeConfig, InstantiateMsg,
     PendingBatch, QueryMsg, StateResponse,
 };
-use eris_chain_adapter::types::{
-    main_denom, test_chain_config, DenomType, StageType, WithdrawType,
-};
+use eris_chain_adapter::types::{test_chain_config, DenomType, StageType, WithdrawType};
 use eris_chain_shared::test_trait::TestInterface;
 use eris_kujira::adapters::bow_vault::BowExecuteMsg;
 use eris_kujira::adapters::bw_vault::BlackwhaleExecuteMsg;
@@ -26,7 +24,7 @@ use eris_staking_hub_tokenfactory::types::Delegation;
 
 use crate::hub_test::helpers::{
     check_received_coin, get_stake_full_denom, mock_dependencies, mock_env_at_timestamp,
-    query_helper,
+    query_helper, MOCK_UTOKEN,
 };
 
 use super::custom_querier::CustomQuerier;
@@ -54,6 +52,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             vote_operator: Some("vote_operator".to_string()),
             delegation_strategy: Some(DelegationStrategy::Uniform),
             chain_config: test_chain_config(),
+            utoken: MOCK_UTOKEN.to_string(),
         },
     )
     .unwrap();
@@ -97,9 +96,9 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
 fn harvest_anyone() {
     let mut deps = setup_test();
 
-    deps.querier.set_staking_delegations(&[Delegation::new("val1", 10)]);
+    deps.querier.set_staking_delegations(&[Delegation::new("val1", 10, MOCK_UTOKEN)]);
     deps.querier.set_bank_balances(&[
-        coin(50, main_denom()),
+        coin(50, MOCK_UTOKEN),
         coin(100, get_stake_full_denom()),
         coin(1, "f1"),
         coin(2, "LP1"),
@@ -162,9 +161,9 @@ fn harvest_anyone() {
 fn harvest_anyone_override() {
     let mut deps = setup_test();
 
-    deps.querier.set_staking_delegations(&[Delegation::new("val1", 10)]);
+    deps.querier.set_staking_delegations(&[Delegation::new("val1", 10, MOCK_UTOKEN)]);
     deps.querier.set_bank_balances(&[
-        coin(50, main_denom()),
+        coin(50, MOCK_UTOKEN),
         coin(100, get_stake_full_denom()),
         coin(1, "f1"),
         coin(2, "LP1"),
@@ -225,9 +224,9 @@ fn harvest_anyone_override() {
 fn harvest_operator_override() {
     let mut deps = setup_test();
 
-    deps.querier.set_staking_delegations(&[Delegation::new("val1", 10)]);
+    deps.querier.set_staking_delegations(&[Delegation::new("val1", 10, MOCK_UTOKEN)]);
     deps.querier.set_bank_balances(&[
-        coin(50, main_denom()),
+        coin(50, MOCK_UTOKEN),
         coin(100, get_stake_full_denom()),
         coin(1, "f1"),
         coin(2, "LP1"),

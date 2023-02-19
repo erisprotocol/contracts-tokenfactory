@@ -14,14 +14,13 @@ use eris::hub::{
     UnbondRequestsByUserResponseItem, UnbondRequestsByUserResponseItemDetails,
 };
 
-use eris_chain_adapter::types::main_denom;
 use eris_chain_shared::chain_trait::ChainInterface;
 use itertools::Itertools;
 use protobuf::SpecialFields;
 
 use crate::contract::execute;
 use crate::error::ContractError;
-use crate::helpers::{dedupe, parse_received_fund};
+use crate::helpers::{dedupe, validate_received_funds};
 use crate::math::{
     compute_redelegations_for_rebalancing, compute_redelegations_for_removal, compute_undelegations,
 };
@@ -29,7 +28,7 @@ use crate::protos::proto::{self, MsgVoteWeighted, WeightedVoteOption};
 use crate::state::State;
 use crate::testing::helpers::{
     chain_test, check_received_coin, get_stake_full_denom, query_helper_env,
-    set_total_stake_supply, setup_test,
+    set_total_stake_supply, setup_test, MOCK_UTOKEN,
 };
 use crate::types::{Coins, Delegation, Redelegation, SendFee, Undelegation};
 
@@ -96,14 +95,14 @@ fn proper_instantiation() {
 fn bonding() {
     let mut deps = setup_test();
 
-    deps.querier.set_bank_balances(&[coin(1000100, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(1000100, MOCK_UTOKEN)]);
 
     // Bond when no delegation has been made
     // In this case, the full deposit simply goes to the first validator
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("user_1", &[Coin::new(1000000, main_denom())]),
+        mock_info("user_1", &[Coin::new(1000000, MOCK_UTOKEN)]),
         ExecuteMsg::Bond {
             receiver: None,
         },
@@ -118,7 +117,10 @@ fn bonding() {
     assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[index], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
+    assert_eq!(
+        res.messages[index],
+        SubMsg::new(Delegation::new("alice", 1000000, MOCK_UTOKEN).to_cosmos_msg())
+    );
     index += 1;
     for msg in mint_msgs {
         assert_eq!(res.messages[index].msg, msg);
@@ -126,11 +128,12 @@ fn bonding() {
     }
 
     assert_eq!(res.messages[index], check_received_coin(100, 0));
-    deps.querier.set_bank_balances(&[coin(12345 + 222, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(12345 + 222, MOCK_UTOKEN)]);
 
     assert_eq!(
         State::default().stake_token.load(deps.as_ref().storage).unwrap(),
         StakeToken {
+            utoken: MOCK_UTOKEN.to_string(),
             denom: get_stake_full_denom(),
             total_supply: Uint128::new(1000000)
         }
@@ -139,9 +142,9 @@ fn bonding() {
     // Bond when there are existing delegations, and Token:Stake exchange rate is >1
     // Previously user 1 delegated 1,000,000 utoken. We assume we have accumulated 2.5% yield at 1025000 staked
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 341666),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 341666, MOCK_UTOKEN),
     ]);
 
     // deps.querier.set_cw20_total_supply("stake_token", 1000000);
@@ -150,7 +153,7 @@ fn bonding() {
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("user_2", &[Coin::new(12345, main_denom())]),
+        mock_info("user_2", &[Coin::new(12345, MOCK_UTOKEN)]),
         ExecuteMsg::Bond {
             receiver: Some("user_3".to_string()),
         },
@@ -165,7 +168,10 @@ fn bonding() {
     assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[index], SubMsg::new(Delegation::new("charlie", 12345).to_cosmos_msg()));
+    assert_eq!(
+        res.messages[index],
+        SubMsg::new(Delegation::new("charlie", 12345, MOCK_UTOKEN).to_cosmos_msg())
+    );
     index += 1;
     for msg in mint_msgs {
         assert_eq!(res.messages[index].msg, msg);
@@ -176,9 +182,9 @@ fn bonding() {
 
     // Check the state after bonding
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 354011),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 354011, MOCK_UTOKEN),
     ]);
     // deps.querier.set_cw20_total_supply("stake_token", 1012043);
 
@@ -201,13 +207,13 @@ fn bonding() {
 fn donating() {
     let mut deps = setup_test();
 
-    deps.querier.set_bank_balances(&[coin(1000100, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(1000100, MOCK_UTOKEN)]);
     // Bond when no delegation has been made
     // In this case, the full deposit simply goes to the first validator
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("user_1", &[Coin::new(1000000, main_denom())]),
+        mock_info("user_1", &[Coin::new(1000000, MOCK_UTOKEN)]),
         ExecuteMsg::Bond {
             receiver: None,
         },
@@ -222,7 +228,10 @@ fn donating() {
     assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(Delegation::new("alice", 1000000, MOCK_UTOKEN).to_cosmos_msg())
+    );
     index += 1;
     for msg in mint_msgs {
         assert_eq!(res.messages[index].msg, msg);
@@ -230,14 +239,14 @@ fn donating() {
     }
 
     assert_eq!(res.messages[index], check_received_coin(100, 0));
-    deps.querier.set_bank_balances(&[coin(100, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(100, MOCK_UTOKEN)]);
 
     // Bond when there are existing delegations, and Token:Stake exchange rate is >1
     // Previously user 1 delegated 1,000,000 utoken. We assume we have accumulated 2.5% yield at 1025000 staked
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 341666),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 341666, MOCK_UTOKEN),
     ]);
     // deps.querier.set_cw20_total_supply("stake_token", 1000000);
 
@@ -255,12 +264,12 @@ fn donating() {
         }
     );
 
-    deps.querier.set_bank_balances(&[coin(100 + 12345, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(100 + 12345, MOCK_UTOKEN)]);
     // Charlie has the smallest amount of delegation, so the full deposit goes to him
     let err = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("user_2", &[Coin::new(12345, main_denom())]),
+        mock_info("user_2", &[Coin::new(12345, MOCK_UTOKEN)]),
         ExecuteMsg::Donate {},
     )
     .unwrap_err();
@@ -270,7 +279,7 @@ fn donating() {
     execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("owner", &[Coin::new(12345, main_denom())]),
+        mock_info("owner", &[Coin::new(12345, MOCK_UTOKEN)]),
         ExecuteMsg::UpdateConfig {
             protocol_fee_contract: None,
             protocol_reward_fee: None,
@@ -288,21 +297,24 @@ fn donating() {
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("user_2", &[Coin::new(12345, main_denom())]),
+        mock_info("user_2", &[Coin::new(12345, MOCK_UTOKEN)]),
         ExecuteMsg::Donate {},
     )
     .unwrap();
 
     assert_eq!(res.messages.len(), 2);
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("charlie", 12345).to_cosmos_msg()));
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(Delegation::new("charlie", 12345, MOCK_UTOKEN).to_cosmos_msg())
+    );
     assert_eq!(res.messages[1], check_received_coin(100, 0));
 
-    deps.querier.set_bank_balances(&[coin(100, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(100, MOCK_UTOKEN)]);
     // Check the state after bonding
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 354011),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 354011, MOCK_UTOKEN),
     ]);
 
     // nothing has been minted -> ustake stays the same, only utoken and exchange rate is changing.
@@ -327,9 +339,9 @@ fn harvesting() {
 
     // Assume users have bonded a total of 1,000,000 utoken and minted the same amount of ustake
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 341666),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 341666, MOCK_UTOKEN),
     ]);
     // deps.querier.set_cw20_total_supply("stake_token", 1000000);
 
@@ -380,13 +392,13 @@ fn harvesting() {
 fn registering_unlocked_coins() {
     let mut deps = setup_test();
     let state = State::default();
-    deps.querier.set_bank_balances(&[coin(100 + 123, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(100 + 123, MOCK_UTOKEN)]);
     let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info(MOCK_CONTRACT_ADDR, &[]),
         ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
-            snapshot: coin(100, main_denom()),
+            snapshot: coin(100, MOCK_UTOKEN),
             snapshot_stake: coin(0, get_stake_full_denom()),
         }),
     )
@@ -394,12 +406,12 @@ fn registering_unlocked_coins() {
     assert_eq!(
         res.events,
         vec![Event::new("erishub/received")
-            .add_attribute("received_coin", 123.to_string() + main_denom())]
+            .add_attribute("received_coin", 123.to_string() + MOCK_UTOKEN)]
     );
     assert_eq!(res.messages.len(), 0);
     // Unlocked coins in contract state should have been updated
     let unlocked_coins = state.unlocked_coins.load(deps.as_ref().storage).unwrap();
-    assert_eq!(unlocked_coins, vec![Coin::new(123, main_denom()),]);
+    assert_eq!(unlocked_coins, vec![Coin::new(123, MOCK_UTOKEN),]);
 }
 
 #[test]
@@ -410,19 +422,20 @@ fn registering_unlocked_stake_coins() -> StdResult<()> {
     state.stake_token.save(
         deps.as_mut().storage,
         &StakeToken {
+            utoken: MOCK_UTOKEN.to_string(),
             denom: get_stake_full_denom(),
             total_supply: Uint128::new(1000),
         },
     )?;
 
     deps.querier
-        .set_bank_balances(&[coin(100 + 123, main_denom()), coin(100, get_stake_full_denom())]);
+        .set_bank_balances(&[coin(100 + 123, MOCK_UTOKEN), coin(100, get_stake_full_denom())]);
     let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info(MOCK_CONTRACT_ADDR, &[]),
         ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
-            snapshot: coin(100, main_denom()),
+            snapshot: coin(100, MOCK_UTOKEN),
             snapshot_stake: coin(0, get_stake_full_denom()),
         }),
     )
@@ -430,7 +443,7 @@ fn registering_unlocked_stake_coins() -> StdResult<()> {
     assert_eq!(
         res.events,
         vec![Event::new("erishub/received")
-            .add_attribute("received_coin", 123.to_string() + main_denom())
+            .add_attribute("received_coin", 123.to_string() + MOCK_UTOKEN)
             .add_attribute("received_coin", 100.to_string() + &get_stake_full_denom())]
     );
 
@@ -440,7 +453,7 @@ fn registering_unlocked_stake_coins() -> StdResult<()> {
     let unlocked_coins = state.unlocked_coins.load(deps.as_ref().storage).unwrap();
     assert_eq!(
         unlocked_coins,
-        vec![Coin::new(123, main_denom()), Coin::new(100, get_stake_full_denom())]
+        vec![Coin::new(123, MOCK_UTOKEN), Coin::new(100, get_stake_full_denom())]
     );
     Ok(())
 }
@@ -451,9 +464,9 @@ fn reinvesting() {
     let state = State::default();
 
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 333334),
-        Delegation::new("bob", 333333),
-        Delegation::new("charlie", 333333),
+        Delegation::new("alice", 333334, MOCK_UTOKEN),
+        Delegation::new("bob", 333333, MOCK_UTOKEN),
+        Delegation::new("charlie", 333333, MOCK_UTOKEN),
     ]);
 
     // After the swaps, `unlocked_coins` should contain only utoken and unknown denoms
@@ -462,7 +475,7 @@ fn reinvesting() {
         .save(
             deps.as_mut().storage,
             &vec![
-                Coin::new(234, main_denom()),
+                Coin::new(234, MOCK_UTOKEN),
                 Coin::new(69420, get_stake_full_denom()),
                 Coin::new(123, "unknown"),
             ],
@@ -486,10 +499,13 @@ fn reinvesting() {
     let fee =
         Decimal::from_ratio(1u128, 100u128).checked_mul_uint(total).expect("expects fee result");
     let delegated = total.saturating_sub(fee);
-    assert_eq!(res.messages[0].msg, Delegation::new("bob", delegated.u128()).to_cosmos_msg());
+    assert_eq!(
+        res.messages[0].msg,
+        Delegation::new("bob", delegated.u128(), MOCK_UTOKEN).to_cosmos_msg()
+    );
     assert_eq!(
         res.messages[1].msg,
-        SendFee::new(Addr::unchecked("fee"), fee.u128(), main_denom().into()).to_cosmos_msg()
+        SendFee::new(Addr::unchecked("fee"), fee.u128(), MOCK_UTOKEN).to_cosmos_msg()
     );
 
     let total = Uint128::from(69420u128);
@@ -615,9 +631,9 @@ fn submitting_batch() {
     // ustake supply: 1,012,043
     // utoken per ustake: 1.025
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 345782),
-        Delegation::new("bob", 345782),
-        Delegation::new("charlie", 345781),
+        Delegation::new("alice", 345782, MOCK_UTOKEN),
+        Delegation::new("bob", 345782, MOCK_UTOKEN),
+        Delegation::new("charlie", 345781, MOCK_UTOKEN),
     ]);
 
     set_total_stake_supply(&state, &mut deps, 1012043);
@@ -679,9 +695,18 @@ fn submitting_batch() {
     .unwrap();
 
     assert_eq!(res.messages.len(), 5);
-    assert_eq!(res.messages[0], SubMsg::new(Undelegation::new("alice", 31732).to_cosmos_msg()));
-    assert_eq!(res.messages[1], SubMsg::new(Undelegation::new("bob", 31733).to_cosmos_msg()));
-    assert_eq!(res.messages[2], SubMsg::new(Undelegation::new("charlie", 31732).to_cosmos_msg()));
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(Undelegation::new("alice", 31732, MOCK_UTOKEN).to_cosmos_msg())
+    );
+    assert_eq!(
+        res.messages[1],
+        SubMsg::new(Undelegation::new("bob", 31733, MOCK_UTOKEN).to_cosmos_msg())
+    );
+    assert_eq!(
+        res.messages[2],
+        SubMsg::new(Undelegation::new("charlie", 31732, MOCK_UTOKEN).to_cosmos_msg())
+    );
     assert_eq!(
         res.messages[3].msg,
         chain_test().create_burn_msg(get_stake_full_denom(), Uint128::new(92876))
@@ -777,7 +802,7 @@ fn reconciling() {
         .save(
             deps.as_mut().storage,
             &vec![
-                Coin::new(10000, main_denom()),
+                Coin::new(10000, MOCK_UTOKEN),
                 Coin::new(234, "ukrw"),
                 Coin::new(345, "uusd"),
                 Coin::new(
@@ -789,7 +814,7 @@ fn reconciling() {
         .unwrap();
 
     deps.querier.set_bank_balances(&[
-        Coin::new(12345, main_denom()),
+        Coin::new(12345, MOCK_UTOKEN),
         Coin::new(234, "ukrw"),
         Coin::new(345, "uusd"),
         Coin::new(69420, "ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B"),
@@ -888,9 +913,9 @@ fn reconciling_even_when_everything_ok() {
             .unwrap();
     }
 
-    state.unlocked_coins.save(deps.as_mut().storage, &vec![Coin::new(1000, main_denom())]).unwrap();
+    state.unlocked_coins.save(deps.as_mut().storage, &vec![Coin::new(1000, MOCK_UTOKEN)]).unwrap();
 
-    deps.querier.set_bank_balances(&[Coin::new(3500, main_denom())]);
+    deps.querier.set_bank_balances(&[Coin::new(3500, MOCK_UTOKEN)]);
 
     execute(
         deps.as_mut(),
@@ -977,7 +1002,7 @@ fn reconciling_underflow() {
         .save(
             deps.as_mut().storage,
             &vec![
-                Coin::new(10000, main_denom()),
+                Coin::new(10000, MOCK_UTOKEN),
                 Coin::new(234, "ukrw"),
                 Coin::new(345, "uusd"),
                 Coin::new(
@@ -988,7 +1013,7 @@ fn reconciling_underflow() {
         )
         .unwrap();
     deps.querier.set_bank_balances(&[
-        Coin::new(12345, main_denom()),
+        Coin::new(12345, MOCK_UTOKEN),
         Coin::new(234, "ukrw"),
         Coin::new(345, "uusd"),
         Coin::new(69420, "ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B"),
@@ -1047,7 +1072,7 @@ fn reconciling_underflow_second() {
         .save(
             deps.as_mut().storage,
             &vec![
-                Coin::new(10000, main_denom()),
+                Coin::new(10000, MOCK_UTOKEN),
                 Coin::new(234, "ukrw"),
                 Coin::new(345, "uusd"),
                 Coin::new(
@@ -1058,7 +1083,7 @@ fn reconciling_underflow_second() {
         )
         .unwrap();
     deps.querier.set_bank_balances(&[
-        Coin::new(12345 - 1323, main_denom()),
+        Coin::new(12345 - 1323, MOCK_UTOKEN),
         Coin::new(234, "ukrw"),
         Coin::new(345, "uusd"),
         Coin::new(69420, "ibc/0471F1C4E7AFD3F07702BEF6DC365268D64570F7C1FDC98EA6098DD6DE59817B"),
@@ -1209,7 +1234,7 @@ fn withdrawing_unbonded() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
             to_address: "user_1".to_string(),
-            amount: vec![Coin::new(59646, main_denom())]
+            amount: vec![Coin::new(59646, MOCK_UTOKEN)]
         }))
     );
 
@@ -1273,7 +1298,7 @@ fn withdrawing_unbonded() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
             to_address: "user_2".to_string(),
-            amount: vec![Coin::new(71155, main_denom())]
+            amount: vec![Coin::new(71155, MOCK_UTOKEN)]
         }))
     );
 
@@ -1358,9 +1383,9 @@ fn removing_validator() {
     let state = State::default();
 
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 341666),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 341666, MOCK_UTOKEN),
     ]);
 
     let err = execute(
@@ -1404,11 +1429,11 @@ fn removing_validator() {
     assert_eq!(res.messages.len(), 3);
     assert_eq!(
         res.messages[0],
-        SubMsg::new(Redelegation::new("charlie", "alice", 170833).to_cosmos_msg()),
+        SubMsg::new(Redelegation::new("charlie", "alice", 170833, MOCK_UTOKEN).to_cosmos_msg()),
     );
     assert_eq!(
         res.messages[1],
-        SubMsg::new(Redelegation::new("charlie", "bob", 170833).to_cosmos_msg()),
+        SubMsg::new(Redelegation::new("charlie", "bob", 170833, MOCK_UTOKEN).to_cosmos_msg()),
     );
     assert_eq!(res.messages[2], check_received_coin(0, 0));
 
@@ -2040,9 +2065,9 @@ fn computing_undelegations() -> StdResult<()> {
     let deps = mock_dependencies();
     let state = State::default();
     let current_delegations = vec![
-        Delegation::new("alice", 400),
-        Delegation::new("bob", 300),
-        Delegation::new("charlie", 200),
+        Delegation::new("alice", 400, MOCK_UTOKEN),
+        Delegation::new("bob", 300, MOCK_UTOKEN),
+        Delegation::new("charlie", 200, MOCK_UTOKEN),
     ];
     // Target: (400 + 300 + 200 - 451) / 3 = 149
     // Remainder: 2
@@ -2055,11 +2080,12 @@ fn computing_undelegations() -> StdResult<()> {
         Uint128::new(451),
         &current_delegations,
         current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
+        MOCK_UTOKEN,
     )?;
     let expected = vec![
-        Undelegation::new("alice", 249),
-        Undelegation::new("bob", 151),
-        Undelegation::new("charlie", 51),
+        Undelegation::new("alice", 249, MOCK_UTOKEN),
+        Undelegation::new("bob", 151, MOCK_UTOKEN),
+        Undelegation::new("charlie", 51, MOCK_UTOKEN),
     ];
     assert_eq!(new_undelegations, expected);
     Ok(())
@@ -2070,10 +2096,10 @@ fn computing_redelegations_for_removal() -> StdResult<()> {
     let deps = mock_dependencies();
     let state = State::default();
     let current_delegations = vec![
-        Delegation::new("alice", 13000),
-        Delegation::new("bob", 12000),
-        Delegation::new("charlie", 11000),
-        Delegation::new("dave", 10000),
+        Delegation::new("alice", 13000, MOCK_UTOKEN),
+        Delegation::new("bob", 12000, MOCK_UTOKEN),
+        Delegation::new("charlie", 11000, MOCK_UTOKEN),
+        Delegation::new("dave", 10000, MOCK_UTOKEN),
     ];
     // Suppose Dave will be removed
     // uluna_per_validator = (13000 + 12000 + 11000 + 10000) / 3 = 15333
@@ -2082,9 +2108,9 @@ fn computing_redelegations_for_removal() -> StdResult<()> {
     // to Bob:     15333 + 0 - 12000 = 3333
     // to Charlie: 15333 + 0 - 11000 = 4333
     let expected = vec![
-        Redelegation::new("dave", "alice", 2334),
-        Redelegation::new("dave", "bob", 3333),
-        Redelegation::new("dave", "charlie", 4333),
+        Redelegation::new("dave", "alice", 2334, MOCK_UTOKEN),
+        Redelegation::new("dave", "bob", 3333, MOCK_UTOKEN),
+        Redelegation::new("dave", "charlie", 4333, MOCK_UTOKEN),
     ];
     assert_eq!(
         compute_redelegations_for_removal(
@@ -2092,7 +2118,8 @@ fn computing_redelegations_for_removal() -> StdResult<()> {
             deps.as_ref().storage,
             &current_delegations[3],
             &current_delegations[..3],
-            current_delegations[..3].iter().map(|a| a.validator.to_string()).collect_vec()
+            current_delegations[..3].iter().map(|a| a.validator.to_string()).collect_vec(),
+            MOCK_UTOKEN,
         )?,
         expected,
     );
@@ -2104,11 +2131,11 @@ fn computing_redelegations_for_rebalancing() -> StdResult<()> {
     let deps = mock_dependencies();
     let state = State::default();
     let current_delegations = vec![
-        Delegation::new("alice", 69420),
-        Delegation::new("bob", 1234),
-        Delegation::new("charlie", 88888),
-        Delegation::new("dave", 40471),
-        Delegation::new("evan", 2345),
+        Delegation::new("alice", 69420, MOCK_UTOKEN),
+        Delegation::new("bob", 1234, MOCK_UTOKEN),
+        Delegation::new("charlie", 88888, MOCK_UTOKEN),
+        Delegation::new("dave", 40471, MOCK_UTOKEN),
+        Delegation::new("evan", 2345, MOCK_UTOKEN),
     ];
     // uluna_per_validator = (69420 + 88888 + 1234 + 40471 + 2345) / 4 = 40471
     // remainer = 3
@@ -2135,16 +2162,17 @@ fn computing_redelegations_for_rebalancing() -> StdResult<()> {
     // Round 3: charlie --(38126)--> evan
     // Queues are emptied
     let expected = vec![
-        Redelegation::new("alice", "bob", 28946),
-        Redelegation::new("charlie", "bob", 10291),
-        Redelegation::new("charlie", "evan", 38126),
+        Redelegation::new("alice", "bob", 28946, MOCK_UTOKEN),
+        Redelegation::new("charlie", "bob", 10291, MOCK_UTOKEN),
+        Redelegation::new("charlie", "evan", 38126, MOCK_UTOKEN),
     ];
     assert_eq!(
         compute_redelegations_for_rebalancing(
             &state,
             deps.as_ref().storage,
             &current_delegations,
-            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec()
+            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
+            &MOCK_UTOKEN.to_string(),
         )?,
         expected,
     );
@@ -2169,70 +2197,74 @@ fn computing_redelegations_for_rebalancing_complex() -> StdResult<()> {
     )?;
     // ratio is good
     let current_delegations = vec![
-        Delegation::new("alice", 50000),
-        Delegation::new("bob", 50000),
-        Delegation::new("charlie", 100000),
+        Delegation::new("alice", 50000, MOCK_UTOKEN),
+        Delegation::new("bob", 50000, MOCK_UTOKEN),
+        Delegation::new("charlie", 100000, MOCK_UTOKEN),
     ];
     assert_eq!(
         compute_redelegations_for_rebalancing(
             &state,
             deps.as_ref().storage,
             &current_delegations,
-            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec()
+            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
+            &MOCK_UTOKEN.to_string(),
         )?,
         vec![],
     );
     // ratio is bad
     let current_delegations = vec![
-        Delegation::new("unlisted", 25000),
-        Delegation::new("alice", 25000),
-        Delegation::new("bob", 50000),
-        Delegation::new("charlie", 100000),
+        Delegation::new("unlisted", 25000, MOCK_UTOKEN),
+        Delegation::new("alice", 25000, MOCK_UTOKEN),
+        Delegation::new("bob", 50000, MOCK_UTOKEN),
+        Delegation::new("charlie", 100000, MOCK_UTOKEN),
     ];
     assert_eq!(
         compute_redelegations_for_rebalancing(
             &state,
             deps.as_ref().storage,
             &current_delegations,
-            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec()
+            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
+            &MOCK_UTOKEN.to_string(),
         )?,
-        vec![Redelegation::new("unlisted", "alice", 25000)],
+        vec![Redelegation::new("unlisted", "alice", 25000, MOCK_UTOKEN)],
     );
     // ratio is bad
     let current_delegations = vec![
-        Delegation::new("charlie", 100000),
-        Delegation::new("unlisted", 50000),
-        Delegation::new("alice", 25000),
-        Delegation::new("bob", 25000),
+        Delegation::new("charlie", 100000, MOCK_UTOKEN),
+        Delegation::new("unlisted", 50000, MOCK_UTOKEN),
+        Delegation::new("alice", 25000, MOCK_UTOKEN),
+        Delegation::new("bob", 25000, MOCK_UTOKEN),
     ];
     assert_eq!(
         compute_redelegations_for_rebalancing(
             &state,
             deps.as_ref().storage,
             &current_delegations,
-            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec()
+            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
+            &MOCK_UTOKEN.to_string(),
         )?,
         vec![
-            Redelegation::new("unlisted", "alice", 25000),
-            Redelegation::new("unlisted", "bob", 25000)
+            Redelegation::new("unlisted", "alice", 25000, MOCK_UTOKEN),
+            Redelegation::new("unlisted", "bob", 25000, MOCK_UTOKEN)
         ],
     );
     // ratio is bad
     let current_delegations = vec![
-        Delegation::new("charlie", 150002),
-        Delegation::new("alice", 20000),
-        Delegation::new("bob", 20000),
+        Delegation::new("charlie", 150002, MOCK_UTOKEN),
+        Delegation::new("alice", 20000, MOCK_UTOKEN),
+        Delegation::new("bob", 20000, MOCK_UTOKEN),
     ];
     assert_eq!(
         compute_redelegations_for_rebalancing(
             &state,
             deps.as_ref().storage,
             &current_delegations,
-            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec()
+            current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
+            &MOCK_UTOKEN.to_string(),
         )?,
         vec![
-            Redelegation::new("charlie", "alice", 27500),
-            Redelegation::new("charlie", "bob", 27500)
+            Redelegation::new("charlie", "alice", 27500, MOCK_UTOKEN),
+            Redelegation::new("charlie", "bob", 27500, MOCK_UTOKEN)
         ],
     );
     Ok(())
@@ -2249,38 +2281,38 @@ fn adding_coins() {
     coins.add(&Coin::new(12345, "uatom")).unwrap();
     assert_eq!(coins.0, vec![Coin::new(12345, "uatom")]);
 
-    coins.add(&Coin::new(23456, main_denom())).unwrap();
-    assert_eq!(coins.0, vec![Coin::new(12345, "uatom"), Coin::new(23456, main_denom())]);
+    coins.add(&Coin::new(23456, MOCK_UTOKEN)).unwrap();
+    assert_eq!(coins.0, vec![Coin::new(12345, "uatom"), Coin::new(23456, MOCK_UTOKEN)]);
 
     coins.add_many(&Coins(vec![Coin::new(76543, "uatom"), Coin::new(69420, "uusd")])).unwrap();
     assert_eq!(
         coins.0,
-        vec![Coin::new(88888, "uatom"), Coin::new(23456, main_denom()), Coin::new(69420, "uusd")]
+        vec![Coin::new(88888, "uatom"), Coin::new(23456, MOCK_UTOKEN), Coin::new(69420, "uusd")]
     );
 }
 
 #[test]
 fn receiving_funds() {
-    let err = parse_received_fund(&[], main_denom()).unwrap_err();
+    let err = validate_received_funds(&[], MOCK_UTOKEN).unwrap_err();
     assert_eq!(err, StdError::generic_err("must deposit exactly one coin; received 0"));
 
-    let err = parse_received_fund(
-        &[Coin::new(12345, "uatom"), Coin::new(23456, main_denom())],
-        main_denom(),
+    let err = validate_received_funds(
+        &[Coin::new(12345, "uatom"), Coin::new(23456, MOCK_UTOKEN)],
+        MOCK_UTOKEN,
     )
     .unwrap_err();
     assert_eq!(err, StdError::generic_err("must deposit exactly one coin; received 2"));
 
-    let err = parse_received_fund(&[Coin::new(12345, "uatom")], main_denom()).unwrap_err();
+    let err = validate_received_funds(&[Coin::new(12345, "uatom")], MOCK_UTOKEN).unwrap_err();
     assert_eq!(
         err,
-        StdError::generic_err(format!("expected {} deposit, received uatom", main_denom()))
+        StdError::generic_err(format!("expected {} deposit, received uatom", MOCK_UTOKEN))
     );
 
-    let err = parse_received_fund(&[Coin::new(0, main_denom())], main_denom()).unwrap_err();
+    let err = validate_received_funds(&[Coin::new(0, MOCK_UTOKEN)], MOCK_UTOKEN).unwrap_err();
     assert_eq!(err, StdError::generic_err("deposit amount must be non-zero"));
 
-    let amount = parse_received_fund(&[Coin::new(69420, main_denom())], main_denom()).unwrap();
+    let amount = validate_received_funds(&[Coin::new(69420, MOCK_UTOKEN)], MOCK_UTOKEN).unwrap();
     assert_eq!(amount, Uint128::new(69420));
 }
 

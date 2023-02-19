@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     attr, to_binary, Addr, Attribute, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, DistributionMsg,
-    Env, Event, Order, Response, StdError, StdResult, Storage, Uint128, WasmMsg,
+    Env, Event, Order, Response, StdError, StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
@@ -10,8 +10,8 @@ use eris::hub::{
     StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, main_denom, CustomMsgType, DenomType, HubChainConfigInput,
-    StageType, WithdrawType,
+    chain, get_balances_hashmap, CustomMsgType, DenomType, HubChainConfigInput, StageType,
+    WithdrawType,
 };
 use itertools::Itertools;
 
@@ -19,7 +19,7 @@ use crate::constants::get_reward_fee_cap;
 use crate::error::{ContractError, ContractResult};
 use crate::helpers::{
     assert_validator_exists, assert_validators_exists, dedupe, get_wanted_delegations,
-    query_all_delegations, query_delegation, query_delegations,
+    query_all_delegations, query_delegation, query_delegations, validate_received_funds,
 };
 use crate::math::{
     compute_mint_amount, compute_redelegations_for_rebalancing, compute_redelegations_for_removal,
@@ -104,6 +104,7 @@ pub fn instantiate(deps: DepsMut, env: Env, msg: InstantiateMsg) -> ContractResu
     state.stake_token.save(
         deps.storage,
         &StakeToken {
+            utoken: msg.utoken,
             denom: full_denom.clone(),
             total_supply: Uint128::zero(),
         },
@@ -128,12 +129,16 @@ pub fn bond(
     deps: DepsMut,
     env: Env,
     receiver: Addr,
-    token_to_bond: Uint128,
+    funds: &[Coin],
     donate: bool,
 ) -> ContractResult {
     let state = State::default();
     let mut stake = state.stake_token.load(deps.storage)?;
-    let (new_delegation, delegations) = find_new_delegation(&state, &deps, &env, token_to_bond)?;
+
+    let token_to_bond = validate_received_funds(funds, &stake.utoken)?;
+
+    let (new_delegation, delegations) =
+        find_new_delegation(&state, &deps, &env, token_to_bond, &stake.utoken)?;
 
     // Query the current supply of Staking Token and compute the amount to mint
     let ustake_supply = stake.total_supply;
@@ -180,10 +185,11 @@ pub fn harvest(
     sender: Addr,
 ) -> ContractResult {
     let state = State::default();
+    let stake = state.stake_token.load(deps.storage)?;
 
     // 1. Withdraw delegation rewards
     let withdraw_submsgs: Vec<CosmosMsg<CustomMsgType>> =
-        query_all_delegations(&deps.querier, &env.contract.address)?
+        query_all_delegations(&deps.querier, &env.contract.address, &stake.utoken)?
             .into_iter()
             .map(|d| {
                 CosmosMsg::Distribution(DistributionMsg::WithdrawDelegatorReward {
@@ -201,7 +207,7 @@ pub fn harvest(
 
     // 3. Prepare swap stages
     let stages = state.get_or_preset(deps.storage, stages, &state.stages_preset, &sender)?;
-    validate_no_utoken_or_ustake_swap(&stages, &state, deps.storage, None)?;
+    validate_no_utoken_or_ustake_swap(&stages, &stake)?;
     let swap_msgs = stages.map(|stages| {
         stages
             .into_iter()
@@ -295,20 +301,13 @@ pub fn single_stage_swap(
 
 fn validate_no_utoken_or_ustake_swap(
     stages: &Option<Vec<Vec<(StageType, DenomType)>>>,
-    state: &State,
-    storage: &dyn Storage,
-    denom_string: Option<String>,
+    stake_token: &StakeToken,
 ) -> Result<(), ContractError> {
     if let Some(stages) = stages {
-        let stake_token_denom = if let Some(denom_string) = denom_string {
-            denom_string
-        } else {
-            state.stake_token.load(storage)?.denom
-        };
-
         for stage in stages {
             for (_addr, denom) in stage {
-                if denom.to_string() == main_denom() || denom.to_string() == stake_token_denom {
+                if denom.to_string() == stake_token.utoken || denom.to_string() == stake_token.denom
+                {
                     return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
                 }
             }
@@ -326,7 +325,7 @@ fn check_received_coin_msg(
     negative_offset: Option<Uint128>,
 ) -> StdResult<CosmosMsg<CustomMsgType>> {
     let mut amount =
-        deps.querier.query_balance(env.contract.address.to_string(), main_denom())?.amount;
+        deps.querier.query_balance(env.contract.address.to_string(), &stake.utoken)?.amount;
 
     if let Some(negative_offset) = negative_offset {
         amount = amount.checked_sub(negative_offset)?;
@@ -338,7 +337,7 @@ fn check_received_coin_msg(
     CallbackMsg::CheckReceivedCoin {
         // 0. take current balance - offset
         snapshot: Coin {
-            denom: main_denom().to_string(),
+            denom: stake.utoken,
             amount,
         },
         snapshot_stake: Coin {
@@ -364,8 +363,7 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
     if unlocked_coins.is_empty() {
         return Err(ContractError::NoTokensAvailable(format!(
             "{0}, {1}",
-            main_denom(),
-            stake.denom
+            stake.utoken, stake.denom
         )));
     }
 
@@ -377,8 +375,10 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
         let protocol_fee = fee_config.protocol_reward_fee.checked_mul_uint(available)?;
         let remaining = available.saturating_sub(protocol_fee);
 
-        let send_fee = if coin.denom == main_denom() {
-            let (new_delegation, _) = find_new_delegation(&state, &deps, &env, remaining)?;
+        let send_fee = if coin.denom == stake.utoken {
+            // if receiving normal utoken -> restake
+            let (new_delegation, _) =
+                find_new_delegation(&state, &deps, &env, remaining, &stake.utoken)?;
 
             event = event
                 .add_attribute("utoken_bonded", remaining)
@@ -387,6 +387,7 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
             msgs.push(new_delegation.to_cosmos_msg());
             true
         } else if coin.denom == stake.denom {
+            // if receiving ustake (staked utoken) -> burn
             event = event
                 .add_attribute("ustake_burned", remaining)
                 .add_attribute("ustake_protocol_fee", protocol_fee);
@@ -410,7 +411,7 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
         }
     }
 
-    unlocked_coins.retain(|coin| coin.denom != main_denom() && coin.denom != stake.denom);
+    unlocked_coins.retain(|coin| coin.denom != stake.utoken && coin.denom != stake.denom);
     state.unlocked_coins.save(deps.storage, &unlocked_coins)?;
 
     Ok(Response::new()
@@ -485,6 +486,7 @@ fn find_new_delegation(
     deps: &DepsMut,
     env: &Env,
     uluna_to_bond: Uint128,
+    ustake: &String,
 ) -> Result<(Delegation, Vec<Delegation>), StdError> {
     let delegation_strategy =
         state.delegation_strategy.may_load(deps.storage)?.unwrap_or(DelegationStrategy::Uniform {});
@@ -502,13 +504,15 @@ fn find_new_delegation(
             ..
         } => {
             // if we have gauges, only delegate to validators that have delegations, all others are "inactive"
-            let mut delegations = query_all_delegations(&deps.querier, &env.contract.address)?;
+            let mut delegations =
+                query_all_delegations(&deps.querier, &env.contract.address, ustake)?;
             if delegations.is_empty() {
                 let validators = state.validators.load(deps.storage)?;
 
                 delegations = vec![Delegation {
                     amount: 0,
                     validator: validators.first().unwrap().to_string(),
+                    denom: ustake.clone(),
                 }]
             }
             delegations
@@ -527,7 +531,7 @@ fn find_new_delegation(
             amount = d.amount;
         }
     }
-    let new_delegation = Delegation::new(validator, uluna_to_bond.u128());
+    let new_delegation = Delegation::new(validator, uluna_to_bond.u128(), ustake);
 
     Ok((new_delegation, delegations))
 }
@@ -597,13 +601,19 @@ pub fn submit_batch(deps: DepsMut, env: Env) -> ContractResult {
         return Err(ContractError::SubmitBatchAfter(pending_batch.est_unbond_start_time));
     }
 
-    let delegations = query_all_delegations(&deps.querier, &env.contract.address)?;
+    let delegations = query_all_delegations(&deps.querier, &env.contract.address, &stake.utoken)?;
     let ustake_supply = stake.total_supply;
 
     let utoken_to_unbond =
         compute_unbond_amount(ustake_supply, pending_batch.ustake_to_burn, &delegations);
-    let new_undelegations =
-        compute_undelegations(&state, deps.storage, utoken_to_unbond, &delegations, validators)?;
+    let new_undelegations = compute_undelegations(
+        &state,
+        deps.storage,
+        utoken_to_unbond,
+        &delegations,
+        validators,
+        &stake.utoken,
+    )?;
 
     state.previous_batches.save(
         deps.storage,
@@ -627,7 +637,8 @@ pub fn submit_batch(deps: DepsMut, env: Env) -> ContractResult {
         },
     )?;
 
-    let undelegate_msgs = new_undelegations.iter().map(|d| d.to_cosmos_msg()).collect::<Vec<_>>();
+    let undelegate_msgs =
+        new_undelegations.into_iter().map(|d| d.to_cosmos_msg()).collect::<Vec<_>>();
 
     // apply burn to the stored total supply and save state
     stake.total_supply = stake.total_supply.checked_sub(pending_batch.ustake_to_burn)?;
@@ -650,6 +661,7 @@ pub fn submit_batch(deps: DepsMut, env: Env) -> ContractResult {
 
 pub fn reconcile(deps: DepsMut, env: Env) -> ContractResult {
     let state = State::default();
+    let stake = state.stake_token.load(deps.storage)?;
     let current_time = env.block.time.seconds();
 
     // Load batches that have not been reconciled
@@ -676,10 +688,10 @@ pub fn reconcile(deps: DepsMut, env: Env) -> ContractResult {
         return Ok(Response::new());
     }
     let unlocked_coins = state.unlocked_coins.load(deps.storage)?;
-    let utoken_expected_unlocked = Coins(unlocked_coins).find(main_denom()).amount;
+    let utoken_expected_unlocked = Coins(unlocked_coins).find(&stake.utoken).amount;
 
     let utoken_expected = utoken_expected_received + utoken_expected_unlocked;
-    let utoken_actual = deps.querier.query_balance(&env.contract.address, main_denom())?.amount;
+    let utoken_actual = deps.querier.query_balance(&env.contract.address, stake.utoken)?.amount;
 
     if utoken_actual >= utoken_expected {
         mark_reconciled_batches(&mut batches);
@@ -763,10 +775,11 @@ pub fn withdraw_unbonded(deps: DepsMut, env: Env, user: Addr, receiver: Addr) ->
     if total_utoken_to_refund.is_zero() {
         return Err(ContractError::CantBeZero("withdrawable amount".into()));
     }
+    let stake = state.stake_token.load(deps.storage)?;
 
     let refund_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: receiver.clone().into(),
-        amount: vec![Coin::new(total_utoken_to_refund.u128(), main_denom())],
+        amount: vec![Coin::new(total_utoken_to_refund.u128(), stake.utoken)],
     });
 
     let event = Event::new("erishub/unbonded_withdrawn")
@@ -817,19 +830,24 @@ pub fn rebalance(
     sender: Addr,
     min_redelegation: Option<Uint128>,
 ) -> ContractResult {
-    let delegations = query_all_delegations(&deps.querier, &env.contract.address)?;
-
     let state = State::default();
+    let stake = state.stake_token.load(deps.storage)?;
     state.assert_owner(deps.storage, &sender)?;
     let validators = state.validators.load(deps.storage)?;
+    let delegations = query_all_delegations(&deps.querier, &env.contract.address, &stake.utoken)?;
 
     let min_redelegation = min_redelegation.unwrap_or_default();
 
-    let new_redelegations =
-        compute_redelegations_for_rebalancing(&state, deps.storage, &delegations, validators)?
-            .into_iter()
-            .filter(|redelegation| redelegation.amount >= min_redelegation.u128())
-            .collect::<Vec<_>>();
+    let new_redelegations = compute_redelegations_for_rebalancing(
+        &state,
+        deps.storage,
+        &delegations,
+        validators,
+        &stake.utoken,
+    )?
+    .into_iter()
+    .filter(|redelegation| redelegation.amount >= min_redelegation.u128())
+    .collect::<Vec<_>>();
 
     let redelegate_msgs = new_redelegations.iter().map(|rd| rd.to_cosmos_msg()).collect::<Vec<_>>();
 
@@ -839,7 +857,7 @@ pub fn rebalance(
 
     let check_msg = if !redelegate_msgs.is_empty() {
         // only check coins if a redelegation is happening
-        Some(check_received_coin_msg(&deps, &env, state.stake_token.load(deps.storage)?, None)?)
+        Some(check_received_coin_msg(&deps, &env, stake, None)?)
     } else {
         None
     };
@@ -877,6 +895,7 @@ pub fn remove_validator(
     validator: String,
 ) -> ContractResult {
     let state = State::default();
+    let stake_token = state.stake_token.load(deps.storage)?;
 
     state.assert_owner(deps.storage, &sender)?;
 
@@ -903,6 +922,7 @@ pub fn remove_validator(
                 &delegation_to_remove,
                 &delegations,
                 validators,
+                &stake_token.utoken,
             )?;
 
             new_redelegations.iter().map(|d| d.to_cosmos_msg()).collect::<Vec<_>>()
@@ -1017,7 +1037,7 @@ pub fn update_config(
     }
 
     if stages_preset.is_some() {
-        validate_no_utoken_or_ustake_swap(&stages_preset, &state, deps.storage, None)?;
+        validate_no_utoken_or_ustake_swap(&stages_preset, &state.stake_token.load(deps.storage)?)?;
     }
 
     if let Some(stages_preset) = stages_preset {

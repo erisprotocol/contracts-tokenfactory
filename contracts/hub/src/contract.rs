@@ -4,11 +4,9 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 
 use eris::hub::{CallbackMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
-use eris_chain_adapter::types::main_denom;
 
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
 use crate::error::{ContractError, ContractResult};
-use crate::helpers::parse_received_fund;
 use crate::state::State;
 use crate::{execute, gov, queries};
 
@@ -32,16 +30,10 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
             deps,
             env,
             receiver.map(|s| api.addr_validate(&s)).transpose()?.unwrap_or(info.sender),
-            parse_received_fund(&info.funds, main_denom())?,
+            &info.funds,
             false,
         ),
-        ExecuteMsg::Donate {} => execute::bond(
-            deps,
-            env,
-            info.sender,
-            parse_received_fund(&info.funds, main_denom())?,
-            true,
-        ),
+        ExecuteMsg::Donate {} => execute::bond(deps, env, info.sender, &info.funds, true),
         ExecuteMsg::WithdrawUnbonded {
             receiver,
         } => execute::withdraw_unbonded(

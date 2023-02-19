@@ -9,13 +9,13 @@ use eris::hub::{
     StakeToken, StateResponse, WantedDelegationsResponse, WantedDelegationsShare,
 };
 
-use eris_chain_adapter::types::{main_denom, test_chain_config};
+use eris_chain_adapter::types::test_chain_config;
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::contract::{execute, instantiate};
 use crate::error::ContractError;
 use crate::state::State;
-use crate::testing::helpers::{chain_test, check_received_coin, get_stake_full_denom};
+use crate::testing::helpers::{chain_test, check_received_coin, get_stake_full_denom, MOCK_UTOKEN};
 use crate::types::{Delegation, Redelegation};
 
 use super::custom_querier::CustomQuerier;
@@ -36,6 +36,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
         mock_info("deployer", &[]),
         InstantiateMsg {
             owner: "owner".to_string(),
+            utoken: MOCK_UTOKEN.to_string(),
             denom: "stake".to_string(),
             epoch_period: 259200,   // 3 * 24 * 60 * 60 = 3 days
             unbond_period: 1814400, // 21 * 24 * 60 * 60 = 21 days
@@ -61,7 +62,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
     let res = execute(
         deps.as_mut(),
         mock_env_at_timestamp(EPOCH_START + WEEK),
-        mock_info("owner", &[Coin::new(1000000, main_denom())]),
+        mock_info("owner", &[Coin::new(1000000, MOCK_UTOKEN)]),
         ExecuteMsg::TuneDelegations {},
     )
     .unwrap();
@@ -237,14 +238,14 @@ fn validate_update() {
 fn bonding() {
     let mut deps = setup_test();
 
-    deps.querier.set_bank_balances(&[coin(1000100, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(1000100, MOCK_UTOKEN)]);
 
     // Bond when no delegation has been made
     // In this case, the full deposit simply goes to the first validator
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("user_1", &[Coin::new(1000000, main_denom())]),
+        mock_info("user_1", &[Coin::new(1000000, MOCK_UTOKEN)]),
         ExecuteMsg::Bond {
             receiver: None,
         },
@@ -259,7 +260,10 @@ fn bonding() {
     assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("alice", 1000000).to_cosmos_msg()));
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(Delegation::new("alice", 1000000, MOCK_UTOKEN).to_cosmos_msg())
+    );
     index += 1;
     for msg in mint_msgs {
         assert_eq!(res.messages[index].msg, msg);
@@ -267,11 +271,12 @@ fn bonding() {
     }
 
     assert_eq!(res.messages[index], check_received_coin(100, 0));
-    deps.querier.set_bank_balances(&[coin(12345 + 222, main_denom())]);
+    deps.querier.set_bank_balances(&[coin(12345 + 222, MOCK_UTOKEN)]);
 
     assert_eq!(
         State::default().stake_token.load(deps.as_ref().storage).unwrap(),
         StakeToken {
+            utoken: MOCK_UTOKEN.to_string(),
             denom: STAKE_DENOM.to_string(),
             total_supply: Uint128::new(1000000)
         }
@@ -280,9 +285,9 @@ fn bonding() {
     // Bond when there are existing delegations, and Token:Stake exchange rate is >1
     // Previously user 1 delegated 1,000,000 utoken. We assume we have accumulated 2.5% yield at 1025000 staked
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 341666),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 341666, MOCK_UTOKEN),
     ]);
 
     // deps.querier.set_cw20_total_supply("stake_token", 1000000);
@@ -291,7 +296,7 @@ fn bonding() {
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("user_2", &[Coin::new(12345, main_denom())]),
+        mock_info("user_2", &[Coin::new(12345, MOCK_UTOKEN)]),
         ExecuteMsg::Bond {
             receiver: Some("user_3".to_string()),
         },
@@ -306,7 +311,10 @@ fn bonding() {
     assert_eq!(res.messages.len(), 2 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[0], SubMsg::new(Delegation::new("charlie", 12345).to_cosmos_msg()));
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(Delegation::new("charlie", 12345, MOCK_UTOKEN).to_cosmos_msg())
+    );
     index += 1;
     for msg in mint_msgs {
         assert_eq!(res.messages[index].msg, msg);
@@ -317,9 +325,9 @@ fn bonding() {
 
     // Check the state after bonding
     deps.querier.set_staking_delegations(&[
-        Delegation::new("alice", 341667),
-        Delegation::new("bob", 341667),
-        Delegation::new("charlie", 354011),
+        Delegation::new("alice", 341667, MOCK_UTOKEN),
+        Delegation::new("bob", 341667, MOCK_UTOKEN),
+        Delegation::new("charlie", 354011, MOCK_UTOKEN),
     ]);
 
     let res: StateResponse = query_helper(deps.as_ref(), QueryMsg::State {});
@@ -356,7 +364,7 @@ fn bonding() {
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("alice", &[Coin::new(12345, main_denom())]),
+        mock_info("alice", &[Coin::new(12345, MOCK_UTOKEN)]),
         ExecuteMsg::Rebalance {
             min_redelegation: None,
         },
@@ -367,7 +375,7 @@ fn bonding() {
     let res = execute(
         deps.as_mut(),
         mock_env(),
-        mock_info("owner", &[Coin::new(12345, main_denom())]),
+        mock_info("owner", &[Coin::new(12345, MOCK_UTOKEN)]),
         ExecuteMsg::Rebalance {
             min_redelegation: None,
         },
@@ -380,7 +388,8 @@ fn bonding() {
         Redelegation {
             src: "charlie".into(),
             dst: "alice".into(),
-            amount: 280740
+            amount: 280740,
+            denom: MOCK_UTOKEN.into()
         }
         .to_cosmos_msg()
     );
@@ -389,7 +398,8 @@ fn bonding() {
         Redelegation {
             src: "charlie".into(),
             dst: "bob".into(),
-            amount: 73271
+            amount: 73271,
+            denom: MOCK_UTOKEN.into()
         }
         .to_cosmos_msg()
     );

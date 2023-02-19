@@ -7,7 +7,6 @@ use eris::hub::{
     UnbondRequestsByUserResponseItem, UnbondRequestsByUserResponseItemDetails,
     WantedDelegationsResponse,
 };
-use eris_chain_adapter::types::main_denom;
 use itertools::Itertools;
 
 use crate::helpers::{get_wanted_delegations, query_delegations};
@@ -89,7 +88,7 @@ pub fn state(deps: Deps, env: Env) -> StdResult<StateResponse> {
         .map(|item| item.utoken_unclaimed.u128())
         .sum();
 
-    let available = deps.querier.query_balance(&env.contract.address, main_denom())?.amount;
+    let available = deps.querier.query_balance(&env.contract.address, stake_token.utoken)?.amount;
 
     let exchange_rate = if total_ustake.is_zero() {
         Decimal::one()
@@ -112,6 +111,7 @@ pub fn state(deps: Deps, env: Env) -> StdResult<StateResponse> {
 
 pub fn wanted_delegations(deps: Deps, env: Env) -> StdResult<WantedDelegationsResponse> {
     let state = State::default();
+    let stake_token = state.stake_token.load(deps.storage)?;
 
     let (delegations, _, _, share) = get_utoken_per_validator_prepared(
         &state,
@@ -119,6 +119,7 @@ pub fn wanted_delegations(deps: Deps, env: Env) -> StdResult<WantedDelegationsRe
         &deps.querier,
         &env.contract.address,
         None,
+        stake_token.utoken,
     )?;
 
     Ok(WantedDelegationsResponse {
@@ -133,6 +134,7 @@ pub fn simulate_wanted_delegations(
     _period: Option<u64>,
 ) -> StdResult<WantedDelegationsResponse> {
     let state = State::default();
+    let stake_token = state.stake_token.load(deps.storage)?;
 
     // let period = period.unwrap_or(get_period(env.block.time.seconds())? + 1);
 
@@ -152,6 +154,7 @@ pub fn simulate_wanted_delegations(
         &deps.querier,
         &env.contract.address,
         Some(delegation_goal),
+        stake_token.utoken,
     )?;
 
     Ok(WantedDelegationsResponse {

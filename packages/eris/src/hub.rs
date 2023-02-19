@@ -116,6 +116,8 @@ pub struct InstantiateMsg {
 
     /// Account who can call harvest
     pub operator: String,
+    /// Denom of the underlaying staking token
+    pub utoken: String,
 
     /// Name of the liquid staking token
     pub denom: String,
@@ -384,6 +386,8 @@ pub struct PendingBatch {
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
 pub struct StakeToken {
+    // denom of the underlying token
+    pub utoken: String,
     // denom of the stake token
     pub denom: String,
     // supply of the stake token

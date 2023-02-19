@@ -17,11 +17,6 @@ pub mod types {
     pub use eris_kujira::kujira_types::WithdrawType;
 
     #[inline(always)]
-    pub fn main_denom() -> &'static str {
-        "ukuji"
-    }
-
-    #[inline(always)]
     pub fn chain(
         _env: &Env,
     ) -> impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig>
@@ -70,11 +65,6 @@ pub mod types {
     pub use eris_whitewhale::whitewhale_types::HubChainConfigInput;
     pub use eris_whitewhale::whitewhale_types::StageType;
     pub use eris_whitewhale::whitewhale_types::WithdrawType;
-
-    #[inline(always)]
-    pub fn main_denom() -> &'static str {
-        "uwhale"
-    }
 
     #[inline(always)]
     pub fn chain(
