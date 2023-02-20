@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Addr, CosmosMsg, StdResult, Uint128};
+use cosmwasm_std::{coins, Addr, CosmosMsg, Decimal, StdResult, Uint128};
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::{
@@ -78,6 +78,8 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         stage_type: StageType,
         denom: DenomType,
         amount: Uint128,
+        belief_price: Option<Decimal>,
+        max_spread: Decimal,
     ) -> StdResult<CosmosMsg<CustomMsgType>>
     where
         F: FnOnce() -> StdResult<HubChainConfig>,
@@ -85,7 +87,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         match stage_type {
             StageType::Dex {
                 addr,
-            } => WhiteWhalePair(addr).swap_msg(denom, amount),
+            } => WhiteWhalePair(addr).swap_msg(denom, amount, belief_price, Some(max_spread)),
         }
     }
 }

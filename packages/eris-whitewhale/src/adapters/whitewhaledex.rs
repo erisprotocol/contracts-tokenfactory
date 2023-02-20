@@ -57,6 +57,8 @@ impl WhiteWhalePair {
         &self,
         denom: DenomType,
         amount: Uint128,
+        belief_price: Option<Decimal>,
+        max_spread: Option<Decimal>,
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
         match denom {
             cw_asset::AssetInfoBase::Cw20(cw20) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -66,8 +68,8 @@ impl WhiteWhalePair {
                     contract: self.0.to_string(),
                     amount,
                     msg: to_binary(&Cw20HookMsg::Swap {
-                        belief_price: None,
-                        max_spread: None,
+                        belief_price,
+                        max_spread,
                         to: None,
                     })?,
                 })?,
@@ -82,8 +84,8 @@ impl WhiteWhalePair {
                         },
                         amount,
                     },
-                    belief_price: None,
-                    max_spread: None,
+                    belief_price,
+                    max_spread,
                     to: None,
                 })?,
             })),

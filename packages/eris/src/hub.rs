@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::helpers::bps::BasicPoints;
 
+pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>);
+
 #[cw_serde]
 pub enum DelegationStrategy
 //<T = String>
@@ -172,7 +174,7 @@ pub enum ExecuteMsg {
     /// Claim staking rewards, swap all for Token, and restake
     Harvest {
         withdrawals: Option<Vec<(WithdrawType, DenomType)>>,
-        stages: Option<Vec<Vec<(StageType, DenomType)>>>,
+        stages: Option<Vec<Vec<SingleSwapConfig>>>,
     },
 
     TuneDelegations {},
@@ -206,7 +208,7 @@ pub enum ExecuteMsg {
         /// Sets a new operator
         operator: Option<String>,
         /// Sets the stages preset
-        stages_preset: Option<Vec<Vec<(StageType, DenomType)>>>,
+        stages_preset: Option<Vec<Vec<SingleSwapConfig>>>,
         /// Sets the withdrawls preset
         withdrawls_preset: Option<Vec<(WithdrawType, DenomType)>>,
         /// Specifies wether donations are allowed.
@@ -217,6 +219,8 @@ pub enum ExecuteMsg {
         vote_operator: Option<String>,
         /// Update the chain_config
         chain_config: Option<HubChainConfigInput>,
+        /// Update the default max_spread
+        default_max_spread: Option<u64>,
     },
 
     /// Submit an unbonding request to the current unbonding queue; automatically invokes `unbond`
@@ -233,7 +237,8 @@ pub enum CallbackMsg {
     },
     // SingleStageSwap is executed multiple times to execute each swap stage. A stage consists of multiple swaps
     SingleStageSwap {
-        stage: Vec<(StageType, DenomType)>,
+        // (Used dex, used denom, belief_price)
+        stage: Vec<SingleSwapConfig>,
     },
     /// Following the swaps, stake the Token acquired to the whitelisted validators
     Reinvest {},
@@ -340,7 +345,7 @@ pub struct ConfigResponse {
     /// Account who can call harvest
     pub operator: String,
     /// Stages that must be used by permissionless users
-    pub stages_preset: Vec<Vec<(StageType, DenomType)>>,
+    pub stages_preset: Vec<Vec<SingleSwapConfig>>,
     /// Withdrawls that must be used by permissionless users
     pub withdrawls_preset: Vec<(WithdrawType, DenomType)>,
     /// Specifies wether donations are allowed.

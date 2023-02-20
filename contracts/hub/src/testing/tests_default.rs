@@ -291,6 +291,7 @@ fn donating() {
             delegation_strategy: None,
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap();
@@ -1526,6 +1527,7 @@ fn update_fee() {
             delegation_strategy: None,
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap_err();
@@ -1545,6 +1547,7 @@ fn update_fee() {
             delegation_strategy: None,
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap_err();
@@ -1564,6 +1567,7 @@ fn update_fee() {
             delegation_strategy: None,
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap();
@@ -1613,6 +1617,7 @@ fn vote() {
             stages_preset: None,
             withdrawls_preset: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap();
@@ -1682,6 +1687,7 @@ fn vote_weighted() {
             stages_preset: None,
             withdrawls_preset: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap();

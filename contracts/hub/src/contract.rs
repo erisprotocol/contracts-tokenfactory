@@ -83,6 +83,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
             vote_operator,
             chain_config,
             withdrawls_preset,
+            default_max_spread,
         } => execute::update_config(
             deps,
             info.sender,
@@ -95,6 +96,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
             delegation_strategy,
             vote_operator,
             chain_config,
+            default_max_spread,
         ),
         ExecuteMsg::QueueUnbond {
             receiver,

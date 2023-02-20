@@ -66,8 +66,8 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: Some(vec![
-                vec![(StageType::fin("fin1"), "f1".into())],
-                vec![(StageType::fin("fin2"), "f2".into())],
+                vec![(StageType::fin("fin1"), "f1".into(), None)],
+                vec![(StageType::fin("fin2"), "f2".into(), None)],
             ]),
             withdrawls_preset: Some(vec![
                 (WithdrawType::bw("bw1"), "LP1".into()),
@@ -77,6 +77,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             delegation_strategy: None,
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap();
@@ -137,7 +138,7 @@ fn harvest_anyone() {
     assert_eq!(
         res.messages[2].msg,
         CallbackMsg::SingleStageSwap {
-            stage: vec![(StageType::fin("fin1"), "f1".into())]
+            stage: vec![(StageType::fin("fin1"), "f1".into(), None)]
         }
         .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
         .unwrap()
@@ -145,7 +146,7 @@ fn harvest_anyone() {
     assert_eq!(
         res.messages[3].msg,
         CallbackMsg::SingleStageSwap {
-            stage: vec![(StageType::fin("fin2"), "f2".into())],
+            stage: vec![(StageType::fin("fin2"), "f2".into(), None)],
         }
         .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
         .unwrap()
@@ -176,7 +177,7 @@ fn harvest_anyone_override() {
         mock_info("anyone", &[]),
         ExecuteMsg::Harvest {
             withdrawals: Some(vec![]),
-            stages: Some(vec![vec![(StageType::fin("x"), "x".into())]]),
+            stages: Some(vec![vec![(StageType::fin("x"), "x".into(), None)]]),
         },
     )
     .unwrap_err();
@@ -240,7 +241,7 @@ fn harvest_operator_override() {
         mock_info("operator", &[]),
         ExecuteMsg::Harvest {
             withdrawals: Some(vec![]),
-            stages: Some(vec![vec![(StageType::fin("x"), "x".into())]]),
+            stages: Some(vec![vec![(StageType::fin("x"), "x".into(), None)]]),
         },
     )
     .unwrap();
@@ -255,7 +256,7 @@ fn harvest_operator_override() {
     assert_eq!(
         res.messages[1].msg,
         CallbackMsg::SingleStageSwap {
-            stage: vec![(StageType::fin("x"), "x".into())]
+            stage: vec![(StageType::fin("x"), "x".into(), None)]
         }
         .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
         .unwrap()

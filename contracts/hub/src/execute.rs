@@ -7,11 +7,10 @@ use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
 
 use eris::hub::{
     Batch, CallbackMsg, DelegationStrategy, ExecuteMsg, FeeConfig, InstantiateMsg, PendingBatch,
-    StakeToken, UnbondRequest,
+    SingleSwapConfig, StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, CustomMsgType, DenomType, HubChainConfigInput, StageType,
-    WithdrawType,
+    chain, get_balances_hashmap, CustomMsgType, DenomType, HubChainConfigInput, WithdrawType,
 };
 use itertools::Itertools;
 
@@ -182,7 +181,7 @@ pub fn harvest(
     deps: DepsMut,
     env: Env,
     withdrawals: Option<Vec<(WithdrawType, DenomType)>>,
-    stages: Option<Vec<Vec<(StageType, DenomType)>>>,
+    stages: Option<Vec<Vec<SingleSwapConfig>>>,
     sender: Addr,
 ) -> ContractResult {
     let state = State::default();
@@ -267,20 +266,17 @@ pub fn withdraw_lps(
 }
 
 /// swaps all unlocked coins to token
-pub fn single_stage_swap(
-    deps: DepsMut,
-    env: Env,
-    stage: Vec<(StageType, DenomType)>,
-) -> ContractResult {
+pub fn single_stage_swap(deps: DepsMut, env: Env, stage: Vec<SingleSwapConfig>) -> ContractResult {
     let state = State::default();
     let chain = chain(&env);
+    let default_max_spread = state.get_default_max_spread(deps.storage);
     let get_chain_config = || state.chain_config.load(deps.storage);
     let get_denoms = || stage.iter().map(|a| a.1.clone()).collect_vec();
     let balances = get_balances_hashmap(&deps, env, get_denoms)?;
 
     let mut response = Response::new().add_attribute("action", "erishub/single_stage_swap");
     // iterate all specified swaps of the stage
-    for (stage, denom) in stage {
+    for (stage_type, denom, belief_price) in stage {
         let balance = balances.get(&denom.to_string());
         // check if the swap also has a balance in the contract
         if let Some(balance) = balance {
@@ -288,9 +284,11 @@ pub fn single_stage_swap(
                 // create a single swap message add add to submsgs
                 let msg = chain.create_single_stage_swap_msgs(
                     get_chain_config,
-                    stage,
+                    stage_type,
                     denom,
                     *balance,
+                    belief_price,
+                    default_max_spread,
                 )?;
                 response = response.add_message(msg)
             }
@@ -301,16 +299,27 @@ pub fn single_stage_swap(
 }
 
 fn validate_no_utoken_or_ustake_swap(
-    stages: &Option<Vec<Vec<(StageType, DenomType)>>>,
+    stages: &Option<Vec<Vec<SingleSwapConfig>>>,
     stake_token: &StakeToken,
 ) -> Result<(), ContractError> {
     if let Some(stages) = stages {
         for stage in stages {
-            for (_addr, denom) in stage {
+            for (_addr, denom, _) in stage {
                 if denom.to_string() == stake_token.utoken || denom.to_string() == stake_token.denom
                 {
                     return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
                 }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_no_belief_price(stages: &Vec<Vec<SingleSwapConfig>>) -> Result<(), ContractError> {
+    for stage in stages {
+        for (_, _, belief_price) in stage {
+            if belief_price.is_some() {
+                return Err(ContractError::BeliefPriceNotAllowed {});
             }
         }
     }
@@ -1031,12 +1040,13 @@ pub fn update_config(
     protocol_fee_contract: Option<String>,
     protocol_reward_fee: Option<Decimal>,
     operator: Option<String>,
-    stages_preset: Option<Vec<Vec<(StageType, DenomType)>>>,
+    stages_preset: Option<Vec<Vec<SingleSwapConfig>>>,
     withdrawls_preset: Option<Vec<(WithdrawType, DenomType)>>,
     allow_donations: Option<bool>,
     delegation_strategy: Option<DelegationStrategy>,
     vote_operator: Option<String>,
     chain_config: Option<HubChainConfigInput>,
+    default_max_spread: Option<u64>,
 ) -> ContractResult {
     let state = State::default();
 
@@ -1072,6 +1082,8 @@ pub fn update_config(
     }
 
     if let Some(stages_preset) = stages_preset {
+        // belief price is not allowed. We still store it with None, as otherwise a lot of additional logic is required to load it.
+        validate_no_belief_price(&stages_preset)?;
         state.stages_preset.save(deps.storage, &stages_preset)?;
     }
 
@@ -1088,6 +1100,9 @@ pub fn update_config(
 
     if let Some(allow_donations) = allow_donations {
         state.allow_donations.save(deps.storage, &allow_donations)?;
+    }
+    if let Some(default_max_spread) = default_max_spread {
+        state.default_max_spread.save(deps.storage, &default_max_spread)?;
     }
 
     if let Some(vote_operator) = vote_operator {

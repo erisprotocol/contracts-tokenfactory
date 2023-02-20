@@ -167,6 +167,7 @@ fn validate_update() {
             }),
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap_err();
@@ -188,6 +189,7 @@ fn validate_update() {
             }),
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap_err();
@@ -209,6 +211,7 @@ fn validate_update() {
             }),
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap_err();
@@ -230,6 +233,7 @@ fn validate_update() {
             }),
             vote_operator: None,
             chain_config: None,
+            default_max_spread: None,
         },
     )
     .unwrap();

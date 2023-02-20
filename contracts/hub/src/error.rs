@@ -61,6 +61,9 @@ pub enum ContractError {
     #[error("Swap from {0} is not allowed")]
     SwapFromNotAllowed(String),
 
+    #[error("Setting a belief Price is not allowed")]
+    BeliefPriceNotAllowed {},
+
     #[error("cannot find `instantiate` event")]
     CannotFindInstantiateEvent {},
 

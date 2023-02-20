@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Api, CosmosMsg, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, CosmosMsg, Decimal, StdResult, Uint128};
 
 pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubChainConfig> {
     fn get_token_denom(&self, contract_addr: impl Into<String>, sub_denom: String) -> String {
@@ -32,6 +32,8 @@ pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubCha
         stage_type: TStageType,
         denom: TDenomType,
         amount: Uint128,
+        belief_price: Option<Decimal>,
+        max_spread: Decimal,
     ) -> StdResult<CosmosMsg<TCustom>>
     where
         F: FnOnce() -> StdResult<THubChainConfig>;

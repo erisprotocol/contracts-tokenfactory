@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, Addr, CosmosMsg, StdResult, Uint128};
+use cosmwasm_std::{coin, Addr, CosmosMsg, Decimal, StdResult, Uint128};
 use eris_chain_shared::chain_trait::ChainInterface;
 use kujira::msg::DenomMsg;
 
@@ -67,6 +67,8 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         stage_type: StageType,
         denom: DenomType,
         amount: Uint128,
+        belief_price: Option<Decimal>,
+        max_spread: Decimal,
     ) -> StdResult<CosmosMsg<CustomMsgType>>
     where
         F: FnOnce() -> StdResult<HubChainConfig>,
@@ -74,7 +76,11 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         match stage_type {
             StageType::Fin {
                 addr,
-            } => Fin(addr).swap_msg(&coin(amount.u128(), denom.to_string())),
+            } => Fin(addr).swap_msg(
+                &coin(amount.u128(), denom.to_string()),
+                belief_price,
+                Some(max_spread),
+            ),
         }
     }
 }

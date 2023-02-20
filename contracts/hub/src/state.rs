@@ -2,10 +2,10 @@ use cosmwasm_std::{Addr, Coin, Decimal, Storage};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, Map, MultiIndex};
 
 use eris::hub::{
-    Batch, DelegationStrategy, FeeConfig, PendingBatch, StakeToken, UnbondRequest,
-    WantedDelegationsShare,
+    Batch, DelegationStrategy, FeeConfig, PendingBatch, SingleSwapConfig, StakeToken,
+    UnbondRequest, WantedDelegationsShare,
 };
-use eris_chain_adapter::types::{DenomType, HubChainConfig, StageType, WithdrawType};
+use eris_chain_adapter::types::{DenomType, HubChainConfig, WithdrawType};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{error::ContractError, types::BooleanKey};
@@ -16,7 +16,7 @@ pub struct State<'a> {
     /// Account who can call harvest
     pub operator: Item<'a, Addr>,
     /// Stages that must be used by permissionless users
-    pub stages_preset: Item<'a, Vec<Vec<(StageType, DenomType)>>>,
+    pub stages_preset: Item<'a, Vec<Vec<SingleSwapConfig>>>,
     /// Withdraws that must be used by permissionless users
     pub withdrawls_preset: Item<'a, Vec<(WithdrawType, DenomType)>>,
 
@@ -57,6 +57,8 @@ pub struct State<'a> {
 
     // history of the exchange_rate
     pub exchange_history: Map<'a, u64, Decimal>,
+
+    pub default_max_spread: Item<'a, u64>,
 }
 
 impl Default for State<'static> {
@@ -96,6 +98,7 @@ impl Default for State<'static> {
             allow_donations: Item::new("allow_donations"),
             chain_config: Item::new("chain_config"),
             exchange_history: Map::new("exchange_history"),
+            default_max_spread: Item::new("default_max_spread"),
         }
     }
 }
@@ -162,6 +165,11 @@ impl<'a> State<'a> {
             preset.may_load(storage)?
         };
         Ok(stages)
+    }
+
+    pub fn get_default_max_spread(&self, storage: &dyn Storage) -> Decimal {
+        // by default a max_spread of 10% is used.
+        Decimal::percent(self.default_max_spread.load(storage).unwrap_or(10))
     }
 }
 
