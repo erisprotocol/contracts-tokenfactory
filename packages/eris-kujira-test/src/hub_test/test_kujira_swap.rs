@@ -123,7 +123,8 @@ fn proper_instantiation() {
             withdrawls_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Uniform,
-            vote_operator: Some("vote_operator".into())
+            vote_operator: Some("vote_operator".into()),
+            utoken: MOCK_UTOKEN.to_string(),
         }
     );
 

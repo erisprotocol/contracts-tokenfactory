@@ -127,7 +127,8 @@ fn proper_instantiation() {
             delegation_strategy: DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 6000), ("bob".into(), 4000)],
             },
-            vote_operator: None
+            vote_operator: None,
+            utoken: MOCK_UTOKEN.to_string()
         }
     );
 

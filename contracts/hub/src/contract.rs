@@ -182,6 +182,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::SimulateWantedDelegations {
             period,
         } => to_binary(&queries::simulate_wanted_delegations(deps, env, period)?),
+
+        QueryMsg::ExchangeRates {
+            start_after,
+            limit,
+        } => to_binary(&queries::query_exchange_rates(deps, env, start_after, limit)?),
     }
 }
 

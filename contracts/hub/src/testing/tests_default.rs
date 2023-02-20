@@ -62,7 +62,8 @@ fn proper_instantiation() {
             withdrawls_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Uniform,
-            vote_operator: None
+            vote_operator: None,
+            utoken: MOCK_UTOKEN.to_string()
         }
     );
 

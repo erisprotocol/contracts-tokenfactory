@@ -49,12 +49,12 @@ pub(crate) fn query_delegations(
 pub(crate) fn query_all_delegations(
     querier: &QuerierWrapper,
     delegator_addr: &Addr,
-    ustake: &String,
+    utoken: &String,
 ) -> StdResult<Vec<Delegation>> {
     let result: Vec<_> = querier
         .query_all_delegations(delegator_addr)?
         .into_iter()
-        .filter(|d| d.amount.denom == *ustake && !d.amount.amount.is_zero())
+        .filter(|d| d.amount.denom == *utoken && !d.amount.amount.is_zero())
         .map(|d| Delegation {
             validator: d.validator,
             amount: d.amount.amount.u128(),
@@ -63,6 +63,22 @@ pub(crate) fn query_all_delegations(
         .collect();
 
     Ok(result)
+}
+
+pub(crate) fn query_all_delegations_amount(
+    querier: &QuerierWrapper,
+    delegator_addr: &Addr,
+    utoken: &String,
+) -> StdResult<u128> {
+    // same as query_all_delegations, but will only collect the sum of the delegations
+    let total_utoken: u128 = querier
+        .query_all_delegations(delegator_addr)?
+        .into_iter()
+        .filter(|d| d.amount.denom == *utoken && !d.amount.amount.is_zero())
+        .map(|d| d.amount.amount.u128())
+        .sum();
+
+    Ok(total_utoken)
 }
 
 /// Find the amount of a denom sent along a message, assert it is non-zero, and no other denom were

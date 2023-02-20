@@ -19,7 +19,8 @@ use crate::constants::get_reward_fee_cap;
 use crate::error::{ContractError, ContractResult};
 use crate::helpers::{
     assert_validator_exists, assert_validators_exists, dedupe, get_wanted_delegations,
-    query_all_delegations, query_delegation, query_delegations, validate_received_funds,
+    query_all_delegations, query_all_delegations_amount, query_delegation, query_delegations,
+    validate_received_funds,
 };
 use crate::math::{
     compute_mint_amount, compute_redelegations_for_rebalancing, compute_redelegations_for_removal,
@@ -370,18 +371,24 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
     let mut event = Event::new("erishub/harvested");
     let mut msgs: Vec<CosmosMsg<CustomMsgType>> = vec![];
 
+    let mut total_utoken: Option<u128> = None;
+
     for coin in unlocked_coins.iter() {
         let available = coin.amount;
         let protocol_fee = fee_config.protocol_reward_fee.checked_mul_uint(available)?;
         let remaining = available.saturating_sub(protocol_fee);
 
         let send_fee = if coin.denom == stake.utoken {
+            let to_bond = remaining;
             // if receiving normal utoken -> restake
-            let (new_delegation, _) =
-                find_new_delegation(&state, &deps, &env, remaining, &stake.utoken)?;
+            let (new_delegation, delegations) =
+                find_new_delegation(&state, &deps, &env, to_bond, &stake.utoken)?;
+
+            let utoken_staked: u128 = delegations.iter().map(|d| d.amount).sum();
+            total_utoken = Some(utoken_staked + to_bond.u128());
 
             event = event
-                .add_attribute("utoken_bonded", remaining)
+                .add_attribute("utoken_bonded", to_bond)
                 .add_attribute("utoken_protocol_fee", protocol_fee);
 
             msgs.push(new_delegation.to_cosmos_msg());
@@ -411,13 +418,37 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
         }
     }
 
+    // remove the converted coins. Unlocked_coins track utoken ([TOKEN]) and ustake (amp[TOKEN]).
     unlocked_coins.retain(|coin| coin.denom != stake.utoken && coin.denom != stake.denom);
     state.unlocked_coins.save(deps.storage, &unlocked_coins)?;
+
+    // update exchange_rate history
+    let exchange_rate = calc_current_exchange_rate(total_utoken, &deps, &env, stake)?;
+    state.exchange_history.save(deps.storage, env.block.time.seconds(), &exchange_rate)?;
 
     Ok(Response::new()
         .add_messages(msgs)
         .add_event(event)
-        .add_attribute("action", "erishub/reinvest"))
+        .add_attribute("action", "erishub/reinvest")
+        .add_attribute("exchange_rate", exchange_rate.to_string()))
+}
+
+fn calc_current_exchange_rate(
+    total_utoken: Option<u128>,
+    deps: &DepsMut,
+    env: &Env,
+    stake: StakeToken,
+) -> Result<Decimal, ContractError> {
+    let total_utoken = match total_utoken {
+        Some(val) => val,
+        None => query_all_delegations_amount(&deps.querier, &env.contract.address, &stake.utoken)?,
+    };
+    let exchange_rate = if stake.total_supply.is_zero() {
+        Decimal::one()
+    } else {
+        Decimal::from_ratio(total_utoken, stake.total_supply)
+    };
+    Ok(exchange_rate)
 }
 
 pub fn callback_received_coins(
@@ -486,7 +517,7 @@ fn find_new_delegation(
     deps: &DepsMut,
     env: &Env,
     uluna_to_bond: Uint128,
-    ustake: &String,
+    utoken: &String,
 ) -> Result<(Delegation, Vec<Delegation>), StdError> {
     let delegation_strategy =
         state.delegation_strategy.may_load(deps.storage)?.unwrap_or(DelegationStrategy::Uniform {});
@@ -505,14 +536,14 @@ fn find_new_delegation(
         } => {
             // if we have gauges, only delegate to validators that have delegations, all others are "inactive"
             let mut delegations =
-                query_all_delegations(&deps.querier, &env.contract.address, ustake)?;
+                query_all_delegations(&deps.querier, &env.contract.address, utoken)?;
             if delegations.is_empty() {
                 let validators = state.validators.load(deps.storage)?;
 
                 delegations = vec![Delegation {
                     amount: 0,
                     validator: validators.first().unwrap().to_string(),
-                    denom: ustake.clone(),
+                    denom: utoken.clone(),
                 }]
             }
             delegations
@@ -531,7 +562,7 @@ fn find_new_delegation(
             amount = d.amount;
         }
     }
-    let new_delegation = Delegation::new(validator, uluna_to_bond.u128(), ustake);
+    let new_delegation = Delegation::new(validator, uluna_to_bond.u128(), utoken);
 
     Ok((new_delegation, delegations))
 }

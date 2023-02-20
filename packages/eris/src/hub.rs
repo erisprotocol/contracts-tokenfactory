@@ -307,6 +307,13 @@ pub enum QueryMsg {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
+
+    #[returns(ExchangeRatesResponse)]
+    ExchangeRates {
+        // start after the provided timestamp in s
+        start_after: Option<u64>,
+        limit: Option<u32>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -315,6 +322,8 @@ pub struct ConfigResponse {
     pub owner: String,
     /// Pending ownership transfer, awaiting acceptance by the new owner
     pub new_owner: Option<String>,
+    /// Underlying staked token
+    pub utoken: String,
     /// Address of the Stake token
     pub stake_token: String,
 
@@ -343,7 +352,7 @@ pub struct ConfigResponse {
     pub vote_operator: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct StateResponse {
     /// Total supply to the Stake token
     pub total_ustake: Uint128,
@@ -361,20 +370,20 @@ pub struct StateResponse {
     pub tvl_utoken: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct WantedDelegationsResponse {
     pub tune_time_period: Option<(u64, u64)>,
     pub delegations: Vec<(String, Uint128)>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct WantedDelegationsShare {
     pub tune_time: u64,
     pub tune_period: u64,
     pub shares: Vec<(String, Decimal)>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct PendingBatch {
     /// ID of this batch
     pub id: u64,
@@ -394,7 +403,7 @@ pub struct StakeToken {
     pub total_supply: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct FeeConfig {
     /// Contract address where fees are sent
     pub protocol_fee_contract: Addr,
@@ -402,7 +411,7 @@ pub struct FeeConfig {
     pub protocol_reward_fee: Decimal, // "1 is 100%, 0.05 is 5%"
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct Batch {
     /// ID of this batch
     pub id: u64,
@@ -416,7 +425,7 @@ pub struct Batch {
     pub est_unbond_end_time: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UnbondRequest {
     /// ID of the batch
     pub id: u64,
@@ -426,7 +435,7 @@ pub struct UnbondRequest {
     pub shares: Uint128,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UnbondRequestsByBatchResponseItem {
     /// The user's address
     pub user: String,
@@ -443,7 +452,7 @@ impl From<UnbondRequest> for UnbondRequestsByBatchResponseItem {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UnbondRequestsByUserResponseItem {
     /// ID of the batch
     pub id: u64,
@@ -460,7 +469,7 @@ impl From<UnbondRequest> for UnbondRequestsByUserResponseItem {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct UnbondRequestsByUserResponseItemDetails {
     /// ID of the batch
     pub id: u64,
@@ -475,6 +484,13 @@ pub struct UnbondRequestsByUserResponseItemDetails {
 
     // Is set if the unbonding request is still pending
     pub pending: Option<PendingBatch>,
+}
+
+#[cw_serde]
+pub struct ExchangeRatesResponse {
+    pub exchange_rates: Vec<(u64, Decimal)>,
+    // APR normalized per DAY
+    pub apr: Option<Decimal>,
 }
 
 pub type MigrateMsg = Empty;

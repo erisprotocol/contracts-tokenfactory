@@ -12,7 +12,7 @@ use eris::{
 };
 
 use crate::{
-    helpers::query_all_delegations,
+    helpers::query_all_delegations_amount,
     state::State,
     types::{Delegation, Redelegation, Undelegation},
 };
@@ -292,8 +292,7 @@ pub(crate) fn get_utoken_per_validator_prepared(
     goal: Option<WantedDelegationsShare>,
     utoken: String,
 ) -> StdResult<UtokenPerValidator> {
-    let current_delegations = query_all_delegations(querier, contract, &utoken)?;
-    let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
+    let utoken_staked: u128 = query_all_delegations_amount(querier, contract, &utoken)?;
     let validators = state.validators.load(storage)?;
     get_utoken_per_validator(state, storage, utoken_staked, &validators, goal)
 }
