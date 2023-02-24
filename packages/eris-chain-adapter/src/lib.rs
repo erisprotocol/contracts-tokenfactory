@@ -16,6 +16,8 @@ pub mod types {
     pub use eris_kujira::kujira_types::StageType;
     pub use eris_kujira::kujira_types::WithdrawType;
 
+    pub const CHAIN_TYPE: &str = "kujira";
+
     #[inline(always)]
     pub fn chain(
         _env: &Env,
@@ -65,6 +67,8 @@ pub mod types {
     pub use eris_whitewhale::whitewhale_types::HubChainConfigInput;
     pub use eris_whitewhale::whitewhale_types::StageType;
     pub use eris_whitewhale::whitewhale_types::WithdrawType;
+
+    pub const CHAIN_TYPE: &str = "migaloo";
 
     #[inline(always)]
     pub fn chain(
