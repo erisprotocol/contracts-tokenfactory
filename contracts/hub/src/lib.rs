@@ -8,6 +8,7 @@ pub mod queries;
 pub mod state;
 pub mod types;
 
+pub mod claim;
 mod constants;
 pub mod error;
 pub mod gov;

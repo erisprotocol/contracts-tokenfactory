@@ -75,4 +75,7 @@ pub enum ContractError {
 
     #[error("Contract can't be migrated!")]
     MigrationError {},
+
+    #[error("No claims provided.")]
+    NoClaimsProvided {},
 }

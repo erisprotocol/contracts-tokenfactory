@@ -228,6 +228,11 @@ pub enum ExecuteMsg {
     QueueUnbond {
         receiver: Option<String>,
     },
+
+    // Claim possible airdrops
+    Claim {
+        claims: Vec<ClaimType>,
+    },
 }
 
 #[cw_serde]
@@ -496,6 +501,11 @@ pub struct ExchangeRatesResponse {
     pub exchange_rates: Vec<(u64, Decimal)>,
     // APR normalized per DAY
     pub apr: Option<Decimal>,
+}
+
+#[cw_serde]
+pub enum ClaimType {
+    Default(String),
 }
 
 pub type MigrateMsg = Empty;

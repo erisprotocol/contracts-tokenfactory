@@ -5,6 +5,7 @@ use cw2::set_contract_version;
 
 use eris::hub::{CallbackMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
+use crate::claim::exec_claim;
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
 use crate::error::{ContractError, ContractResult};
 use crate::state::State;
@@ -119,6 +120,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
                 info.funds[0].amount,
             )
         },
+        ExecuteMsg::Claim {
+            claims,
+        } => exec_claim(deps, env, info, claims),
     }
 }
 
