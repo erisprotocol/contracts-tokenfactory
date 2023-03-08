@@ -98,7 +98,7 @@ pub(crate) fn compute_undelegations(
                 new_undelegations.push(Undelegation::new(
                     &d.validator,
                     utoken_to_undelegate,
-                    utoken.to_string(),
+                    utoken,
                 ));
             }
 
