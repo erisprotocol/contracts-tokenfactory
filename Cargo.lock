@@ -424,6 +424,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "eris-chain-shared",
+ "eris-injective",
  "eris-kujira",
  "eris-whitewhale",
  "schemars",
@@ -439,6 +440,22 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "eris-injective"
+version = "1.2.2"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-asset",
+ "cw20 0.13.4",
+ "eris-chain-shared",
+ "osmosis-std-derive",
+ "prost",
+ "prost-types",
+ "schemars",
+ "serde",
 ]
 
 [[package]]

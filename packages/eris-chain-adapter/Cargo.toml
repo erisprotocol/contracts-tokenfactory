@@ -16,9 +16,11 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 eris-chain-shared = { path = "../eris-chain-shared" }
 eris-kujira = { path = "../eris-kujira" }
 eris-whitewhale = { path = "../eris-whitewhale" }
+eris-injective = { path = "../eris-injective" }
 
 [features]
 X-whitewhale-X = []
 X-kujira-X = []
+X-injective-X = []
 
 default = ["X-kujira-X"]
