@@ -209,8 +209,8 @@ pub enum ExecuteMsg {
         operator: Option<String>,
         /// Sets the stages preset
         stages_preset: Option<Vec<Vec<SingleSwapConfig>>>,
-        /// Sets the withdrawls preset
-        withdrawls_preset: Option<Vec<(WithdrawType, DenomType)>>,
+        /// Sets the withdrawals preset
+        withdrawals_preset: Option<Vec<(WithdrawType, DenomType)>>,
         /// Specifies wether donations are allowed.
         allow_donations: Option<bool>,
         /// Strategy how delegations should be handled
@@ -351,8 +351,8 @@ pub struct ConfigResponse {
     pub operator: String,
     /// Stages that must be used by permissionless users
     pub stages_preset: Vec<Vec<SingleSwapConfig>>,
-    /// Withdrawls that must be used by permissionless users
-    pub withdrawls_preset: Vec<(WithdrawType, DenomType)>,
+    /// withdrawals that must be used by permissionless users
+    pub withdrawals_preset: Vec<(WithdrawType, DenomType)>,
     /// Specifies wether donations are allowed.
     pub allow_donations: bool,
 

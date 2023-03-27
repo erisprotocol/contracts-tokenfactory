@@ -122,7 +122,7 @@ fn proper_instantiation() {
             },
             operator: "operator".to_string(),
             stages_preset: vec![],
-            withdrawls_preset: vec![],
+            withdrawals_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 6000), ("bob".into(), 4000)],
@@ -160,7 +160,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("abc".into(), 1000)],
@@ -182,7 +182,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000), ("alice".into(), 1000)],
@@ -204,7 +204,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000)],
@@ -226,7 +226,7 @@ fn validate_update() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: None,
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000), ("charlie".into(), 9000)],

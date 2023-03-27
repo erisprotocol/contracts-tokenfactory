@@ -18,7 +18,7 @@ pub struct State<'a> {
     /// Stages that must be used by permissionless users
     pub stages_preset: Item<'a, Vec<Vec<SingleSwapConfig>>>,
     /// Withdraws that must be used by permissionless users
-    pub withdrawls_preset: Item<'a, Vec<(WithdrawType, DenomType)>>,
+    pub withdrawals_preset: Item<'a, Vec<(WithdrawType, DenomType)>>,
 
     /// Pending ownership transfer, awaiting acceptance by the new owner
     pub new_owner: Item<'a, Addr>,
@@ -82,7 +82,7 @@ impl Default for State<'static> {
             new_owner: Item::new("new_owner"),
             operator: Item::new("operator"),
             stages_preset: Item::new("stages_preset"),
-            withdrawls_preset: Item::new("withdrawls_preset"),
+            withdrawals_preset: Item::new("withdrawals_preset"),
             stake_token: Item::new("stake_token"),
             epoch_period: Item::new("epoch_period"),
             unbond_period: Item::new("unbond_period"),

@@ -4,7 +4,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use cosmwasm_std::{Addr, QuerierWrapper, StdResult, Storage, Uint128};
+use cosmwasm_std::{attr, Addr, Attribute, QuerierWrapper, StdResult, Storage, Uint128};
 
 use eris::{
     hub::{Batch, WantedDelegationsShare},
@@ -360,7 +360,10 @@ pub(crate) fn get_utoken_per_validator(
 ///
 /// The idea of "reconciling" is based on Stader's implementation:
 /// https://github.com/stader-labs/stader-liquid-token/blob/v0.2.1/contracts/staking/src/contract.rs#L968-L1048
-pub(crate) fn reconcile_batches(batches: &mut [Batch], utoken_to_deduct: Uint128) {
+pub(crate) fn reconcile_batches(
+    batches: &mut [Batch],
+    utoken_to_deduct: Uint128,
+) -> Option<Attribute> {
     let batch_count = batches.len() as u128;
     let utoken_per_batch = utoken_to_deduct.u128() / batch_count;
     let remainder = utoken_to_deduct.u128() % batch_count;
@@ -417,9 +420,12 @@ pub(crate) fn reconcile_batches(batches: &mut [Batch], utoken_to_deduct: Uint128
 
             if !remaining_underflow.is_zero() {
                 // no way to reconcile right now, need to top up some funds.
+                return Some(attr("remaining_underflow", remaining_underflow));
             }
         }
     }
+
+    None
 }
 
 /// If all funds are available we still need to mark batches as reconciled

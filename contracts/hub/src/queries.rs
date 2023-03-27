@@ -36,7 +36,7 @@ pub fn config(deps: Deps) -> StdResult<ConfigResponse> {
         validators: state.validators.load(deps.storage)?,
         fee_config: state.fee_config.load(deps.storage)?,
         stages_preset: state.stages_preset.may_load(deps.storage)?.unwrap_or_default(),
-        withdrawls_preset: state.withdrawls_preset.may_load(deps.storage)?.unwrap_or_default(),
+        withdrawals_preset: state.withdrawals_preset.may_load(deps.storage)?.unwrap_or_default(),
         allow_donations: state.allow_donations.may_load(deps.storage)?.unwrap_or(false),
         delegation_strategy: match state
             .delegation_strategy

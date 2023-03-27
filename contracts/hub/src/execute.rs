@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     attr, to_binary, Addr, Attribute, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, DistributionMsg,
-    Env, Event, Order, Response, StdError, StdResult, Uint128, WasmMsg,
+    Env, Event, Order, Response, StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
@@ -200,7 +200,7 @@ pub fn harvest(
 
     // 2. Prepare LP withdrawals / deconstruction
     let withdrawals =
-        state.get_or_preset(deps.storage, withdrawals, &state.withdrawls_preset, &sender)?;
+        state.get_or_preset(deps.storage, withdrawals, &state.withdrawals_preset, &sender)?;
     let withdrawal_msg = withdrawals.map(|withdrawals| CallbackMsg::WithdrawLps {
         withdrawals,
     });
@@ -525,9 +525,9 @@ fn find_new_delegation(
     state: &State,
     deps: &DepsMut,
     env: &Env,
-    uluna_to_bond: Uint128,
+    utoken_to_bond: Uint128,
     utoken: &String,
-) -> Result<(Delegation, Vec<Delegation>), StdError> {
+) -> Result<(Delegation, Vec<Delegation>), ContractError> {
     let delegation_strategy =
         state.delegation_strategy.may_load(deps.storage)?.unwrap_or(DelegationStrategy::Uniform {});
 
@@ -549,11 +549,15 @@ fn find_new_delegation(
             if delegations.is_empty() {
                 let validators = state.validators.load(deps.storage)?;
 
-                delegations = vec![Delegation {
-                    amount: 0,
-                    validator: validators.first().unwrap().to_string(),
-                    denom: utoken.clone(),
-                }]
+                if let Some(first_validator) = validators.first() {
+                    delegations = vec![Delegation {
+                        amount: 0,
+                        validator: first_validator.to_string(),
+                        denom: utoken.clone(),
+                    }]
+                } else {
+                    return Err(ContractError::NoValidatorsConfigured);
+                }
             }
             delegations
         },
@@ -571,7 +575,7 @@ fn find_new_delegation(
             amount = d.amount;
         }
     }
-    let new_delegation = Delegation::new(validator, uluna_to_bond.u128(), utoken);
+    let new_delegation = Delegation::new(validator, utoken_to_bond.u128(), utoken);
 
     Ok((new_delegation, delegations))
 }
@@ -608,7 +612,7 @@ pub fn queue_unbond(
 
     let mut msgs: Vec<CosmosMsg<CustomMsgType>> = vec![];
     let mut start_time = pending_batch.est_unbond_start_time.to_string();
-    if env.block.time.seconds() >= pending_batch.est_unbond_start_time {
+    if env.block.time.seconds() > pending_batch.est_unbond_start_time {
         start_time = "immediate".to_string();
         msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.into(),
@@ -747,7 +751,7 @@ pub fn reconcile(deps: DepsMut, env: Env) -> ContractResult {
 
     let utoken_to_deduct = utoken_expected - utoken_actual;
 
-    reconcile_batches(&mut batches, utoken_to_deduct);
+    let reconcile_info = reconcile_batches(&mut batches, utoken_to_deduct);
 
     for batch in &batches {
         state.previous_batches.save(deps.storage, batch.id, batch)?;
@@ -757,7 +761,8 @@ pub fn reconcile(deps: DepsMut, env: Env) -> ContractResult {
 
     let event = Event::new("erishub/reconciled")
         .add_attribute("ids", ids)
-        .add_attribute("utoken_deducted", utoken_to_deduct.to_string());
+        .add_attribute("utoken_deducted", utoken_to_deduct.to_string())
+        .add_optional_attribute(reconcile_info);
 
     Ok(Response::new().add_event(event).add_attribute("action", "erishub/reconcile"))
 }
@@ -944,6 +949,11 @@ pub fn remove_validator(
             return Err(ContractError::ValidatorNotWhitelisted(validator.clone()));
         }
         validators.retain(|v| *v != validator);
+
+        if validators.is_empty() {
+            return Err(ContractError::NoValidatorsConfigured);
+        }
+
         Ok(validators)
     })?;
 
@@ -1041,7 +1051,7 @@ pub fn update_config(
     protocol_reward_fee: Option<Decimal>,
     operator: Option<String>,
     stages_preset: Option<Vec<Vec<SingleSwapConfig>>>,
-    withdrawls_preset: Option<Vec<(WithdrawType, DenomType)>>,
+    withdrawals_preset: Option<Vec<(WithdrawType, DenomType)>>,
     allow_donations: Option<bool>,
     delegation_strategy: Option<DelegationStrategy>,
     vote_operator: Option<String>,
@@ -1087,8 +1097,8 @@ pub fn update_config(
         state.stages_preset.save(deps.storage, &stages_preset)?;
     }
 
-    if let Some(withdrawls_preset) = withdrawls_preset {
-        state.withdrawls_preset.save(deps.storage, &withdrawls_preset)?;
+    if let Some(withdrawals_preset) = withdrawals_preset {
+        state.withdrawals_preset.save(deps.storage, &withdrawals_preset)?;
     }
 
     if let Some(delegation_strategy) = delegation_strategy {

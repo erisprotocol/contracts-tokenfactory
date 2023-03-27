@@ -22,6 +22,7 @@ mod extensions {
     pub trait CustomEvent {
         fn add_optional_attribute(self, attribute: Option<Attribute>) -> Event;
     }
+
     impl CustomEvent for Event {
         fn add_optional_attribute(mut self, attribute: Option<Attribute>) -> Event {
             match attribute {

@@ -2107,7 +2107,7 @@
 //         Delegation::new("dave", 10000),
 //     ];
 //     // Suppose Dave will be removed
-//     // uluna_per_validator = (13000 + 12000 + 11000 + 10000) / 3 = 15333
+//     // utoken_per_validator = (13000 + 12000 + 11000 + 10000) / 3 = 15333
 //     // remainder = 1
 //     // to Alice:   15333 + 1 - 13000 = 2334
 //     // to Bob:     15333 + 0 - 12000 = 3333
@@ -2141,7 +2141,7 @@
 //         Delegation::new("dave", 40471),
 //         Delegation::new("evan", 2345),
 //     ];
-//     // uluna_per_validator = (69420 + 88888 + 1234 + 40471 + 2345) / 4 = 40471
+//     // utoken_per_validator = (69420 + 88888 + 1234 + 40471 + 2345) / 4 = 40471
 //     // remainer = 3
 //     // src_delegations:
 //     //  - alice:   69420 - (40471 + 3) = 28946

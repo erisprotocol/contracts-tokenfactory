@@ -78,4 +78,7 @@ pub enum ContractError {
 
     #[error("No claims provided.")]
     NoClaimsProvided {},
+
+    #[error("No validators configured. There needs to be at least one validator available.")]
+    NoValidatorsConfigured,
 }

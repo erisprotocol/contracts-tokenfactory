@@ -59,7 +59,7 @@ fn proper_instantiation() {
 
             operator: "operator".to_string(),
             stages_preset: vec![],
-            withdrawls_preset: vec![],
+            withdrawals_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Uniform,
             vote_operator: None,
@@ -286,7 +286,7 @@ fn donating() {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: Some(true),
             delegation_strategy: None,
             vote_operator: None,
@@ -1522,7 +1522,7 @@ fn update_fee() {
             protocol_reward_fee: Some(Decimal::from_ratio(11u128, 100u128)),
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: None,
             delegation_strategy: None,
             vote_operator: None,
@@ -1542,7 +1542,7 @@ fn update_fee() {
             protocol_reward_fee: Some(Decimal::from_ratio(11u128, 100u128)),
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: None,
             delegation_strategy: None,
             vote_operator: None,
@@ -1562,7 +1562,7 @@ fn update_fee() {
             protocol_reward_fee: Some(Decimal::from_ratio(10u128, 100u128)),
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             allow_donations: None,
             delegation_strategy: None,
             vote_operator: None,
@@ -1615,7 +1615,7 @@ fn vote() {
             vote_operator: Some("vote_operator".to_string()),
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             chain_config: None,
             default_max_spread: None,
         },
@@ -1685,7 +1685,7 @@ fn vote_weighted() {
             vote_operator: Some("vote_operator".to_string()),
             operator: None,
             stages_preset: None,
-            withdrawls_preset: None,
+            withdrawals_preset: None,
             chain_config: None,
             default_max_spread: None,
         },
@@ -2109,7 +2109,7 @@ fn computing_redelegations_for_removal() -> StdResult<()> {
         Delegation::new("dave", 10000, MOCK_UTOKEN),
     ];
     // Suppose Dave will be removed
-    // uluna_per_validator = (13000 + 12000 + 11000 + 10000) / 3 = 15333
+    // utoken_per_validator = (13000 + 12000 + 11000 + 10000) / 3 = 15333
     // remainder = 1
     // to Alice:   15333 + 1 - 13000 = 2334
     // to Bob:     15333 + 0 - 12000 = 3333
@@ -2144,7 +2144,7 @@ fn computing_redelegations_for_rebalancing() -> StdResult<()> {
         Delegation::new("dave", 40471, MOCK_UTOKEN),
         Delegation::new("evan", 2345, MOCK_UTOKEN),
     ];
-    // uluna_per_validator = (69420 + 88888 + 1234 + 40471 + 2345) / 4 = 40471
+    // utoken_per_validator = (69420 + 88888 + 1234 + 40471 + 2345) / 4 = 40471
     // remainer = 3
     // src_delegations:
     //  - alice:   69420 - (40471 + 3) = 28946

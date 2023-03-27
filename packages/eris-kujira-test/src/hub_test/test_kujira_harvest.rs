@@ -69,7 +69,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
                 vec![(StageType::fin("fin1"), "f1".into(), None)],
                 vec![(StageType::fin("fin2"), "f2".into(), None)],
             ]),
-            withdrawls_preset: Some(vec![
+            withdrawals_preset: Some(vec![
                 (WithdrawType::bw("bw1"), "LP1".into()),
                 (WithdrawType::bow("bow1"), "LP2".into()),
             ]),
