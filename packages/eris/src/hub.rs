@@ -11,63 +11,58 @@ use eris_chain_adapter::types::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::helpers::bps::BasicPoints;
+use crate::{helper::addr_opt_validate, helpers::bps::BasicPoints};
 
 pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>);
 
 #[cw_serde]
-pub enum DelegationStrategy
-//<T = String>
-{
+pub enum DelegationStrategy<T = String> {
     /// all validators receive the same delegation.
     Uniform,
     Defined {
         shares_bps: Vec<(String, u16)>,
     },
-    // /// validators receive delegations based on community voting + merit points
-    // Gauges {
-    //     /// gauges based on vAmp voting
-    //     amp_gauges: T,
-    //     /// gauges based on eris merit points
-    //     emp_gauges: Option<T>,
-    //     /// weight between amp and emp gauges between 0 and 1
-    //     amp_factor_bps: u16,
-    //     /// min amount of delegation needed
-    //     min_delegation_bps: u16,
-    //     /// max amount of delegation needed
-    //     max_delegation_bps: u16,
-    //     /// count of validators that should receive delegations
-    //     validator_count: u8,
-    // },
+    /// validators receive delegations based on community voting + merit points
+    Gauges {
+        /// gauges based on vAmp voting
+        amp_gauges: T,
+        /// gauges based on eris merit points
+        emp_gauges: Option<T>,
+        /// weight between amp and emp gauges between 0 and 1
+        amp_factor_bps: u16,
+        /// min amount of delegation needed
+        min_delegation_bps: u16,
+        /// max amount of delegation needed
+        max_delegation_bps: u16,
+        /// count of validators that should receive delegations
+        validator_count: u8,
+    },
 }
 
-impl DelegationStrategy //<String>
-{
+impl DelegationStrategy<String> {
     pub fn validate(
         self,
-        _api: &dyn Api,
+        api: &dyn Api,
         validators: &[String],
-    ) -> StdResult<
-        DelegationStrategy, //<Addr>
-    > {
+    ) -> StdResult<DelegationStrategy<Addr>> {
         let result = match self {
             DelegationStrategy::Uniform {} => DelegationStrategy::Uniform {},
 
-            // DelegationStrategy::Gauges {
-            //     amp_gauges,
-            //     emp_gauges,
-            //     amp_factor_bps: amp_factor,
-            //     min_delegation_bps,
-            //     validator_count,
-            //     max_delegation_bps,
-            // } => DelegationStrategy::Gauges {
-            //     amp_gauges: api.addr_validate(&amp_gauges)?,
-            //     emp_gauges: addr_opt_validate(api, &emp_gauges)?,
-            //     amp_factor_bps: amp_factor,
-            //     min_delegation_bps,
-            //     validator_count,
-            //     max_delegation_bps,
-            // },
+            DelegationStrategy::Gauges {
+                amp_gauges,
+                emp_gauges,
+                amp_factor_bps: amp_factor,
+                min_delegation_bps,
+                validator_count,
+                max_delegation_bps,
+            } => DelegationStrategy::Gauges {
+                amp_gauges: api.addr_validate(&amp_gauges)?,
+                emp_gauges: addr_opt_validate(api, &emp_gauges)?,
+                amp_factor_bps: amp_factor,
+                min_delegation_bps,
+                validator_count,
+                max_delegation_bps,
+            },
             DelegationStrategy::Defined {
                 shares_bps,
             } => {

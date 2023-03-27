@@ -26,6 +26,7 @@ use crate::math::{
     compute_unbond_amount, compute_undelegations, mark_reconciled_batches, reconcile_batches,
 };
 use crate::state::State;
+use crate::types::gauges::TuneInfoGaugeLoader;
 // use crate::types::gauges::TuneInfoGaugeLoader;
 use crate::types::{Coins, Delegation, SendFee};
 
@@ -536,11 +537,10 @@ fn find_new_delegation(
             let validators = state.validators.load(deps.storage)?;
             query_delegations(&deps.querier, &validators, &env.contract.address)?
         },
-        // DelegationStrategy::Gauges {
-        //     ..
-        // }
-        // |
-        DelegationStrategy::Defined {
+        DelegationStrategy::Gauges {
+            ..
+        }
+        | DelegationStrategy::Defined {
             ..
         } => {
             // if we have gauges, only delegate to validators that have delegations, all others are "inactive"
@@ -842,12 +842,8 @@ pub fn withdraw_unbonded(deps: DepsMut, env: Env, user: Addr, receiver: Addr) ->
 pub fn tune_delegations(deps: DepsMut, env: Env, sender: Addr) -> ContractResult {
     let state = State::default();
     state.assert_owner(deps.storage, &sender)?;
-    let (wanted_delegations, save) = get_wanted_delegations(
-        &state,
-        &env,
-        deps.storage,
-        &deps.querier, //, TuneInfoGaugeLoader {}
-    )?;
+    let (wanted_delegations, save) =
+        get_wanted_delegations(&state, &env, deps.storage, &deps.querier, TuneInfoGaugeLoader {})?;
     let attributes = if save {
         state.delegation_goal.save(deps.storage, &wanted_delegations)?;
         wanted_delegations
@@ -977,11 +973,10 @@ pub fn remove_validator(
 
             new_redelegations.iter().map(|d| d.to_cosmos_msg()).collect::<Vec<_>>()
         },
-        // DelegationStrategy::Gauges {
-        //     ..
-        // }
-        // |
-        DelegationStrategy::Defined {
+        DelegationStrategy::Gauges {
+            ..
+        }
+        | DelegationStrategy::Defined {
             ..
         } => {
             // removed validators can have a delegation until the next tune, to keep undelegations in sync.

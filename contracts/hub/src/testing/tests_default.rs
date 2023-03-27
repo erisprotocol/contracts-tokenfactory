@@ -2179,7 +2179,7 @@ fn computing_redelegations_for_rebalancing() -> StdResult<()> {
             deps.as_ref().storage,
             &current_delegations,
             current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
-            &MOCK_UTOKEN.to_string(),
+            MOCK_UTOKEN,
         )?,
         expected,
     );
@@ -2214,7 +2214,7 @@ fn computing_redelegations_for_rebalancing_complex() -> StdResult<()> {
             deps.as_ref().storage,
             &current_delegations,
             current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
-            &MOCK_UTOKEN.to_string(),
+            MOCK_UTOKEN,
         )?,
         vec![],
     );
@@ -2231,7 +2231,7 @@ fn computing_redelegations_for_rebalancing_complex() -> StdResult<()> {
             deps.as_ref().storage,
             &current_delegations,
             current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
-            &MOCK_UTOKEN.to_string(),
+            MOCK_UTOKEN,
         )?,
         vec![Redelegation::new("unlisted", "alice", 25000, MOCK_UTOKEN)],
     );
@@ -2248,7 +2248,7 @@ fn computing_redelegations_for_rebalancing_complex() -> StdResult<()> {
             deps.as_ref().storage,
             &current_delegations,
             current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
-            &MOCK_UTOKEN.to_string(),
+            MOCK_UTOKEN,
         )?,
         vec![
             Redelegation::new("unlisted", "alice", 25000, MOCK_UTOKEN),
@@ -2267,7 +2267,7 @@ fn computing_redelegations_for_rebalancing_complex() -> StdResult<()> {
             deps.as_ref().storage,
             &current_delegations,
             current_delegations.iter().map(|a| a.validator.to_string()).collect_vec(),
-            &MOCK_UTOKEN.to_string(),
+            MOCK_UTOKEN,
         )?,
         vec![
             Redelegation::new("charlie", "alice", 27500, MOCK_UTOKEN),

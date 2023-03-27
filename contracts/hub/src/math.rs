@@ -216,7 +216,7 @@ pub(crate) fn compute_redelegations_for_rebalancing(
     storage: &dyn Storage,
     current_delegations: &[Delegation],
     validators: Vec<String>,
-    utoken: &String,
+    utoken: &str,
 ) -> StdResult<Vec<Redelegation>> {
     let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
 
@@ -239,14 +239,14 @@ pub(crate) fn compute_redelegations_for_rebalancing(
                 src_delegations.push(Delegation::new(
                     &d.validator,
                     d.amount - utoken_for_validator,
-                    utoken.clone(),
+                    utoken.to_string(),
                 ));
             },
             Ordering::Less => {
                 dst_delegations.push(Delegation::new(
                     &d.validator,
                     utoken_for_validator - d.amount,
-                    utoken.clone(),
+                    utoken.to_string(),
                 ));
             },
             Ordering::Equal => (),

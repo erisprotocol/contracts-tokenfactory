@@ -41,10 +41,7 @@ pub struct State<'a> {
     /// Fee Config
     pub fee_config: Item<'a, FeeConfig>,
     /// Delegation Strategy
-    pub delegation_strategy: Item<
-        'a,
-        DelegationStrategy, //<Addr>
-    >,
+    pub delegation_strategy: Item<'a, DelegationStrategy<Addr>>,
     /// Delegation Distribution
     pub delegation_goal: Item<'a, WantedDelegationsShare>,
     /// Operator who is allowed to vote on props
