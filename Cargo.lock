@@ -480,14 +480,14 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory",
+ "eris-staking-hub-tokenfactory-kujira",
  "kujira",
  "schemars",
  "serde",
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory"
+name = "eris-staking-hub-tokenfactory-kujira"
 version = "1.6.0"
 dependencies = [
  "cosmwasm-schema",

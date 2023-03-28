@@ -24,7 +24,7 @@ cosmwasm-schema = "1.1.3"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 kujira = "0.7.13"
-eris-staking-hub-tokenfactory = { path = "../../contracts/hub" }
+eris-staking-hub-tokenfactory = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-kujira" }
 eris = { path = "../eris"}
 eris-kujira = { path = "../eris-kujira"}
 eris-chain-shared = { path = "../eris-chain-shared"}

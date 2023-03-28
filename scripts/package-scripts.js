@@ -12,7 +12,7 @@ module.exports = {
 
       create: "bash build_schema.sh",
 
-      hub: "cd .. && json2ts -i contracts/hub/**/*.json -o ../liquid-staking-scripts/types/kujira/hub",
+      hub: "cd .. && json2ts -i contracts/hub/**/*.json -o ../liquid-staking-scripts/types/tokenfactory/hub",
 
       // ampz: "cd .. && json2ts -i contracts/ampz/schema/*.json -o ../liquid-staking-scripts/types/ampz",
 
