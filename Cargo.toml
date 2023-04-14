@@ -1,5 +1,6 @@
 [workspace]
-members = ["contracts/*", "packages/*"]
+members = ["contracts/hub", "contracts/amp-governance/*", "packages/*"]
+
 
 [profile.release.package.eris]
 opt-level = 3
@@ -22,4 +23,3 @@ overflow-checks = true
 # codegen-units = 1
 # panic = 'abort'
 # incremental = false
-

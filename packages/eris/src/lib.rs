@@ -6,6 +6,7 @@ pub mod governance_helper;
 pub mod helper;
 pub mod helpers;
 pub mod hub;
+pub mod prop_gauges;
 pub mod querier;
 pub mod voting_escrow;
 

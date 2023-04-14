@@ -3,6 +3,7 @@ use cosmwasm_std::{
     Env, Event, Order, Response, StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
+use eris::helper::validate_received_funds;
 use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
 
 use eris::hub::{
@@ -19,7 +20,6 @@ use crate::error::{ContractError, ContractResult};
 use crate::helpers::{
     assert_validator_exists, assert_validators_exists, dedupe, get_wanted_delegations,
     query_all_delegations, query_all_delegations_amount, query_delegation, query_delegations,
-    validate_received_funds,
 };
 use crate::math::{
     compute_mint_amount, compute_redelegations_for_rebalancing, compute_redelegations_for_removal,

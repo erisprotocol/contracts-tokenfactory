@@ -4,8 +4,8 @@ use std::{
 };
 
 use cosmwasm_std::{
-    Addr, Coin, Decimal, Env, QuerierWrapper, QueryRequest, StakingQuery, StdError, StdResult,
-    Storage, Uint128, ValidatorResponse,
+    Addr, Decimal, Env, QuerierWrapper, QueryRequest, StakingQuery, StdError, StdResult, Storage,
+    Uint128, ValidatorResponse,
 };
 use eris::{
     governance_helper::get_period,
@@ -85,31 +85,6 @@ pub(crate) fn query_all_delegations_amount(
         .sum();
 
     Ok(total_utoken)
-}
-
-/// Find the amount of a denom sent along a message, assert it is non-zero, and no other denom were
-/// sent together
-pub(crate) fn validate_received_funds(funds: &[Coin], denom: &str) -> StdResult<Uint128> {
-    if funds.len() != 1 {
-        return Err(StdError::generic_err(format!(
-            "must deposit exactly one coin; received {}",
-            funds.len()
-        )));
-    }
-
-    let fund = &funds[0];
-    if fund.denom != denom {
-        return Err(StdError::generic_err(format!(
-            "expected {} deposit, received {}",
-            denom, fund.denom
-        )));
-    }
-
-    if fund.amount.is_zero() {
-        return Err(StdError::generic_err("deposit amount must be non-zero"));
-    }
-
-    Ok(fund.amount)
 }
 
 pub fn assert_validator_exists(querier: &QuerierWrapper, validator: &String) -> StdResult<()> {

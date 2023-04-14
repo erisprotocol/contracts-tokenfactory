@@ -8,6 +8,7 @@ use cosmwasm_std::{
 };
 use eris::DecimalCheckedOps;
 
+use eris::helper::validate_received_funds;
 use eris::hub::{
     Batch, CallbackMsg, ConfigResponse, DelegationStrategy, ExecuteMsg, FeeConfig, InstantiateMsg,
     PendingBatch, QueryMsg, StakeToken, StateResponse, UnbondRequest,
@@ -21,7 +22,7 @@ use protobuf::SpecialFields;
 
 use crate::contract::{execute, instantiate};
 use crate::error::ContractError;
-use crate::helpers::{dedupe, validate_received_funds};
+use crate::helpers::dedupe;
 use crate::math::{
     compute_redelegations_for_rebalancing, compute_redelegations_for_removal, compute_undelegations,
 };

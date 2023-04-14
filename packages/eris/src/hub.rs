@@ -2,8 +2,8 @@ use std::{collections::HashSet, convert::TryInto};
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, StdError, StdResult, Uint128,
-    VoteOption, WasmMsg,
+    to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, QuerierWrapper, StdError, StdResult,
+    Uint128, VoteOption, WasmMsg,
 };
 use eris_chain_adapter::types::{
     CustomMsgType, DenomType, HubChainConfigInput, StageType, WithdrawType,
@@ -504,3 +504,11 @@ pub enum ClaimType {
 }
 
 pub type MigrateMsg = Empty;
+
+pub fn get_hub_validators(
+    querier: &QuerierWrapper,
+    hub_addr: impl Into<String>,
+) -> StdResult<Vec<String>> {
+    let config: ConfigResponse = querier.query_wasm_smart(hub_addr.into(), &QueryMsg::Config {})?;
+    Ok(config.validators)
+}
