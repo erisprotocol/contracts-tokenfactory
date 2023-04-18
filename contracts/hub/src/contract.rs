@@ -55,9 +55,10 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
         ExecuteMsg::DropOwnershipProposal {} => execute::drop_ownership_proposal(deps, info.sender),
         ExecuteMsg::AcceptOwnership {} => execute::accept_ownership(deps, info.sender),
         ExecuteMsg::Harvest {
+            validators,
             withdrawals,
             stages,
-        } => execute::harvest(deps, env, withdrawals, stages, info.sender),
+        } => execute::harvest(deps, env, validators, withdrawals, stages, info.sender),
         ExecuteMsg::TuneDelegations {} => execute::tune_delegations(deps, env, info.sender),
         ExecuteMsg::Rebalance {
             min_redelegation,

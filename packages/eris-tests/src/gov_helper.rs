@@ -390,6 +390,7 @@ impl EscrowHelper {
         self.hub_execute(
             router_ref,
             eris::hub::ExecuteMsg::Harvest {
+                validators: None,
                 stages: None,
                 withdrawals: None,
             },

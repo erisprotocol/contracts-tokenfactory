@@ -66,8 +66,8 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
             protocol_reward_fee: None,
             operator: None,
             stages_preset: Some(vec![
-                vec![(StageType::fin("fin1"), "f1".into(), None)],
-                vec![(StageType::fin("fin2"), "f2".into(), None)],
+                vec![(StageType::fin("fin1"), "f1".into(), None, None)],
+                vec![(StageType::fin("fin2"), "f2".into(), None, None)],
             ]),
             withdrawals_preset: Some(vec![
                 (WithdrawType::bw("bw1"), "LP1".into()),
@@ -111,6 +111,7 @@ fn harvest_anyone() {
         mock_env(),
         mock_info("anyone", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             withdrawals: None,
             stages: None,
         },
@@ -138,7 +139,7 @@ fn harvest_anyone() {
     assert_eq!(
         res.messages[2].msg,
         CallbackMsg::SingleStageSwap {
-            stage: vec![(StageType::fin("fin1"), "f1".into(), None)]
+            stage: vec![(StageType::fin("fin1"), "f1".into(), None, None)]
         }
         .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
         .unwrap()
@@ -146,7 +147,7 @@ fn harvest_anyone() {
     assert_eq!(
         res.messages[3].msg,
         CallbackMsg::SingleStageSwap {
-            stage: vec![(StageType::fin("fin2"), "f2".into(), None)],
+            stage: vec![(StageType::fin("fin2"), "f2".into(), None, None)],
         }
         .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
         .unwrap()
@@ -154,6 +155,81 @@ fn harvest_anyone() {
     assert_eq!(res.messages[4], check_received_coin(50, 100));
     assert_eq!(
         res.messages[5].msg,
+        CallbackMsg::Reinvest {}.into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR)).unwrap()
+    );
+}
+
+#[test]
+fn harvest_specific_validator() {
+    let mut deps = setup_test();
+
+    deps.querier.set_staking_delegations(&[Delegation::new("val1", 10, MOCK_UTOKEN)]);
+    deps.querier.set_staking_delegations(&[Delegation::new("val2", 10, MOCK_UTOKEN)]);
+    deps.querier.set_staking_delegations(&[Delegation::new("val3", 10, MOCK_UTOKEN)]);
+
+    deps.querier.set_bank_balances(&[
+        coin(50, MOCK_UTOKEN),
+        coin(100, get_stake_full_denom()),
+        coin(1, "f1"),
+        coin(2, "LP1"),
+        coin(3, "LP2"),
+    ]);
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("anyone", &[]),
+        ExecuteMsg::Harvest {
+            validators: Some(vec!["val3".to_string(), "val2".to_string()]),
+            withdrawals: None,
+            stages: None,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(res.messages.len(), 7);
+    assert_eq!(
+        res.messages[0].msg,
+        CosmosMsg::Distribution(DistributionMsg::WithdrawDelegatorReward {
+            validator: "val3".into(),
+        })
+    );
+    assert_eq!(
+        res.messages[1].msg,
+        CosmosMsg::Distribution(DistributionMsg::WithdrawDelegatorReward {
+            validator: "val2".into(),
+        })
+    );
+    assert_eq!(
+        res.messages[2].msg,
+        CallbackMsg::WithdrawLps {
+            withdrawals: vec![
+                (WithdrawType::bw("bw1"), "LP1".into()),
+                (WithdrawType::bow("bow1"), "LP2".into()),
+            ]
+        }
+        .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
+        .unwrap()
+    );
+    assert_eq!(
+        res.messages[3].msg,
+        CallbackMsg::SingleStageSwap {
+            stage: vec![(StageType::fin("fin1"), "f1".into(), None, None)]
+        }
+        .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
+        .unwrap()
+    );
+    assert_eq!(
+        res.messages[4].msg,
+        CallbackMsg::SingleStageSwap {
+            stage: vec![(StageType::fin("fin2"), "f2".into(), None, None)],
+        }
+        .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
+        .unwrap()
+    );
+    assert_eq!(res.messages[5], check_received_coin(50, 100));
+    assert_eq!(
+        res.messages[6].msg,
         CallbackMsg::Reinvest {}.into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR)).unwrap()
     );
 }
@@ -176,8 +252,9 @@ fn harvest_anyone_override() {
         mock_env(),
         mock_info("anyone", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             withdrawals: Some(vec![]),
-            stages: Some(vec![vec![(StageType::fin("x"), "x".into(), None)]]),
+            stages: Some(vec![vec![(StageType::fin("x"), "x".into(), None, None)]]),
         },
     )
     .unwrap_err();
@@ -188,6 +265,7 @@ fn harvest_anyone_override() {
         mock_env(),
         mock_info("anyone", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             withdrawals: Some(vec![(WithdrawType::bow("x"), "x".into())]),
             stages: Some(vec![]),
         },
@@ -201,6 +279,7 @@ fn harvest_anyone_override() {
         mock_env(),
         mock_info("anyone", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             withdrawals: Some(vec![]),
             stages: Some(vec![]),
         },
@@ -240,8 +319,9 @@ fn harvest_operator_override() {
         mock_env(),
         mock_info("operator", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             withdrawals: Some(vec![]),
-            stages: Some(vec![vec![(StageType::fin("x"), "x".into(), None)]]),
+            stages: Some(vec![vec![(StageType::fin("x"), "x".into(), None, None)]]),
         },
     )
     .unwrap();
@@ -256,7 +336,7 @@ fn harvest_operator_override() {
     assert_eq!(
         res.messages[1].msg,
         CallbackMsg::SingleStageSwap {
-            stage: vec![(StageType::fin("x"), "x".into(), None)]
+            stage: vec![(StageType::fin("x"), "x".into(), None, None)]
         }
         .into_cosmos_msg(&Addr::unchecked(MOCK_CONTRACT_ADDR))
         .unwrap()
@@ -273,6 +353,7 @@ fn harvest_operator_override() {
         mock_env(),
         mock_info("operator", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             withdrawals: Some(vec![(WithdrawType::bow("x"), "x".into())]),
             stages: Some(vec![]),
         },
@@ -306,6 +387,7 @@ fn harvest_operator_override() {
         mock_env(),
         mock_info("anyone", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             withdrawals: Some(vec![]),
             stages: Some(vec![]),
         },
