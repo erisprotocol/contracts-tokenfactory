@@ -408,6 +408,7 @@ fn harvesting() {
         mock_env(),
         mock_info("worker", &[]),
         ExecuteMsg::Harvest {
+            validators: None,
             stages: None,
             withdrawals: None,
         },

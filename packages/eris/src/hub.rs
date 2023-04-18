@@ -13,7 +13,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{helper::addr_opt_validate, helpers::bps::BasicPoints};
 
-pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>);
+// StageType = DEX
+// DenomType = Chain specific denom
+// Option<Decimal> = Price
+// Option<Uint128> = max amount, 0 = unlimited
+pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>, Option<Uint128>);
 
 #[cw_serde]
 pub enum DelegationStrategy<T = String> {
@@ -168,6 +172,8 @@ pub enum ExecuteMsg {
     DropOwnershipProposal {},
     /// Claim staking rewards, swap all for Token, and restake
     Harvest {
+        // specifies which validators should be harvested
+        validators: Option<Vec<String>>,
         withdrawals: Option<Vec<(WithdrawType, DenomType)>>,
         stages: Option<Vec<Vec<SingleSwapConfig>>>,
     },

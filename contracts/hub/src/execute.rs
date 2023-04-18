@@ -1,3 +1,5 @@
+use std::cmp;
+
 use cosmwasm_std::{
     attr, to_binary, Addr, Attribute, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, DistributionMsg,
     Env, Event, Order, Response, StdResult, Uint128, WasmMsg,
@@ -181,6 +183,7 @@ pub fn bond(
 pub fn harvest(
     deps: DepsMut,
     env: Env,
+    validators: Option<Vec<String>>,
     withdrawals: Option<Vec<(WithdrawType, DenomType)>>,
     stages: Option<Vec<Vec<SingleSwapConfig>>>,
     sender: Addr,
@@ -189,7 +192,17 @@ pub fn harvest(
     let stake = state.stake_token.load(deps.storage)?;
 
     // 1. Withdraw delegation rewards
-    let withdraw_submsgs: Vec<CosmosMsg<CustomMsgType>> =
+    let withdraw_submsgs: Vec<CosmosMsg<CustomMsgType>> = if let Some(validators) = validators {
+        // it is validated by the cosmos sdk that validators exist
+        validators
+            .into_iter()
+            .map(|validator| {
+                CosmosMsg::Distribution(DistributionMsg::WithdrawDelegatorReward {
+                    validator,
+                })
+            })
+            .collect()
+    } else {
         query_all_delegations(&deps.querier, &env.contract.address, &stake.utoken)?
             .into_iter()
             .map(|d| {
@@ -197,7 +210,8 @@ pub fn harvest(
                     validator: d.validator,
                 })
             })
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
+    };
 
     // 2. Prepare LP withdrawals / deconstruction
     let withdrawals =
@@ -277,17 +291,28 @@ pub fn single_stage_swap(deps: DepsMut, env: Env, stage: Vec<SingleSwapConfig>) 
 
     let mut response = Response::new().add_attribute("action", "erishub/single_stage_swap");
     // iterate all specified swaps of the stage
-    for (stage_type, denom, belief_price) in stage {
+    for (stage_type, denom, belief_price, max_amount) in stage {
         let balance = balances.get(&denom.to_string());
         // check if the swap also has a balance in the contract
         if let Some(balance) = balance {
             if !balance.is_zero() {
+                let used_amount = match max_amount {
+                    Some(max_amount) => {
+                        if max_amount.is_zero() {
+                            *balance
+                        } else {
+                            cmp::min(*balance, max_amount)
+                        }
+                    },
+                    None => *balance,
+                };
+
                 // create a single swap message add add to submsgs
                 let msg = chain.create_single_stage_swap_msgs(
                     get_chain_config,
                     stage_type,
                     denom,
-                    *balance,
+                    used_amount,
                     belief_price,
                     default_max_spread,
                 )?;
@@ -305,7 +330,7 @@ fn validate_no_utoken_or_ustake_swap(
 ) -> Result<(), ContractError> {
     if let Some(stages) = stages {
         for stage in stages {
-            for (_addr, denom, _) in stage {
+            for (_addr, denom, _, _) in stage {
                 if denom.to_string() == stake_token.utoken || denom.to_string() == stake_token.denom
                 {
                     return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
@@ -318,7 +343,7 @@ fn validate_no_utoken_or_ustake_swap(
 
 fn validate_no_belief_price(stages: &Vec<Vec<SingleSwapConfig>>) -> Result<(), ContractError> {
     for stage in stages {
-        for (_, _, belief_price) in stage {
+        for (_, _, belief_price, _) in stage {
             if belief_price.is_some() {
                 return Err(ContractError::BeliefPriceNotAllowed {});
             }

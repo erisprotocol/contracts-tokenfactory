@@ -76,6 +76,7 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
                 },
                 "test".into(),
                 None,
+                None,
             )]]),
             withdrawals_preset: None,
             allow_donations: None,
@@ -121,7 +122,7 @@ fn proper_instantiation() {
                 protocol_reward_fee: Decimal::from_ratio(1u128, 100u128)
             },
             operator: "operator".to_string(),
-            stages_preset: vec![vec![(StageType::fin("fin1"), "test".into(), None)]],
+            stages_preset: vec![vec![(StageType::fin("fin1"), "test".into(), None, None)]],
             withdrawals_preset: vec![],
             allow_donations: false,
             delegation_strategy: DelegationStrategy::Uniform,
@@ -172,7 +173,8 @@ fn harvesting_with_options() {
         mock_env(),
         mock_info("worker", &[]),
         ExecuteMsg::Harvest {
-            stages: Some(vec![vec![(StageType::fin("fin1"), "test".into(), None)]]),
+            validators: None,
+            stages: Some(vec![vec![(StageType::fin("fin1"), "test".into(), None, None)]]),
             withdrawals: Some(vec![(WithdrawType::bw("bw1"), BW_DENOM1.into())]),
         },
     )
@@ -184,7 +186,8 @@ fn harvesting_with_options() {
         mock_env(),
         mock_info("operator", &[]),
         ExecuteMsg::Harvest {
-            stages: Some(vec![vec![(StageType::fin("fin1"), MOCK_UTOKEN.into(), None)]]),
+            validators: None,
+            stages: Some(vec![vec![(StageType::fin("fin1"), MOCK_UTOKEN.into(), None, None)]]),
             withdrawals: Some(vec![(WithdrawType::bw("bw1"), BW_DENOM1.into())]),
         },
     )
@@ -196,7 +199,8 @@ fn harvesting_with_options() {
         mock_env(),
         mock_info("operator", &[]),
         ExecuteMsg::Harvest {
-            stages: Some(vec![vec![(StageType::fin("fin2"), STAKE_DENOM.into(), None)]]),
+            validators: None,
+            stages: Some(vec![vec![(StageType::fin("fin2"), STAKE_DENOM.into(), None, None)]]),
             withdrawals: Some(vec![(WithdrawType::bw("bw1"), BW_DENOM1.into())]),
         },
     )
@@ -208,7 +212,8 @@ fn harvesting_with_options() {
         mock_env(),
         mock_info("operator", &[]),
         ExecuteMsg::Harvest {
-            stages: Some(vec![vec![(StageType::fin("fin1"), "test".into(), None)]]),
+            validators: None,
+            stages: Some(vec![vec![(StageType::fin("fin1"), "test".into(), None, None)]]),
             withdrawals: Some(vec![(WithdrawType::bw("bw1"), BW_DENOM1.into())]),
         },
     )
@@ -256,7 +261,8 @@ fn harvesting_with_options() {
                         addr: Addr::unchecked("fin1")
                     },
                     "test".into(),
-                    None
+                    None,
+                    None,
                 )],
             }))
             .unwrap(),
@@ -355,7 +361,7 @@ fn swap() -> StdResult<()> {
         mock_env(),
         mock_info("operator", &[]),
         ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
-            stage: vec![(StageType::fin("fin1"), "test".into(), None)],
+            stage: vec![(StageType::fin("fin1"), "test".into(), None, None)],
         }),
     )
     .unwrap_err();
@@ -370,13 +376,13 @@ fn swap() -> StdResult<()> {
     ]);
 
     let stages: Vec<Vec<SingleSwapConfig>> = vec![
-        vec![(StageType::fin("fin1"), "test".into(), None)],
+        vec![(StageType::fin("fin1"), "test".into(), None, None)],
         vec![
-            (StageType::fin("fin2"), "abc".into(), None),
-            (StageType::fin("fin3"), "test2".into(), None),
-            (StageType::fin("fin5"), "anything".into(), None),
+            (StageType::fin("fin2"), "abc".into(), None, None),
+            (StageType::fin("fin3"), "test2".into(), None, None),
+            (StageType::fin("fin5"), "anything".into(), None, None),
         ],
-        vec![(StageType::fin("fin4"), "rest".into(), None)],
+        vec![(StageType::fin("fin4"), "rest".into(), None, None)],
     ];
 
     let res = execute(
