@@ -488,7 +488,7 @@ dependencies = [
 
 [[package]]
 name = "eris-staking-hub-tokenfactory-kujira"
-version = "1.6.0"
+version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
