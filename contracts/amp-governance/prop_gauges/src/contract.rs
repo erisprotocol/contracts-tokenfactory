@@ -1,4 +1,3 @@
-use astroport::asset::addr_validate_to_lower;
 use astroport::common::{claim_ownership, drop_ownership_proposal, propose_new_owner};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -50,9 +49,9 @@ pub fn instantiate(
     state.config.save(
         deps.storage,
         &Config {
-            owner: addr_validate_to_lower(deps.api, &msg.owner)?,
-            escrow_addr: addr_validate_to_lower(deps.api, &msg.escrow_addr)?,
-            hub_addr: addr_validate_to_lower(deps.api, &msg.hub_addr)?,
+            owner: deps.api.addr_validate(&msg.owner)?,
+            escrow_addr: deps.api.addr_validate(&msg.escrow_addr)?,
+            hub_addr: deps.api.addr_validate(&msg.hub_addr)?,
             quorum_bps: msg.quorum_bps,
             use_weighted_vote: msg.use_weighted_vote,
         },
@@ -310,7 +309,7 @@ fn remove_user(deps: DepsMut, env: Env, info: MessageInfo, user: String) -> Exec
     let config = state.config.load(deps.storage)?;
     config.assert_owner(&info.sender)?;
 
-    let user_addr = addr_validate_to_lower(deps.api, user)?;
+    let user_addr = deps.api.addr_validate(&user)?;
 
     let mut response = Response::new();
     for (proposal_id, prop) in state.all_active_props(deps.storage, &env)?.into_iter() {

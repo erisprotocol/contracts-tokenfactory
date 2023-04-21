@@ -6,7 +6,8 @@ module.exports = {
       default: "bash build_release.sh",
     },
     schema: {
-      default: "nps schema.create schema.transform schema.hub ",
+      default:
+        "nps schema.create schema.transform schema.hub schema.votingescrow",
 
       transform: "ts-node transform.ts",
 
@@ -21,8 +22,8 @@ module.exports = {
       // ampextractor:
       //   "cd .. && json2ts -i contracts/amp-extractor/**/*.json -o ../liquid-staking-scripts/types/amp-extractor",
 
-      // votingescrow:
-      //   "cd .. && json2ts -i contracts/amp-governance/voting_escrow/**/*.json -o ../liquid-staking-scripts/types/voting_escrow",
+      votingescrow:
+        "cd .. && json2ts -i contracts/amp-governance/voting_escrow/**/*.json -o ../liquid-staking-scripts/types/tokenfactory/voting_escrow",
       // ampgauges:
       //   "cd .. && json2ts -i contracts/amp-governance/amp_gauges/**/*.json -o ../liquid-staking-scripts/types/amp_gauges",
       // empgauges:
