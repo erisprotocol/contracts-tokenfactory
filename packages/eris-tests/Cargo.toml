@@ -11,6 +11,12 @@ homepage = "https://erisprotocol.com"
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 
+X-whitewhale-X = []
+X-kujira-X = []
+X-injective-X = []
+
+default = ["X-injective-X"]
+
 [dependencies]
 cw2 = "0.13.2"
 cw20 = "0.13.2"
@@ -30,7 +36,7 @@ astroport = { git = "https://github.com/astroport-fi/astroport-core.git", defaul
 eris = { path = "../eris" }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 
-eris-staking-hub = { package = "eris-staking-hub-tokenfactory-kujira", path = "../../contracts/hub" }
+eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-injective" }
 # eris-arb-vault = { path = "../../contracts/arb-vault" }
 eris-gov-voting-escrow = { path = "../../contracts/amp-governance/voting_escrow" }
 eris-gov-emp-gauges = { path = "../../contracts/amp-governance/emp_gauges" }

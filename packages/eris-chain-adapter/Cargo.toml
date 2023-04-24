@@ -23,4 +23,4 @@ X-whitewhale-X = []
 X-kujira-X = []
 X-injective-X = []
 
-default = ["X-kujira-X"]
+default = ["X-injective-X"]

@@ -14,7 +14,7 @@ use cw_multi_test::{
 // use eris::arb_vault::LsdConfig;
 use eris_chain_adapter::types::{test_chain_config, CustomMsgType};
 
-use crate::modules::UsedCustomModule;
+use crate::modules::types::UsedCustomModule;
 
 pub const MULTIPLIER: u64 = 1_000_000;
 

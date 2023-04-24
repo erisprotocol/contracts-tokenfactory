@@ -11,7 +11,7 @@ use cosmwasm_std::testing::{mock_env, MockApi, MockStorage};
 use cosmwasm_std::{coin, Addr, Attribute, BlockInfo, Decimal, Timestamp, Validator};
 use cw_multi_test::{AppResponse, BankKeeper, BasicAppBuilder, StakeKeeper, StakingInfo};
 use eris::governance_helper::{get_period, EPOCH_START, WEEK};
-use modules::UsedCustomModule;
+use modules::types::init_custom;
 
 #[allow(clippy::all)]
 #[allow(dead_code)]
@@ -47,9 +47,7 @@ pub fn mock_app_validators(
         .with_bank(bank)
         .with_storage(storage)
         .with_staking(staking)
-        .with_custom(UsedCustomModule {
-            oracle_price: Decimal::zero(),
-        })
+        .with_custom(init_custom())
         // .with_gov(AcceptingModule)
         .build(|router, api, storage| {
             router

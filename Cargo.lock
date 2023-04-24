@@ -979,14 +979,14 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-kujira",
+ "eris-staking-hub-tokenfactory-injective",
  "kujira",
  "schemars",
  "serde",
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-kujira"
+name = "eris-staking-hub-tokenfactory-injective"
 version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1021,7 +1021,7 @@ dependencies = [
  "eris-gov-emp-gauges",
  "eris-gov-prop-gauges",
  "eris-gov-voting-escrow",
- "eris-staking-hub-tokenfactory-kujira",
+ "eris-staking-hub-tokenfactory-injective",
  "kujira",
  "pfc-steak",
  "pfc-steak-hub",
