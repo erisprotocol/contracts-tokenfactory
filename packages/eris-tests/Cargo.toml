@@ -14,8 +14,9 @@ backtraces = ["cosmwasm-std/backtraces"]
 X-whitewhale-X = []
 X-kujira-X = []
 X-injective-X = []
+X-osmosis-X = []
 
-default = ["X-injective-X"]
+default = ["X-osmosis-X"]
 
 [dependencies]
 cw2 = "0.13.2"
@@ -36,7 +37,7 @@ astroport = { git = "https://github.com/astroport-fi/astroport-core.git", defaul
 eris = { path = "../eris" }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 
-eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-injective" }
+eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-osmosis" }
 # eris-arb-vault = { path = "../../contracts/arb-vault" }
 eris-gov-voting-escrow = { path = "../../contracts/amp-governance/voting_escrow" }
 eris-gov-emp-gauges = { path = "../../contracts/amp-governance/emp_gauges" }
@@ -49,5 +50,7 @@ steak-hub = { git = "https://github.com/PFC-developer/steak-contracts.git", pack
 steak = { git = "https://github.com/PFC-developer/steak-contracts.git", package = "pfc-steak", default-features = false, rev = "6fbc9f9190da6e179ba9f84494e3b7e929d38842" }
 
 kujira = "0.7.13"
+osmosis-std = "0.15.3"
+osmosis-testing = "0.13.2"
 
 anyhow = "1"
