@@ -1,6 +1,6 @@
 use std::ops::Div;
 
-use cosmwasm_std::StdError;
+use cosmwasm_std::{coins, StdError};
 use cosmwasm_std::{Addr, CosmosMsg, Decimal, StdResult, Uint128};
 use eris_chain_shared::chain_trait::ChainInterface;
 use osmosis_std::types::cosmos::base::v1beta1::Coin;
@@ -34,15 +34,22 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         amount: Uint128,
         recipient: Addr,
     ) -> Vec<CosmosMsg<CustomMsgType>> {
-        vec![MsgMint {
-            sender: self.contract.to_string(),
-            mint_to_address: recipient.to_string(),
-            amount: Some(Coin {
-                denom: full_denom,
-                amount: amount.to_string(),
+        vec![
+            MsgMint {
+                sender: self.contract.to_string(),
+                // osmosis cant mint to a different address than itself.
+                mint_to_address: self.contract.to_string(),
+                amount: Some(Coin {
+                    denom: full_denom.clone(),
+                    amount: amount.to_string(),
+                }),
+            }
+            .into(),
+            CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
+                to_address: recipient.to_string(),
+                amount: coins(amount.u128(), full_denom),
             }),
-        }
-        .into()]
+        ]
     }
 
     fn create_burn_msg(&self, full_denom: String, amount: Uint128) -> CosmosMsg<CustomMsgType> {
