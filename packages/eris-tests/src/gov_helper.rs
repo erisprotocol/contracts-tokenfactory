@@ -441,6 +441,8 @@ impl EscrowHelper {
                 operator: None,
                 stages_preset: None,
                 withdrawals_preset: None,
+                epoch_period: None,
+                unbond_period: None,
             },
         )
     }

@@ -1077,6 +1077,8 @@ pub fn update_config(
     vote_operator: Option<String>,
     chain_config: Option<HubChainConfigInput>,
     default_max_spread: Option<u64>,
+    epoch_period: Option<u64>,
+    unbond_period: Option<u64>,
 ) -> ContractResult {
     let state = State::default();
 
@@ -1097,6 +1099,20 @@ pub fn update_config(
         }
 
         state.fee_config.save(deps.storage, &fee_config)?;
+    }
+    
+    if let Some(epoch_period) = epoch_period {
+        if epoch_period == 0 {
+            return Err(ContractError::CantBeZero("epoch_period".into()));
+        }
+        state.epoch_period.save(deps.storage, &epoch_period)?;
+    }
+
+    if let Some(unbond_period) = unbond_period {
+        if unbond_period == 0 {
+            return Err(ContractError::CantBeZero("unbond_period".into()));
+        }
+        state.unbond_period.save(deps.storage, &unbond_period)?;
     }
 
     if let Some(operator) = operator {

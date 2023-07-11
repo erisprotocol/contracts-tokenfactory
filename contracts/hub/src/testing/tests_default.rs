@@ -293,6 +293,8 @@ fn donating() {
             vote_operator: None,
             chain_config: None,
             default_max_spread: None,
+            epoch_period: None,
+            unbond_period: None,
         },
     )
     .unwrap();
@@ -1530,6 +1532,8 @@ fn update_fee() {
             vote_operator: None,
             chain_config: None,
             default_max_spread: None,
+            epoch_period: None,
+            unbond_period: None,
         },
     )
     .unwrap_err();
@@ -1550,6 +1554,8 @@ fn update_fee() {
             vote_operator: None,
             chain_config: None,
             default_max_spread: None,
+            epoch_period: None,
+            unbond_period: None,
         },
     )
     .unwrap_err();
@@ -1570,6 +1576,8 @@ fn update_fee() {
             vote_operator: None,
             chain_config: None,
             default_max_spread: None,
+            epoch_period: None,
+            unbond_period: None,
         },
     )
     .unwrap();
@@ -1620,6 +1628,8 @@ fn vote() {
             withdrawals_preset: None,
             chain_config: None,
             default_max_spread: None,
+            epoch_period: None,
+            unbond_period: None,
         },
     )
     .unwrap();
@@ -1690,6 +1700,8 @@ fn vote_weighted() {
             withdrawals_preset: None,
             chain_config: None,
             default_max_spread: None,
+            epoch_period: None,
+            unbond_period: None,
         },
     )
     .unwrap();

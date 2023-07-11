@@ -86,6 +86,8 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
             chain_config,
             withdrawals_preset,
             default_max_spread,
+            epoch_period,
+            unbond_period,
         } => execute::update_config(
             deps,
             info.sender,
@@ -99,6 +101,8 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
             vote_operator,
             chain_config,
             default_max_spread,
+            epoch_period,
+            unbond_period,
         ),
         ExecuteMsg::QueueUnbond {
             receiver,

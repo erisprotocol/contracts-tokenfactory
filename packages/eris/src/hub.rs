@@ -222,6 +222,11 @@ pub enum ExecuteMsg {
         chain_config: Option<HubChainConfigInput>,
         /// Update the default max_spread
         default_max_spread: Option<u64>,
+
+        /// How often the unbonding queue is to be executed, in seconds
+        epoch_period: Option<u64>,
+        /// The staking module's unbonding time, in seconds
+        unbond_period: Option<u64>,
     },
 
     /// Submit an unbonding request to the current unbonding queue; automatically invokes `unbond`
