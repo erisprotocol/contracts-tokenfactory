@@ -1056,7 +1056,7 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-kujira",
+ "eris-staking-hub-tokenfactory-whitewhale",
  "kujira",
  "schemars",
  "serde",
@@ -1075,7 +1075,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-kujira"
+name = "eris-staking-hub-tokenfactory-whitewhale"
 version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1111,7 +1111,7 @@ dependencies = [
  "eris-gov-emp-gauges",
  "eris-gov-prop-gauges",
  "eris-gov-voting-escrow",
- "eris-staking-hub-tokenfactory-kujira",
+ "eris-staking-hub-tokenfactory-whitewhale",
  "kujira",
  "osmosis-std",
  "pfc-steak",

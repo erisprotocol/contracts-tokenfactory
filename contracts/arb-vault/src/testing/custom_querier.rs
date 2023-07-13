@@ -6,7 +6,6 @@ use cosmwasm_std::{
     QueryRequest, SystemError, SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::vec;
 

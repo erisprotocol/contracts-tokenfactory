@@ -1,11 +1,10 @@
 use std::ops::Div;
 
 use astroport::asset::{native_asset, AssetInfo, AssetInfoExt};
-use cosmwasm_std::{attr, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response};
+use cosmwasm_std::{attr, Decimal, DepsMut, Env, MessageInfo, Response};
 use eris::arb_vault::{CallbackMsg, ExchangeHistory};
 use eris::constants::DAY;
 use eris::CustomResponse;
-use eris_chain_adapter::types::CustomMsgType;
 
 use crate::error::{ContractError, ContractResult};
 use crate::extensions::{BalancesEx, ConfigEx};
