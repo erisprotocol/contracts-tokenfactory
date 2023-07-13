@@ -1,4 +1,6 @@
 // pub mod arb_contract;
+pub mod arb_contract;
+pub mod asset_ex;
 pub mod base;
 mod custom_gov;
 pub mod model;

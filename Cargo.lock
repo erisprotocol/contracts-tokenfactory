@@ -429,6 +429,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-item-set"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dea5a233bd67babedbe96a514178a64b0c597f1f38bc474fa8d63e3f26bdceb2"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus 1.0.1",
+]
+
+[[package]]
 name = "cw-multi-test"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -463,6 +473,32 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "cw-ownable"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27fc0c75fc61cf268e5dc5f23ff24bd84b629c575b5a1522e2349f61b46874b4"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-address-like",
+ "cw-ownable-derive",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-ownable-derive"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1d3bf2e0f341bb6cc100d7d441d31cf713fbd3ce0c511f91e79f14b40a889af"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -824,12 +860,36 @@ dependencies = [
 name = "eris"
 version = "1.6.0"
 dependencies = [
+ "astroport 2.0.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw20 0.13.4",
  "eris-chain-adapter",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "eris-arb-vault"
+version = "1.0.2"
+dependencies = [
+ "anyhow",
+ "astroport 2.0.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test 0.16.2",
+ "cw-storage-plus 0.13.4",
+ "cw2 0.13.4",
+ "cw20 0.13.4",
+ "cw20-base 0.13.4",
+ "eris",
+ "eris-chain-adapter",
+ "eris-chain-shared",
+ "eris-tests",
+ "itertools",
+ "pfc-steak",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -996,7 +1056,7 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-osmosis",
+ "eris-staking-hub-tokenfactory-kujira",
  "kujira",
  "schemars",
  "serde",
@@ -1015,7 +1075,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-osmosis"
+name = "eris-staking-hub-tokenfactory-kujira"
 version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1045,16 +1105,17 @@ dependencies = [
  "cw20 0.13.4",
  "cw20-base 0.13.4",
  "eris",
+ "eris-arb-vault",
  "eris-chain-adapter",
  "eris-gov-amp-gauges",
  "eris-gov-emp-gauges",
  "eris-gov-prop-gauges",
  "eris-gov-voting-escrow",
- "eris-staking-hub-tokenfactory-osmosis",
+ "eris-staking-hub-tokenfactory-kujira",
  "kujira",
  "osmosis-std",
  "pfc-steak",
- "pfc-steak-hub",
+ "pfc-steak-hub-tf",
  "reward",
  "staking",
 ]
@@ -1351,7 +1412,7 @@ dependencies = [
 [[package]]
 name = "pfc-dust-collector"
 version = "3.0.0"
-source = "git+https://github.com/PFC-developer/steak-contracts.git?rev=6fbc9f9190da6e179ba9f84494e3b7e929d38842#6fbc9f9190da6e179ba9f84494e3b7e929d38842"
+source = "git+https://github.com/PFC-developer/steak-contracts.git?rev=425818764da1c6b87080b99f47ecebcccbc99dd8#425818764da1c6b87080b99f47ecebcccbc99dd8"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1373,8 +1434,8 @@ dependencies = [
 
 [[package]]
 name = "pfc-steak"
-version = "2.2.4"
-source = "git+https://github.com/PFC-developer/steak-contracts.git?rev=6fbc9f9190da6e179ba9f84494e3b7e929d38842#6fbc9f9190da6e179ba9f84494e3b7e929d38842"
+version = "3.0.3"
+source = "git+https://github.com/PFC-developer/steak-contracts.git?rev=425818764da1c6b87080b99f47ecebcccbc99dd8#425818764da1c6b87080b99f47ecebcccbc99dd8"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -1385,18 +1446,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "pfc-steak-hub"
-version = "3.0.3"
-source = "git+https://github.com/PFC-developer/steak-contracts.git?rev=6fbc9f9190da6e179ba9f84494e3b7e929d38842#6fbc9f9190da6e179ba9f84494e3b7e929d38842"
+name = "pfc-steak-hub-tf"
+version = "3.0.4"
+source = "git+https://github.com/PFC-developer/steak-contracts.git?rev=425818764da1c6b87080b99f47ecebcccbc99dd8#425818764da1c6b87080b99f47ecebcccbc99dd8"
 dependencies = [
  "cosmwasm-std",
- "cw-storage-plus 0.13.4",
+ "cw-item-set",
+ "cw-ownable",
+ "cw-storage-plus 1.0.1",
  "cw2 1.0.1",
- "cw20 1.0.1",
- "cw20-base 1.0.1",
+ "osmosis-std-derive 0.13.2",
  "pfc-dust-collector",
  "pfc-fee-split",
  "pfc-steak",
+ "prost 0.11.6",
+ "prost-types",
+ "protobuf 3.2.0",
+ "schemars",
  "serde",
 ]
 
@@ -1517,6 +1583,7 @@ version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b55bad9126f378a853655831eb7363b7b01b81d19f8cb1218861086ca4a1a61e"
 dependencies = [
+ "bytes",
  "once_cell",
  "protobuf-support",
  "thiserror",
@@ -1675,9 +1742,9 @@ checksum = "73b4b750c782965c211b42f022f59af1fbceabdd026623714f104152f1ec149f"
 
 [[package]]
 name = "schemars"
-version = "0.8.10"
+version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1847b767a3d62d95cbf3d8a9f0e421cf57a0d8aa4f411d4b16525afb0284d4ed"
+checksum = "02c613288622e5f0c3fdc5dbd4db1c5fbe752746b1d1a56a0630b78fd00de44f"
 dependencies = [
  "dyn-clone",
  "schemars_derive",
@@ -1687,9 +1754,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "0.8.10"
+version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af4d7e1b012cb3d9129567661a63755ea4b8a7386d339dc945ae187e403c6743"
+checksum = "109da1e6b197438deb6db99952990c7f959572794b80ff93707d55a232545e7c"
 dependencies = [
  "proc-macro2",
  "quote",

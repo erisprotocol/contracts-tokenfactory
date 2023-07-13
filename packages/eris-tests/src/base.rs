@@ -1,9 +1,12 @@
+use std::str::FromStr;
+
 use cosmwasm_schema::cw_serde;
 
 use cosmwasm_std::{
     attr,
     testing::{MockApi, MockStorage},
-    Addr, Decimal, Empty, GovMsg, IbcMsg, IbcQuery, StdResult, Uint128,
+    Addr, Decimal, DepsMut, Empty, Env, GovMsg, IbcMsg, IbcQuery, Reply, Response, StdError,
+    StdResult, Uint128,
 };
 use cw20::{BalanceResponse, Cw20QueryMsg};
 
@@ -11,10 +14,12 @@ use cw_multi_test::{
     App, BankKeeper, ContractWrapper, DistributionKeeper, Executor, FailingModule, StakeKeeper,
     WasmKeeper,
 };
+use cw_storage_plus::Item;
+use eris::arb_vault::LsdConfig;
 // use eris::arb_vault::LsdConfig;
 use eris_chain_adapter::types::{test_chain_config, CustomMsgType};
 
-use crate::modules::types::UsedCustomModule;
+use crate::{arb_contract, modules::types::UsedCustomModule};
 
 pub const MULTIPLIER: u64 = 1_000_000;
 
@@ -61,12 +66,11 @@ pub struct BaseErisTestPackage {
     // pub stader: ContractInfoWrapper,
     // pub stader_reward: ContractInfoWrapper,
     // pub stader_token: ContractInfoWrapper,
+    pub steak_hub: ContractInfoWrapper,
+    pub steak_token: ContractInfoWrapper,
 
-    // pub steak_hub: ContractInfoWrapper,
-    // pub steak_token: ContractInfoWrapper,
-
-    // pub arb_vault: ContractInfoWrapper,
-    // pub arb_fake_contract: ContractInfoWrapper,
+    pub arb_vault: ContractInfoWrapper,
+    pub arb_fake_contract: ContractInfoWrapper,
 }
 
 #[cw_serde]
@@ -101,13 +105,13 @@ impl BaseErisTestPackage {
             amp_gauges: None.into(),
             amp_token: None.into(),
             prop_gauges: None.into(),
-            // arb_vault: None.into(),
-            // arb_fake_contract: None.into(),
+            arb_vault: None.into(),
+            arb_fake_contract: None.into(),
             // stader_token: None.into(),
             // stader: None.into(),
             // stader_reward: None.into(),
-            // steak_hub: None.into(),
-            // steak_token: None.into(),
+            steak_hub: None.into(),
+            steak_token: None.into(),
         };
 
         // base_pack.init_token(router, msg.owner.clone());
@@ -117,9 +121,9 @@ impl BaseErisTestPackage {
         base_pack.init_amp_gauges(router, msg.owner.clone());
         base_pack.init_prop_gauges(router, msg.owner.clone());
         // base_pack.init_stader(router, msg.owner.clone());
-        // base_pack.init_steak_hub(router, msg.owner.clone());
-        // base_pack.init_arb_vault(router, msg.owner.clone());
-        // base_pack.init_arb_fake_contract(router, msg.owner.clone());
+        base_pack.init_steak_hub(router, msg.owner.clone());
+        base_pack.init_arb_vault(router, msg.owner.clone());
+        base_pack.init_arb_fake_contract(router, msg.owner.clone());
 
         base_pack.init_hub_delegation_strategy(router, msg.owner, msg.use_uniform_hub);
 
@@ -327,61 +331,57 @@ impl BaseErisTestPackage {
         .into()
     }
 
-    // fn init_arb_vault(&mut self, router: &mut CustomApp, owner: Addr) {
-    //     let contract = Box::new(
-    //         ContractWrapper::new_with_empty(
-    //             eris_arb_vault::contract::execute,
-    //             eris_arb_vault::contract::instantiate,
-    //             eris_arb_vault::contract::query,
-    //         )
-    //         .with_reply(eris_arb_vault::contract::reply),
-    //     );
+    fn init_arb_vault(&mut self, router: &mut CustomApp, owner: Addr) {
+        let contract = Box::new(
+            ContractWrapper::new_with_empty(
+                eris_arb_vault::contract::execute,
+                eris_arb_vault::contract::instantiate,
+                eris_arb_vault::contract::query,
+            ), // .with_reply(eris_arb_vault::contract::reply),
+        );
 
-    //     let code_id = router.store_code(contract);
-    //     let hub_addr = self.hub.get_address();
+        let code_id = router.store_code(contract);
+        let hub_addr = self.hub.get_address();
 
-    //     let msg = eris::arb_vault::InstantiateMsg {
-    //         owner: owner.to_string(),
+        let msg = eris::arb_vault::InstantiateMsg {
+            owner: owner.to_string(),
 
-    //         cw20_code_id: self.token_id.unwrap(),
-    //         decimals: 6,
-    //         fee_config: eris::arb_vault::FeeConfig {
-    //             protocol_fee_contract: "fee".to_string(),
-    //             protocol_performance_fee: Decimal::from_str("0.1").unwrap(),
-    //             protocol_withdraw_fee: Decimal::from_str("0.01").unwrap(),
-    //             immediate_withdraw_fee: Decimal::from_str("0.03").unwrap(),
-    //         },
-    //         name: "arbLUNA".to_string(),
-    //         symbol: "arbLUNA".to_string(),
-    //         unbond_time_s: 24 * 24 * 60 * 60,
-    //         utilization_method: eris::arb_vault::UtilizationMethod::Steps(vec![
-    //             (Decimal::from_ratio(10u128, 1000u128), Decimal::from_ratio(50u128, 100u128)),
-    //             (Decimal::from_ratio(15u128, 1000u128), Decimal::from_ratio(70u128, 100u128)),
-    //             (Decimal::from_ratio(20u128, 1000u128), Decimal::from_ratio(90u128, 100u128)),
-    //             (Decimal::from_ratio(25u128, 1000u128), Decimal::from_ratio(100u128, 100u128)),
-    //         ]),
-    //         utoken: "uluna".to_string(),
-    //         whitelist: vec!["executor".to_string()],
-    //         lsds: vec![LsdConfig {
-    //             name: "eris".into(),
-    //             lsd_type: eris::arb_vault::LsdType::Eris {
-    //                 addr: hub_addr.to_string(),
-    //                 cw20: self.amp_token.get_address_string(),
-    //             },
-    //             disabled: false,
-    //         }],
-    //     };
+            denom: "arbLUNA".into(),
+            fee_config: eris::arb_vault::FeeConfig {
+                protocol_fee_contract: "fee".to_string(),
+                protocol_performance_fee: Decimal::from_str("0.1").unwrap(),
+                protocol_withdraw_fee: Decimal::from_str("0.01").unwrap(),
+                immediate_withdraw_fee: Decimal::from_str("0.03").unwrap(),
+            },
+            unbond_time_s: 24 * 24 * 60 * 60,
+            utilization_method: eris::arb_vault::UtilizationMethod::Steps(vec![
+                (Decimal::from_ratio(10u128, 1000u128), Decimal::from_ratio(50u128, 100u128)),
+                (Decimal::from_ratio(15u128, 1000u128), Decimal::from_ratio(70u128, 100u128)),
+                (Decimal::from_ratio(20u128, 1000u128), Decimal::from_ratio(90u128, 100u128)),
+                (Decimal::from_ratio(25u128, 1000u128), Decimal::from_ratio(100u128, 100u128)),
+            ]),
+            utoken: "uluna".to_string(),
+            whitelist: vec!["executor".to_string()],
+            lsds: vec![LsdConfig {
+                name: "eris".into(),
+                lsd_type: eris::arb_vault::LsdType::Eris {
+                    addr: hub_addr.to_string(),
+                    denom: self.amp_token.get_address_string(),
+                },
+                disabled: false,
+            }],
+        };
 
-    //     let instance = router
-    //         .instantiate_contract(code_id, owner, &msg, &[], String::from("arb-vault"), None)
-    //         .unwrap();
+        let instance = router
+            .instantiate_contract(code_id, owner, &msg, &[], String::from("arb-vault"), None)
+            .unwrap();
 
-    //     self.arb_vault = Some(ContractInfo {
-    //         address: instance,
-    //         code_id,
-    //     })
-    //     .into()
-    // }
+        self.arb_vault = Some(ContractInfo {
+            address: instance,
+            code_id,
+        })
+        .into()
+    }
 
     // fn init_stader(&mut self, router: &mut CustomApp, owner: Addr) {
     //     self.init_stader_reward(router, owner.clone());
@@ -529,114 +529,110 @@ impl BaseErisTestPackage {
     //     .into();
     // }
 
-    // pub fn fixed_steak_reply(deps: DepsMut, env: Env, reply: Reply) -> StdResult<Response> {
-    //     match reply.id {
-    //         1 => {
-    //             let response = reply.result.into_result().unwrap();
+    pub fn fixed_steak_reply(deps: DepsMut, env: Env, reply: Reply) -> StdResult<Response> {
+        match reply.id {
+            1 => {
+                let response = reply.result.into_result().unwrap();
 
-    //             let event = response
-    //                 .events
-    //                 .iter()
-    //                 .find(|event| event.ty == "instantiate")
-    //                 .ok_or_else(|| StdError::generic_err("cannot find `instantiate` event"))?;
+                let event = response
+                    .events
+                    .iter()
+                    .find(|event| event.ty == "instantiate")
+                    .ok_or_else(|| StdError::generic_err("cannot find `instantiate` event"))?;
 
-    //             let contract_addr_str = &event
-    //                 .attributes
-    //                 .iter()
-    //                 .find(|attr| attr.key == "_contract_address" || attr.key == "_contract_addr")
-    //                 .ok_or_else(|| {
-    //                     StdError::generic_err("cannot find `_contract_address` attribute")
-    //                 })?
-    //                 .value;
+                let contract_addr_str = &event
+                    .attributes
+                    .iter()
+                    .find(|attr| attr.key == "_contract_address" || attr.key == "_contract_addr")
+                    .ok_or_else(|| {
+                        StdError::generic_err("cannot find `_contract_address` attribute")
+                    })?
+                    .value;
 
-    //             Item::new("steak_token").save(deps.storage, contract_addr_str)?;
+                Item::new("steak_token").save(deps.storage, contract_addr_str)?;
 
-    //             Ok(Response::new())
-    //         },
-    //         _ => steak_hub::contract::reply(deps, env, reply),
-    //     }
-    // }
+                Ok(Response::new())
+            },
+            _ => steak_hub::contract::reply(deps, env, reply),
+        }
+    }
 
-    // fn init_steak_hub(&mut self, router: &mut CustomApp, owner: Addr) {
-    //     let hub_contract = Box::new(
-    //         ContractWrapper::new(
-    //             steak_hub::contract::execute,
-    //             steak_hub::contract::instantiate,
-    //             steak_hub::contract::query,
-    //         )
-    //         .with_reply(BaseErisTestPackage::fixed_steak_reply),
-    //     );
+    fn init_steak_hub(&mut self, router: &mut CustomApp, owner: Addr) {
+        let hub_contract = Box::new(
+            ContractWrapper::new(
+                steak_hub::contract::execute,
+                steak_hub::contract::instantiate,
+                steak_hub::contract::query,
+            )
+            .with_reply(BaseErisTestPackage::fixed_steak_reply),
+        );
 
-    //     // let x = steak_hub::contract::reply;
+        // let x = steak_hub::contract::reply;
 
-    //     let code_id = router.store_code(hub_contract);
+        let code_id = router.store_code(hub_contract);
 
-    //     let init_msg = steak::hub::InstantiateMsg {
-    //         cw20_code_id: self.burnable_token_id.unwrap(),
-    //         owner: owner.to_string(),
-    //         name: "Staking token".to_string(),
-    //         symbol: "stake".to_string(),
-    //         decimals: 6,
-    //         epoch_period: 259200,   // 3 * 24 * 60 * 60 = 3 days
-    //         unbond_period: 1814400, // 21 * 24 * 60 * 60 = 21 days
-    //         validators: vec!["val1".to_string(), "val2".to_string(), "val3".to_string()],
-    //         denom: "uluna".to_string(),
-    //         fee_account: "fee".to_string(),
-    //         fee_account_type: "Wallet".to_string(),
-    //         fee_amount: Decimal::from_ratio(1u128, 100u128),
-    //         label: None,
-    //         marketing: None,
-    //         max_fee_amount: Decimal::from_ratio(10u128, 100u128),
-    //         dust_collector: None,
-    //     };
+        let init_msg = steak::hub_tf::InstantiateMsg {
+            owner: owner.to_string(),
+            steak_denom: "stake".into(),
+            token_factory: "CosmWasm".into(),
+            epoch_period: 259200,   // 3 * 24 * 60 * 60 = 3 days
+            unbond_period: 1814400, // 21 * 24 * 60 * 60 = 21 days
+            validators: vec!["val1".to_string(), "val2".to_string(), "val3".to_string()],
+            denom: "uluna".to_string(),
+            fee_account: "fee".to_string(),
+            fee_account_type: "Wallet".to_string(),
+            fee_amount: Decimal::from_ratio(1u128, 100u128),
+            max_fee_amount: Decimal::from_ratio(10u128, 100u128),
+            dust_collector: None,
+        };
 
-    //     let instance = router
-    //         .instantiate_contract(code_id, owner, &init_msg, &[], "Backbone Hub", None)
-    //         .unwrap();
+        let instance = router
+            .instantiate_contract(code_id, owner, &init_msg, &[], "Backbone Hub", None)
+            .unwrap();
 
-    //     let config: steak::hub::ConfigResponse = router
-    //         .wrap()
-    //         .query_wasm_smart(instance.to_string(), &steak::hub::QueryMsg::Config {})
-    //         .unwrap();
+        let config: steak::hub::ConfigResponse = router
+            .wrap()
+            .query_wasm_smart(instance.to_string(), &steak::hub::QueryMsg::Config {})
+            .unwrap();
 
-    //     self.steak_token = Some(ContractInfo {
-    //         address: Addr::unchecked(config.steak_token),
-    //         code_id: self.token_id.unwrap(),
-    //     })
-    //     .into();
+        self.steak_token = Some(ContractInfo {
+            address: Addr::unchecked(config.steak_token),
+            code_id: 0,
+        })
+        .into();
 
-    //     self.steak_hub = Some(ContractInfo {
-    //         address: instance,
-    //         code_id,
-    //     })
-    //     .into()
-    // }
+        self.steak_hub = Some(ContractInfo {
+            address: instance,
+            code_id,
+        })
+        .into()
+    }
 
-    // fn init_arb_fake_contract(&mut self, router: &mut CustomApp, owner: Addr) {
-    //     let contract = Box::new(ContractWrapper::new_with_empty(
-    //         arb_contract::execute,
-    //         arb_contract::instantiate,
-    //         arb_contract::query,
-    //     ));
-    //     let code_id = router.store_code(contract);
+    fn init_arb_fake_contract(&mut self, router: &mut CustomApp, owner: Addr) {
+        let contract = Box::new(ContractWrapper::new_with_empty(
+            arb_contract::execute,
+            arb_contract::instantiate,
+            arb_contract::query,
+        ));
+        let code_id = router.store_code(contract);
 
-    //     let instance = router
-    //         .instantiate_contract(
-    //             code_id,
-    //             owner,
-    //             &arb_contract::InstantiateMsg {},
-    //             &[],
-    //             String::from("arb-fake-contract"),
-    //             None,
-    //         )
-    //         .unwrap();
+        let instance = router
+            .instantiate_contract(
+                code_id,
+                owner,
+                &arb_contract::InstantiateMsg {},
+                &[],
+                String::from("arb-fake-contract"),
+                None,
+            )
+            .unwrap();
 
-    //     self.arb_fake_contract = Some(ContractInfo {
-    //         address: instance,
-    //         code_id,
-    //     })
-    //     .into()
-    // }
+        self.arb_fake_contract = Some(ContractInfo {
+            address: instance,
+            code_id,
+        })
+        .into()
+    }
 
     fn init_hub_delegation_strategy(
         &mut self,

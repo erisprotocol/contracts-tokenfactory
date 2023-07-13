@@ -1,6 +1,8 @@
 // pub mod asset;
 pub mod adapters;
 pub mod amp_gauges;
+pub mod arb_vault;
+pub mod constants;
 pub mod emp_gauges;
 pub mod governance_helper;
 pub mod helper;

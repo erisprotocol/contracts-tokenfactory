@@ -16,7 +16,7 @@ X-kujira-X = []
 X-injective-X = []
 X-osmosis-X = []
 
-default = ["X-osmosis-X"]
+default = ["X-whitewhale-X"]
 
 [dependencies]
 cw2 = "0.13.2"
@@ -37,8 +37,8 @@ astroport = { git = "https://github.com/astroport-fi/astroport-core.git", defaul
 eris = { path = "../eris" }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 
-eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-osmosis" }
-# eris-arb-vault = { path = "../../contracts/arb-vault" }
+eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-whitewhale" }
+eris-arb-vault = { path = "../../contracts/arb-vault" }
 eris-gov-voting-escrow = { path = "../../contracts/amp-governance/voting_escrow" }
 eris-gov-emp-gauges = { path = "../../contracts/amp-governance/emp_gauges" }
 eris-gov-amp-gauges = { path = "../../contracts/amp-governance/amp_gauges" }
@@ -46,8 +46,8 @@ eris-gov-prop-gauges = { path = "../../contracts/amp-governance/prop_gauges" }
 
 stader = { git = "https://github.com/stader-labs/lunax.git", package = "staking", default-features = false, rev = "20143548e2dea807b343fe6ad60375086af35ea9" }
 stader-reward = { git = "https://github.com/stader-labs/lunax.git", package = "reward", default-features = false, rev = "20143548e2dea807b343fe6ad60375086af35ea9" }
-steak-hub = { git = "https://github.com/PFC-developer/steak-contracts.git", package = "pfc-steak-hub", default-features = false, rev = "6fbc9f9190da6e179ba9f84494e3b7e929d38842" }
-steak = { git = "https://github.com/PFC-developer/steak-contracts.git", package = "pfc-steak", default-features = false, rev = "6fbc9f9190da6e179ba9f84494e3b7e929d38842" }
+steak-hub = { git = "https://github.com/PFC-developer/steak-contracts.git", package = "pfc-steak-hub-tf", default-features = false, rev = "425818764da1c6b87080b99f47ecebcccbc99dd8" }
+steak = { git = "https://github.com/PFC-developer/steak-contracts.git", package = "pfc-steak", default-features = false, rev = "425818764da1c6b87080b99f47ecebcccbc99dd8" }
 
 kujira = "0.7.13"
 osmosis-std = "0.15.3"

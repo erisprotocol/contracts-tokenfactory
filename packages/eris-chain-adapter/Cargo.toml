@@ -25,4 +25,4 @@ X-kujira-X = []
 X-injective-X = []
 X-osmosis-X = []
 
-default = ["X-osmosis-X"]
+default = ["X-whitewhale-X"]

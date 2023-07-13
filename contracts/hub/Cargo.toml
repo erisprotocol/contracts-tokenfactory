@@ -1,5 +1,5 @@
 [package]
-name = "eris-staking-hub-tokenfactory-osmosis"
+name = "eris-staking-hub-tokenfactory-whitewhale"
 version = "1.7.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
