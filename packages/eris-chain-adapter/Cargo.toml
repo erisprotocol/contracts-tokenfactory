@@ -9,7 +9,7 @@ homepage = "https://www.erisprotocol.com"
 repository = "https://github.com/erisprotocol/contracts-kujira"
 
 [dependencies]
-cosmwasm-std =  { version = "1.1.3", features = ["stargate"] }
+cosmwasm-std = { version = "1.1.3", features = ["stargate"] }
 cosmwasm-schema = "1.1.3"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
@@ -18,11 +18,13 @@ eris-kujira = { path = "../eris-kujira" }
 eris-whitewhale = { path = "../eris-whitewhale" }
 eris-injective = { path = "../eris-injective" }
 eris-osmosis = { path = "../eris-osmosis" }
+eris-neutron = { path = "../eris-neutron" }
 
 [features]
 X-whitewhale-X = []
 X-kujira-X = []
 X-injective-X = []
 X-osmosis-X = []
+X-neutron-X = []
 
-default = ["X-whitewhale-X"]
+default = ["X-neutron-X"]

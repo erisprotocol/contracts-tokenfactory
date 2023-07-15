@@ -70,6 +70,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "astroport"
+version = "2.8.0"
+source = "git+https://github.com/astroport-fi/astroport-core.git?rev=3b44a4044b823a145730f66ffaf7ae4205b2cd35#3b44a4044b823a145730f66ffaf7ae4205b2cd35"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "cw-utils 0.15.1",
+ "cw20 0.15.1",
+ "itertools",
+ "uint",
+]
+
+[[package]]
+name = "astroport"
+version = "3.1.3"
+source = "git+https://github.com/astroport-fi/astroport-core.git?branch=main#aec333976fa3716c90ce5cf9d5ba0e29347dc712"
+dependencies = [
+ "astroport-circular-buffer",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "cw-utils 1.0.1",
+ "cw20 0.15.1",
+ "cw3",
+ "itertools",
+ "uint",
+]
+
+[[package]]
+name = "astroport-circular-buffer"
+version = "0.1.0"
+source = "git+https://github.com/astroport-fi/astroport-core.git?branch=main#aec333976fa3716c90ce5cf9d5ba0e29347dc712"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "thiserror",
+]
+
+[[package]]
 name = "astroport-factory"
 version = "1.3.0"
 source = "git+https://github.com/astroport-fi/astroport-core.git?rev=bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62#bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62"
@@ -91,7 +132,7 @@ version = "2.1.0"
 source = "git+https://github.com/astroport-fi/astroport-core.git?rev=bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62#bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62"
 dependencies = [
  "astroport 2.0.0",
- "astroport-governance",
+ "astroport-governance 1.2.0",
  "cosmwasm-std",
  "cw-storage-plus 0.13.4",
  "cw2 0.13.4",
@@ -100,6 +141,19 @@ dependencies = [
  "schemars",
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "astroport-governance"
+version = "1.1.0"
+source = "git+https://github.com/astroport-fi/astroport-governance.git?rev=6cb3becc39c9d0c29eff66bbf7dd751a882fea7d#6cb3becc39c9d0c29eff66bbf7dd751a882fea7d"
+dependencies = [
+ "astroport 3.1.3",
+ "cosmwasm-std",
+ "cw-storage-plus 0.13.4",
+ "cw20 0.13.4",
+ "schemars",
+ "serde",
 ]
 
 [[package]]
@@ -751,6 +805,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw3"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fe0b587008aa221cd2a2579a21990a28c4347dc53ad43167c68ad765f5b6efa"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 1.0.1",
+ "cw20 1.0.1",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "der"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -860,25 +929,26 @@ dependencies = [
 name = "eris"
 version = "1.6.0"
 dependencies = [
- "astroport 2.0.0",
+ "astroport 2.8.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw20 0.13.4",
+ "cw20-base 0.13.4",
  "eris-chain-adapter",
  "schemars",
  "serde",
 ]
 
 [[package]]
-name = "eris-arb-vault-whitewhale"
+name = "eris-arb-vault-neutron"
 version = "1.0.2"
 dependencies = [
  "anyhow",
- "astroport 2.0.0",
+ "astroport 2.8.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.16.2",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 0.13.4",
  "cw20-base 0.13.4",
@@ -893,6 +963,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "eris-astroport-farm-neutron"
+version = "1.4.0"
+dependencies = [
+ "astroport 2.8.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "cw20 0.13.4",
+ "eris",
+ "eris-chain-adapter",
+ "eris-chain-shared",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "eris-chain-adapter"
 version = "1.2.2"
 dependencies = [
@@ -901,6 +988,7 @@ dependencies = [
  "eris-chain-shared",
  "eris-injective",
  "eris-kujira",
+ "eris-neutron",
  "eris-osmosis",
  "eris-whitewhale",
  "schemars",
@@ -919,11 +1007,63 @@ dependencies = [
 ]
 
 [[package]]
+name = "eris-compound-proxy"
+version = "1.6.1"
+dependencies = [
+ "astroport 2.8.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test 0.13.4",
+ "cw-storage-plus 0.15.1",
+ "cw2 0.13.4",
+ "cw20 0.13.4",
+ "eris",
+ "integer-sqrt",
+ "proptest 0.10.1",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "eris-fees-collector"
+version = "1.3.0"
+dependencies = [
+ "astroport 2.8.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test 0.13.4",
+ "cw-storage-plus 0.15.1",
+ "cw20 0.13.4",
+ "eris",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "eris-generator-proxy"
+version = "1.4.0"
+dependencies = [
+ "astroport 2.8.0",
+ "astroport-governance 1.1.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "cw2 0.13.4",
+ "cw20 0.13.4",
+ "eris",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "eris-gov-amp-gauges"
 version = "1.4.0"
 dependencies = [
  "anyhow",
- "astroport 2.0.0",
+ "astroport 2.8.0",
  "astroport-factory",
  "astroport-generator",
  "astroport-pair",
@@ -933,14 +1073,14 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.13.4",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 0.13.4",
  "eris",
  "eris-gov-voting-escrow",
  "eris-tests",
  "itertools",
- "proptest",
+ "proptest 1.1.0",
  "thiserror",
 ]
 
@@ -949,7 +1089,7 @@ name = "eris-gov-emp-gauges"
 version = "1.4.0"
 dependencies = [
  "anyhow",
- "astroport 2.0.0",
+ "astroport 2.8.0",
  "astroport-factory",
  "astroport-generator",
  "astroport-pair",
@@ -959,14 +1099,14 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.13.4",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 0.13.4",
  "eris",
  "eris-gov-voting-escrow",
  "eris-tests",
  "itertools",
- "proptest",
+ "proptest 1.1.0",
  "thiserror",
 ]
 
@@ -975,7 +1115,7 @@ name = "eris-gov-prop-gauges"
 version = "1.4.0"
 dependencies = [
  "anyhow",
- "astroport 2.0.0",
+ "astroport 2.8.0",
  "astroport-factory",
  "astroport-generator",
  "astroport-pair",
@@ -985,7 +1125,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.13.4",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 0.13.4",
  "eris",
@@ -994,7 +1134,7 @@ dependencies = [
  "eris-gov-voting-escrow",
  "eris-tests",
  "itertools",
- "proptest",
+ "proptest 1.1.0",
  "thiserror",
 ]
 
@@ -1003,18 +1143,18 @@ name = "eris-gov-voting-escrow"
 version = "1.4.0"
 dependencies = [
  "anyhow",
- "astroport 2.0.0",
+ "astroport 2.8.0",
  "astroport-staking",
  "astroport-token",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.13.4",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 0.13.4",
  "cw20-base 0.13.4",
  "eris",
- "proptest",
+ "proptest 1.1.0",
  "thiserror",
 ]
 
@@ -1056,8 +1196,20 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-whitewhale",
+ "eris-staking-hub-tokenfactory-neutron",
  "kujira",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "eris-neutron"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "eris-chain-shared",
+ "osmosis-std",
  "schemars",
  "serde",
 ]
@@ -1075,12 +1227,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-whitewhale"
+name = "eris-staking-hub-tokenfactory-neutron"
 version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "eris",
  "eris-chain-adapter",
@@ -1092,26 +1244,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "eris-staking-token"
+version = "1.0.1"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw20 0.13.4",
+ "cw20-base 0.13.4",
+]
+
+[[package]]
 name = "eris-tests"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "astroport 2.0.0",
+ "astroport 2.8.0",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.16.2",
- "cw-storage-plus 0.13.4",
+ "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 0.13.4",
  "cw20-base 0.13.4",
  "eris",
- "eris-arb-vault-whitewhale",
+ "eris-arb-vault-neutron",
  "eris-chain-adapter",
  "eris-gov-amp-gauges",
  "eris-gov-emp-gauges",
  "eris-gov-prop-gauges",
  "eris-gov-voting-escrow",
- "eris-staking-hub-tokenfactory-whitewhale",
+ "eris-staking-hub-tokenfactory-neutron",
  "kujira",
  "osmosis-std",
  "pfc-steak",
@@ -1493,6 +1655,26 @@ dependencies = [
 
 [[package]]
 name = "proptest"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12e6c80c1139113c28ee4670dc50cc42915228b51f56a9e407f0ec60f966646f"
+dependencies = [
+ "bit-set",
+ "bitflags",
+ "byteorder",
+ "lazy_static",
+ "num-traits",
+ "quick-error 1.2.3",
+ "rand 0.7.3",
+ "rand_chacha 0.2.2",
+ "rand_xorshift 0.2.0",
+ "regex-syntax",
+ "rusty-fork",
+ "tempfile",
+]
+
+[[package]]
+name = "proptest"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29f1b898011ce9595050a68e60f90bad083ff2987a695a42357134c8381fba70"
@@ -1503,9 +1685,9 @@ dependencies = [
  "lazy_static",
  "num-traits",
  "quick-error 2.0.1",
- "rand",
- "rand_chacha",
- "rand_xorshift",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rand_xorshift 0.3.0",
  "regex-syntax",
  "rusty-fork",
  "tempfile",
@@ -1621,13 +1803,36 @@ dependencies = [
 
 [[package]]
 name = "rand"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
+dependencies = [
+ "getrandom 0.1.16",
+ "libc",
+ "rand_chacha 0.2.2",
+ "rand_core 0.5.1",
+ "rand_hc",
+]
+
+[[package]]
+name = "rand"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34af8d1a0e25924bc5b7c43c079c942339d8f0a8b57c39049bef581b46327404"
 dependencies = [
  "libc",
- "rand_chacha",
+ "rand_chacha 0.3.1",
  "rand_core 0.6.3",
+]
+
+[[package]]
+name = "rand_chacha"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4c8ed856279c9737206bf725bf36935d8666ead7aa69b52be55af369d193402"
+dependencies = [
+ "ppv-lite86",
+ "rand_core 0.5.1",
 ]
 
 [[package]]
@@ -1656,6 +1861,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
  "getrandom 0.2.6",
+]
+
+[[package]]
+name = "rand_hc"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
+dependencies = [
+ "rand_core 0.5.1",
+]
+
+[[package]]
+name = "rand_xorshift"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77d416b86801d23dde1aa643023b775c3a462efc0ed96443add11546cdf1dca8"
+dependencies = [
+ "rand_core 0.5.1",
 ]
 
 [[package]]

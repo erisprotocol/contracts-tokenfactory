@@ -324,6 +324,7 @@ pub fn single_stage_swap(deps: DepsMut, env: Env, stage: Vec<SingleSwapConfig>) 
     Ok(response)
 }
 
+#[allow(clippy::cmp_owned)]
 fn validate_no_utoken_or_ustake_swap(
     stages: &Option<Vec<Vec<SingleSwapConfig>>>,
     stake_token: &StakeToken,
@@ -1100,7 +1101,7 @@ pub fn update_config(
 
         state.fee_config.save(deps.storage, &fee_config)?;
     }
-    
+
     if let Some(epoch_period) = epoch_period {
         if epoch_period == 0 {
             return Err(ContractError::CantBeZero("epoch_period".into()));

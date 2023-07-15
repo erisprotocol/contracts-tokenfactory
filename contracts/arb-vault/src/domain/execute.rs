@@ -379,14 +379,14 @@ fn create_withdraw_msgs(
     let protocol_fee_msg = if !withdraw_protocol_fee.is_zero() {
         Some(
             native_asset(config.utoken.clone(), withdraw_protocol_fee)
-                .into_msg(querier, fee_config.protocol_fee_contract)?,
+                .into_msg(fee_config.protocol_fee_contract)?,
         )
     } else {
         None
     };
 
     let withdraw_msg =
-        native_asset(config.utoken.clone(), receive_amount).into_msg(querier, receiver.clone())?;
+        native_asset(config.utoken.clone(), receive_amount).into_msg(receiver.clone())?;
 
     Ok(Response::new()
         // send assets to the sender

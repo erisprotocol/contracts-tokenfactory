@@ -201,10 +201,7 @@ fn provide_liquidity_no_token() {
 
     let res = execute(deps.as_mut(), mock_env(), mock_info("user", &[]), provide_msg).unwrap_err();
 
-    assert_eq!(
-        res.to_string(),
-        "Generic error: Native token balance mismatch between the argument and the transferred"
-    )
+    assert_eq!(res.to_string(), "Generic error: No funds sent")
 }
 
 #[test]
@@ -244,7 +241,7 @@ fn provide_liquidity_zero_throws() {
         execute(deps.as_mut(), mock_env(), mock_info("user", &[coin(0, "utoken")]), provide_msg)
             .unwrap_err();
 
-    assert_eq!(res, ContractError::InvalidZeroAmount {})
+    assert_eq!(res.to_string(), "Generic error: No funds sent")
 }
 
 fn _provide_liquidity() -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response) {
@@ -1901,9 +1898,7 @@ fn execute_arb() {
     assert_eq!(res.messages.len(), 1);
     assert_eq!(
         res.messages[0].msg,
-        native_asset("utoken".to_string(), Uint128::new(8231))
-            .into_msg(&deps.as_ref().querier, "fee")
-            .unwrap()
+        native_asset("utoken".to_string(), Uint128::new(8231)).into_msg("fee").unwrap()
     );
 
     let res = execute(

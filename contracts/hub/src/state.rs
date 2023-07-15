@@ -62,14 +62,14 @@ impl Default for State<'static> {
     fn default() -> Self {
         let pb_indexes = PreviousBatchesIndexes {
             reconciled: MultiIndex::new(
-                |d: &Batch| d.reconciled.into(),
+                |_, d: &Batch| d.reconciled.into(),
                 "previous_batches",
                 "previous_batches__reconciled",
             ),
         };
         let ubr_indexes = UnbondRequestsIndexes {
             user: MultiIndex::new(
-                |d: &UnbondRequest| d.user.clone().into(),
+                |_, d: &UnbondRequest| d.user.clone().into(),
                 "unbond_requests",
                 "unbond_requests__user",
             ),

@@ -6,7 +6,7 @@ use eris_tests::{mock_app, CustomAppExtension, EventChecker};
 use eris::prop_gauges::ExecuteMsg;
 
 #[test]
-fn update_configs() -> StdResult<()> {
+fn integration_update_configs() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 

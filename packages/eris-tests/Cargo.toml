@@ -15,8 +15,9 @@ X-whitewhale-X = []
 X-kujira-X = []
 X-injective-X = []
 X-osmosis-X = []
+X-neutron-X = []
 
-default = ["X-whitewhale-X"]
+default = ["X-neutron-X"]
 
 [dependencies]
 cw2 = "0.13.2"
@@ -30,15 +31,15 @@ cosmwasm-schema = "1.1"
 cw-multi-test = { git = "https://github.com/erisprotocol/cw-multi-test.git", default-features = false, features = [
     "iterator",
 ], rev = "5f2f7062187d762b71fd22b91157c4e88de87a64" }
-cw-storage-plus = "0.13.2"
+cw-storage-plus = "0.15.1"
 
-astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
 
 eris = { path = "../eris" }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 
-eris-arb-vault = { path = "../../contracts/arb-vault", package = "eris-arb-vault-whitewhale" }
-eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-whitewhale" }
+eris-arb-vault = { path = "../../contracts/arb-vault", package = "eris-arb-vault-neutron" }
+eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-neutron" }
 eris-gov-voting-escrow = { path = "../../contracts/amp-governance/voting_escrow" }
 eris-gov-emp-gauges = { path = "../../contracts/amp-governance/emp_gauges" }
 eris-gov-amp-gauges = { path = "../../contracts/amp-governance/amp_gauges" }

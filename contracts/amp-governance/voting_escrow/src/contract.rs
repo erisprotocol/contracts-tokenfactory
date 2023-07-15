@@ -556,8 +556,8 @@ fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Cont
         Err(ContractError::LockHasNotExpired {})
     } else {
         let config = CONFIG.load(deps.storage)?;
-        let transfer_msg = native_asset(config.deposit_denom.clone(), lock.amount)
-            .into_msg(&deps.querier, sender.clone())?;
+        let transfer_msg =
+            native_asset(config.deposit_denom.clone(), lock.amount).into_msg(sender.clone())?;
 
         let amount = lock.amount;
         lock.amount = Uint128::zero();

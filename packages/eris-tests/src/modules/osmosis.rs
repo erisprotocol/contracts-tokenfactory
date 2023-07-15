@@ -1,8 +1,8 @@
 use anyhow::Result as AnyResult;
 use cosmwasm_schema::{schemars, serde};
-use cosmwasm_std::{attr, Addr, BankMsg, CosmosMsg, Decimal, Empty, Event, Uint128};
+use cosmwasm_std::{Addr, Empty};
 
-use cw_multi_test::{AppResponse, BankSudo, CosmosRouter, Module, SudoMsg};
+use cw_multi_test::{AppResponse, CosmosRouter, Module};
 use eris_chain_adapter::types::CustomMsgType;
 
 pub struct OsmosisModule {}
@@ -18,12 +18,12 @@ impl Module for OsmosisModule {
 
     fn execute<ExecC, QueryC>(
         &self,
-        api: &dyn cosmwasm_std::Api,
-        storage: &mut dyn cosmwasm_std::Storage,
-        router: &dyn CosmosRouter<ExecC = ExecC, QueryC = QueryC>,
-        block: &cosmwasm_std::BlockInfo,
-        sender: Addr,
-        msg: Self::ExecT,
+        _api: &dyn cosmwasm_std::Api,
+        _storage: &mut dyn cosmwasm_std::Storage,
+        _router: &dyn CosmosRouter<ExecC = ExecC, QueryC = QueryC>,
+        _block: &cosmwasm_std::BlockInfo,
+        _sender: Addr,
+        _msg: Self::ExecT,
     ) -> AnyResult<AppResponse>
     where
         ExecC: std::fmt::Debug

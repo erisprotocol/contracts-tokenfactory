@@ -26,12 +26,12 @@ backtraces = ["cosmwasm-std/backtraces"]
 cw2 = "0.13.2"
 cw20 = "0.13.2"
 cosmwasm-std = "1.1"
-cw-storage-plus = "0.13.2"
+cw-storage-plus = "0.15.1"
 thiserror = { version = "1.0" }
 itertools = "0.10"
 eris = { path = "../../../packages/eris" }
 cosmwasm-schema = "1.1"
-astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
 
 [dev-dependencies]
 cw-multi-test = "0.13.2"

@@ -17,10 +17,10 @@ pub(crate) struct State<'a> {
 impl Default for State<'static> {
     fn default() -> Self {
         let props_indexes = PropsIndexes {
-            time: MultiIndex::new(|d: &PropInfo| d.end_time_s, "props", "props__time"),
+            time: MultiIndex::new(|_, d: &PropInfo| d.end_time_s, "props", "props__time"),
         };
         let user_indexes = UserIndexes {
-            user: MultiIndex::new(|d: &PropUserInfo| d.user.clone(), "users", "users__user"),
+            user: MultiIndex::new(|_, d: &PropUserInfo| d.user.clone(), "users", "users__user"),
         };
 
         Self {

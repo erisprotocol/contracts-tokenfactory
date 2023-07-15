@@ -1,5 +1,5 @@
 [package]
-name = "eris-staking-hub-tokenfactory-whitewhale"
+name = "eris-staking-hub-tokenfactory-neutron"
 version = "1.7.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
@@ -16,7 +16,7 @@ backtraces = ["cosmwasm-std/backtraces"]
 cosmwasm-std = { version = "1.1.3", features = ["staking"] }
 cosmwasm-schema = "1.1.3"
 cw2 = "0.13.2"
-cw-storage-plus = "0.13.2"
+cw-storage-plus = "0.15.1"
 eris = { path = "../../packages/eris" }
 eris-chain-adapter = { path = "../../packages/eris-chain-adapter" }
 eris-chain-shared = { path = "../../packages/eris-chain-shared" }

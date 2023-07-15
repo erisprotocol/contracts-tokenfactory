@@ -17,19 +17,20 @@ X-whitewhale-X = []
 X-kujira-X = []
 X-injective-X = []
 X-osmosis-X = []
-default = ["X-whitewhale-X"]
+X-neutron-X = []
+default = ["X-neutron-X"]
 
 [dependencies]
-cosmwasm-std =  { version = "1.1.3", features = ["stargate"] }
+cosmwasm-std = { version = "1.1.3", features = ["stargate"] }
 cosmwasm-schema = "1.1.3"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 kujira = "0.7.13"
-eris-staking-hub-tokenfactory = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-whitewhale" }
-eris = { path = "../eris"}
-eris-kujira = { path = "../eris-kujira"}
-eris-chain-shared = { path = "../eris-chain-shared"}
-eris-chain-adapter = { path = "../eris-chain-adapter"}
+eris-staking-hub-tokenfactory = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-neutron" }
+eris = { path = "../eris" }
+eris-kujira = { path = "../eris-kujira" }
+eris-chain-shared = { path = "../eris-chain-shared" }
+eris-chain-adapter = { path = "../eris-chain-adapter" }
 
 [dev-dependencies]
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }

@@ -7,7 +7,7 @@ use std::vec;
 use eris::amp_gauges::{ConfigResponse, ExecuteMsg};
 
 #[test]
-fn update_configs() -> StdResult<()> {
+fn integration_update_configs() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -42,7 +42,7 @@ fn update_configs() -> StdResult<()> {
 }
 
 #[test]
-fn vote() -> StdResult<()> {
+fn integration_vote() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -150,7 +150,7 @@ fn vote() -> StdResult<()> {
 }
 
 #[test]
-fn update_vote_extend_locktime() -> StdResult<()> {
+fn integration_update_vote_extend_locktime() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -214,7 +214,8 @@ fn update_vote_extend_locktime() -> StdResult<()> {
 }
 
 #[test]
-fn update_vote_extend_amount() -> StdResult<()> {
+
+fn integration_update_vote_extend_amount() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -316,7 +317,7 @@ fn update_vote_extend_amount() -> StdResult<()> {
 }
 
 #[test]
-fn check_update_owner() -> StdResult<()> {
+fn integration_check_update_owner() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 

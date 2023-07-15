@@ -8,7 +8,7 @@ use eris::emp_gauges::{
 };
 
 #[test]
-fn update_configs() {
+fn integration_update_configs() {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -41,7 +41,7 @@ fn update_configs() {
 }
 
 #[test]
-fn add_points() -> StdResult<()> {
+fn integration_add_points() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -254,7 +254,7 @@ fn add_points() -> StdResult<()> {
 }
 
 #[test]
-fn check_kick_holders_works() -> StdResult<()> {
+fn integration_check_kick_holders_works() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -308,7 +308,7 @@ fn check_kick_holders_works() -> StdResult<()> {
 }
 
 #[test]
-fn add_points_later() -> StdResult<()> {
+fn integration_add_points_later() -> StdResult<()> {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 
@@ -366,7 +366,7 @@ fn add_points_later() -> StdResult<()> {
 }
 
 #[test]
-fn check_update_owner() {
+fn integration_check_update_owner() {
     let mut router = mock_app();
     let helper = EscrowHelper::init(&mut router, false);
 

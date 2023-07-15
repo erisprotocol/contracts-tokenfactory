@@ -103,7 +103,7 @@ pub fn execute_assert_result(
     } else if new_balances.vault_takeable >= fee_amount {
         // send fees in utoken if takeable allows it.
         let utoken = native_asset(config.utoken, fee_amount);
-        let fee_msg = utoken.into_msg(&deps.querier, fee_config.protocol_fee_contract)?;
+        let fee_msg = utoken.into_msg(fee_config.protocol_fee_contract)?;
 
         (Some(fee_msg), vec![])
     } else {
@@ -114,7 +114,7 @@ pub fn execute_assert_result(
             .adapter
             .asset()
             .with_balance(fee_xamount)
-            .into_msg(&deps.querier, fee_config.protocol_fee_contract)?;
+            .into_msg(fee_config.protocol_fee_contract)?;
 
         (
             Some(fee_msg),
