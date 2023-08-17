@@ -9,7 +9,7 @@ use eris::hub::{
     StakeToken, StateResponse, WantedDelegationsResponse, WantedDelegationsShare,
 };
 
-use eris_chain_adapter::types::test_chain_config;
+use eris_chain_adapter::types::{test_chain_config, CustomQueryType};
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::contract::{execute, instantiate};
@@ -27,7 +27,7 @@ use super::helpers::{mock_dependencies, mock_env_at_timestamp, query_helper};
 
 pub const STAKE_DENOM: &str = "factory/cosmos2contract/stake";
 
-fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
+fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, CustomQueryType> {
     let mut deps = mock_dependencies();
 
     let res = instantiate(

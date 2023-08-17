@@ -6,6 +6,7 @@ use cosmwasm_std::{
     CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
 };
 use eris::adapters::asset::{AssetEx, AssetInfoEx};
+use eris::CustomMsgExt2;
 
 pub fn validate_percentage(value: Decimal, field: &str) -> StdResult<()> {
     if value > Decimal::one() {
@@ -107,7 +108,13 @@ pub fn execute_send_income(
     REWARD_INFO.save(deps.storage, &astro_token_addr, &reward_info)?;
 
     if !fee.is_zero() {
-        messages.push(config.astro_token.with_balance(fee).transfer_msg(&config.fee_collector)?);
+        messages.push(
+            config
+                .astro_token
+                .with_balance(fee)
+                .transfer_msg(&config.fee_collector)?
+                .to_normal()?,
+        );
     }
 
     Ok(Response::new().add_messages(messages))

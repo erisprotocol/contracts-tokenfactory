@@ -1,5 +1,6 @@
 use astroport::asset::AssetInfo;
 use cosmwasm_std::{Addr, CosmosMsg, Decimal, Deps, Uint128};
+use eris_chain_adapter::types::CustomMsgType;
 
 use crate::error::CustomResult;
 
@@ -8,11 +9,15 @@ pub trait LsdAdapter {
 
     fn asset(&self) -> AssetInfo;
 
-    fn unbond(&self, deps: &Deps, amount: Uint128) -> CustomResult<Vec<CosmosMsg>>;
+    fn unbond(&self, deps: &Deps, amount: Uint128) -> CustomResult<Vec<CosmosMsg<CustomMsgType>>>;
 
     fn query_unbonding(&mut self, deps: &Deps) -> CustomResult<Uint128>;
 
-    fn withdraw(&mut self, deps: &Deps, amount: Uint128) -> CustomResult<Vec<CosmosMsg>>;
+    fn withdraw(
+        &mut self,
+        deps: &Deps,
+        amount: Uint128,
+    ) -> CustomResult<Vec<CosmosMsg<CustomMsgType>>>;
 
     fn query_withdrawable(&mut self, deps: &Deps) -> CustomResult<Uint128>;
 

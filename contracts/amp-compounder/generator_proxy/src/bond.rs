@@ -11,6 +11,7 @@ use cosmwasm_std::{
     Response, StdError, StdResult, Uint128,
 };
 use eris::adapters::asset::{AssetEx, AssetInfoEx};
+use eris::CustomMsgExt2;
 use std::cmp;
 use std::collections::HashMap;
 
@@ -36,7 +37,7 @@ pub fn execute_deposit(
                 .iter()
                 .map(|bal| attr("prev_balance", format!("{0}{1}", bal.1, bal.0)))
                 .collect::<Vec<Attribute>>();
-            messages.push(config.generator.claim_rewards_msg(vec![lp_token])?);
+            messages.push(config.generator.claim_rewards_msg(vec![lp_token])?.to_normal()?);
             messages.push(
                 CallbackMsg::AfterBondClaimed {
                     lp_token: info.sender.clone(),
@@ -79,7 +80,7 @@ pub fn execute_withdraw(
 
     let mut messages: Vec<CosmosMsg> = vec![];
     if claim {
-        messages.push(config.generator.claim_rewards_msg(vec![lp_token.to_string()])?);
+        messages.push(config.generator.claim_rewards_msg(vec![lp_token.to_string()])?.to_normal()?);
         messages.push(
             CallbackMsg::AfterBondClaimed {
                 lp_token: lp_token.clone(),
@@ -121,7 +122,8 @@ pub fn execute_claim_rewards(
         let (claim, prev_balances) =
             reconcile_claimed_by_others(deps.branch(), &env, &config, &lp_token, &astro_user_info)?;
         if claim {
-            messages.push(config.generator.claim_rewards_msg(vec![lp_token.to_string()])?);
+            messages
+                .push(config.generator.claim_rewards_msg(vec![lp_token.to_string()])?.to_normal()?);
             messages.push(
                 CallbackMsg::AfterBondClaimed {
                     lp_token: lp_token.clone(),
@@ -399,7 +401,7 @@ pub fn callback_deposit(
     USER_INFO.save(deps.storage, (&lp_token, &staker_addr), &user_info)?;
     POOL_INFO.save(deps.storage, &lp_token, &pool_info)?;
 
-    let deposit_msg = config.generator.deposit_msg(lp_token.to_string(), amount)?;
+    let deposit_msg = config.generator.deposit_msg(lp_token.to_string(), amount)?.to_normal()?;
     Ok(Response::new()
         .add_message(deposit_msg)
         .add_message(
@@ -435,10 +437,10 @@ pub fn callback_withdraw(
     USER_INFO.save(deps.storage, (&lp_token, &staker_addr), &user_info)?;
     POOL_INFO.save(deps.storage, &lp_token, &pool_info)?;
 
-    let withdraw_msg = config.generator.withdraw_msg(lp_token.to_string(), amount)?;
+    let withdraw_msg = config.generator.withdraw_msg(lp_token.to_string(), amount)?.to_normal()?;
     Ok(Response::new()
         .add_message(withdraw_msg)
-        .add_message(token_asset(lp_token.clone(), amount).transfer_msg(&staker_addr)?)
+        .add_message(token_asset(lp_token.clone(), amount).transfer_msg(&staker_addr)?.to_normal()?)
         .add_message(
             CallbackMsg::AfterBondChanged {
                 lp_token,
@@ -472,7 +474,7 @@ pub fn callback_claim_rewards(
 
         let asset = token.with_balance(*amount);
 
-        messages.push(asset.transfer_msg(&staker_addr)?);
+        messages.push(asset.transfer_msg(&staker_addr)?.to_normal()?);
     }
     user_info.pending_rewards = RestrictedVector::default();
 

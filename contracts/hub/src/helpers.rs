@@ -12,6 +12,7 @@ use eris::{
     helpers::bps::BasicPoints,
     hub::{DelegationStrategy, WantedDelegationsShare},
 };
+use eris_chain_adapter::types::CustomQueryType;
 use itertools::Itertools;
 
 use crate::{
@@ -21,7 +22,7 @@ use crate::{
 
 /// Query the amounts of Token a staker is delegating to a specific validator
 pub(crate) fn query_delegation(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     validator: &str,
     delegator_addr: &Addr,
 ) -> StdResult<Delegation> {
@@ -42,7 +43,7 @@ pub(crate) fn query_delegation(
 
 /// Query the amounts of Token a staker is delegating to each of the validators specified
 pub(crate) fn query_delegations(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     validators: &[String],
     delegator_addr: &Addr,
 ) -> StdResult<Vec<Delegation>> {
@@ -53,7 +54,7 @@ pub(crate) fn query_delegations(
 }
 
 pub(crate) fn query_all_delegations(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     delegator_addr: &Addr,
     utoken: &String,
 ) -> StdResult<Vec<Delegation>> {
@@ -72,7 +73,7 @@ pub(crate) fn query_all_delegations(
 }
 
 pub(crate) fn query_all_delegations_amount(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     delegator_addr: &Addr,
     utoken: &String,
 ) -> StdResult<u128> {
@@ -87,7 +88,10 @@ pub(crate) fn query_all_delegations_amount(
     Ok(total_utoken)
 }
 
-pub fn assert_validator_exists(querier: &QuerierWrapper, validator: &String) -> StdResult<()> {
+pub fn assert_validator_exists(
+    querier: &QuerierWrapper<CustomQueryType>,
+    validator: &String,
+) -> StdResult<()> {
     let _result: ValidatorResponse =
         querier.query(&QueryRequest::Staking(StakingQuery::Validator {
             address: validator.into(),
@@ -96,7 +100,7 @@ pub fn assert_validator_exists(querier: &QuerierWrapper, validator: &String) -> 
 }
 
 pub fn assert_validators_exists(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     validators: &Vec<String>,
 ) -> StdResult<()> {
     for validator in validators {
@@ -119,7 +123,7 @@ pub(crate) fn get_wanted_delegations(
     state: &State,
     env: &Env,
     storage: &dyn Storage,
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     loader: impl GaugeLoader,
 ) -> StdResult<(WantedDelegationsShare, bool)> {
     let delegation_strategy =
@@ -239,7 +243,7 @@ struct Context {
 impl Context {
     pub fn from_emps(
         loader: &impl GaugeLoader,
-        querier: &QuerierWrapper,
+        querier: &QuerierWrapper<CustomQueryType>,
         emp_gauges: Option<Addr>,
     ) -> StdResult<Option<Context>> {
         if let Some(emp_gauges) = emp_gauges {
@@ -263,7 +267,7 @@ impl Context {
 
     pub fn from_amps(
         loader: &impl GaugeLoader,
-        querier: &QuerierWrapper,
+        querier: &QuerierWrapper<CustomQueryType>,
         amp_gauges: Addr,
     ) -> StdResult<Context> {
         let vamp_info = loader.get_amp_tune_info(querier, amp_gauges)?;

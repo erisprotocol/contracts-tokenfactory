@@ -4,7 +4,8 @@ use cosmwasm_std::{
     OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
 use eris_chain_adapter::types::{
-    chain, test_chain_config, CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType,
+    chain, test_chain_config, CustomMsgType, CustomQueryType, DenomType, HubChainConfig, StageType,
+    WithdrawType,
 };
 use serde::de::DeserializeOwned;
 
@@ -25,7 +26,8 @@ pub(super) fn err_unsupported_query<T: std::fmt::Debug>(request: T) -> QuerierRe
     })
 }
 
-pub(super) fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
+pub(super) fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, CustomQueryType>
+{
     OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
@@ -48,12 +50,12 @@ pub(super) fn mock_env_at_timestamp(timestamp: u64) -> Env {
     }
 }
 
-pub(super) fn query_helper<T: DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
+pub(super) fn query_helper<T: DeserializeOwned>(deps: Deps<CustomQueryType>, msg: QueryMsg) -> T {
     from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
 pub(super) fn query_helper_env<T: DeserializeOwned>(
-    deps: Deps,
+    deps: Deps<CustomQueryType>,
     msg: QueryMsg,
     timestamp: u64,
 ) -> T {
@@ -67,7 +69,7 @@ pub(super) fn get_stake_full_denom() -> String {
 
 pub(super) fn set_total_stake_supply(
     state: &State,
-    deps: &mut OwnedDeps<cosmwasm_std::MemoryStorage, MockApi, CustomQuerier>,
+    deps: &mut OwnedDeps<cosmwasm_std::MemoryStorage, MockApi, CustomQuerier, CustomQueryType>,
     total_supply: u128,
 ) {
     state
@@ -99,7 +101,7 @@ pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsg
 // Test setup
 //--------------------------------------------------------------------------------------------------
 
-pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
+pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, CustomQueryType> {
     let mut deps = mock_dependencies();
 
     let res = instantiate(

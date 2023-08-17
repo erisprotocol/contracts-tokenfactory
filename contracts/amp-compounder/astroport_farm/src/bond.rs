@@ -1,4 +1,4 @@
-use crate::error::ContractError;
+use crate::error::{ContractError, ContractResult};
 use crate::state::{Config, State, CONFIG, STATE};
 use astroport::asset::{token_asset, Asset};
 use astroport::querier::query_token_balance;
@@ -22,7 +22,7 @@ pub fn bond_assets(
     no_swap: Option<bool>,
     slippage_tolerance: Option<Decimal>,
     receiver: Addr,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let config = CONFIG.load(deps.storage)?;
     let lp_token = config.lp_token;
 
@@ -63,7 +63,7 @@ pub fn bond_to(
     to: Addr,
     prev_balance: Uint128,
     minimum_receive: Option<Uint128>,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let config = CONFIG.load(deps.storage)?;
 
     let balance = query_token_balance(&deps.querier, &config.lp_token, &env.contract.address)?;
@@ -89,7 +89,7 @@ pub fn bond(
     info: MessageInfo,
     sender_addr: String,
     amount: Uint128,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let staker_addr = deps.api.addr_validate(&sender_addr)?;
 
     let config = CONFIG.load(deps.storage)?;
@@ -109,7 +109,7 @@ fn bond_internal(
     config: Config,
     staker_addr: Addr,
     amount: Uint128,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let chain = chain(&env);
     let lp_balance = config.staking_contract.query_deposit(
         &deps.querier,
@@ -154,7 +154,7 @@ pub fn unbond(
     mut state: State,
     sender: String,
     amount: Uint128,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let chain = chain(&env);
     let staker_addr = deps.api.addr_validate(&sender)?;
 

@@ -12,6 +12,7 @@ use eris::compound_proxy::{CompoundSimulationResponse, PairType};
 use astroport::asset::{Asset, MINIMUM_LIQUIDITY_AMOUNT};
 use eris::adapters::pair::Pair;
 use eris::helper::assert_uniq_assets;
+use eris_chain_adapter::types::CustomMsgType;
 
 const ITERATIONS: u8 = 32;
 
@@ -85,7 +86,7 @@ pub fn query_compound_simulation(
                     info: asset_b_info,
                     amount: asset_b_amount,
                 };
-                let mut _messages: Vec<CosmosMsg> = vec![];
+                let mut _messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
                 let (swap_asset_a_amount, swap_asset_b_amount, return_a_amount, return_b_amount) =
                     calculate_optimal_swap(
                         &deps.querier,

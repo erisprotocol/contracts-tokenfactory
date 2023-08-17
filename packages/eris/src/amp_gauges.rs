@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, QuerierWrapper, StdError, StdResult, Uint128};
+use eris_chain_adapter::types::CustomQueryType;
 
 use crate::voting_escrow::LockInfoResponse;
 
@@ -178,7 +179,7 @@ pub struct UserInfosResponse {
 
 /// Queries amp tune info.
 pub fn get_amp_tune_info(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     amp_gauge_addr: impl Into<String>,
 ) -> StdResult<GaugeInfoResponse> {
     let gauge: GaugeInfoResponse =
@@ -187,7 +188,7 @@ pub fn get_amp_tune_info(
 }
 
 pub fn get_amp_validator_infos(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     amp_gauge_addr: impl Into<String>,
     period: u64,
 ) -> StdResult<Vec<(String, VotedValidatorInfoResponse)>> {

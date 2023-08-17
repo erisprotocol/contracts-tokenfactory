@@ -8,6 +8,7 @@ use cosmwasm_std::{
     Uint128,
 };
 use eris::adapters::asset::{AssetEx, AssetInfoEx};
+use eris::CustomMsgExt2;
 use std::cmp;
 
 pub fn execute_stake(
@@ -251,7 +252,7 @@ pub fn execute_withdraw_unstaked(
     // message
     let transfer_msg =
         token_asset(config.astro_gov.xastro_token, amount).transfer_msg(&info.sender)?;
-    Ok(Response::new().add_message(transfer_msg))
+    Ok(Response::new().add_message(transfer_msg.to_normal()?))
 }
 
 pub fn execute_claim_income(
@@ -279,5 +280,5 @@ pub fn execute_claim_income(
     REWARD_INFO.save(deps.storage, &astro_token_addr, &astro_reward)?;
 
     let transfer_msg = config.astro_token.with_balance(amount).transfer_msg(&info.sender)?;
-    Ok(Response::new().add_message(transfer_msg))
+    Ok(Response::new().add_message(transfer_msg.to_normal()?))
 }

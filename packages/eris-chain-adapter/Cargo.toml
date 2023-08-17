@@ -18,13 +18,13 @@ eris-kujira = { path = "../eris-kujira" }
 eris-whitewhale = { path = "../eris-whitewhale" }
 eris-injective = { path = "../eris-injective" }
 eris-osmosis = { path = "../eris-osmosis" }
-eris-neutron = { path = "../eris-neutron" }
+eris-sei = { path = "../eris-sei" }
 
 [features]
 X-whitewhale-X = []
 X-kujira-X = []
 X-injective-X = []
 X-osmosis-X = []
-X-neutron-X = []
+X-sei-X = []
 
-default = ["X-neutron-X"]
+default = ["X-sei-X"]

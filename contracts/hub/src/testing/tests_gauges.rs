@@ -15,7 +15,7 @@ use eris::hub::{
     UnbondRequestsByBatchResponseItem, UnbondRequestsByUserResponseItem,
     UnbondRequestsByUserResponseItemDetails,
 };
-use eris_chain_adapter::types::test_chain_config;
+use eris_chain_adapter::types::{test_chain_config, CustomQueryType};
 use eris_chain_shared::chain_trait::ChainInterface;
 use itertools::Itertools;
 use protobuf::SpecialFields;
@@ -44,7 +44,7 @@ use super::helpers::{mock_dependencies, mock_env_at_timestamp, query_helper};
 // THIS IS A COPY OF tests_default with the only change of using a gauge delegation_strategy
 pub const STAKE_DENOM: &str = "factory/cosmos2contract/stake";
 
-fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
+fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, CustomQueryType> {
     let mut deps = mock_dependencies();
 
     let res = instantiate(

@@ -1,6 +1,7 @@
 use astroport::asset::AssetInfo;
 use cosmwasm_std::{attr, Addr, Attribute, CosmosMsg, Deps, DepsMut, Env, Uint128};
 use eris::arb_vault::{BalancesDetails, ClaimBalance, LsdConfig, LsdType, ValidatedConfig};
+use eris_chain_adapter::types::CustomMsgType;
 use itertools::Itertools;
 
 use crate::{
@@ -83,8 +84,8 @@ impl LsdGroup {
     pub fn get_withdraw_msgs(
         &mut self,
         deps: &DepsMut,
-    ) -> CustomResult<(Vec<CosmosMsg>, Vec<Attribute>)> {
-        let mut messages: Vec<CosmosMsg> = vec![];
+    ) -> CustomResult<(Vec<CosmosMsg<CustomMsgType>>, Vec<Attribute>)> {
+        let mut messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
         let mut attributes: Vec<Attribute> = vec![attr("action", "arb/execute_withdraw_liquidity")];
 
         for lsd in self.lsds.iter_mut() {
@@ -103,8 +104,8 @@ impl LsdGroup {
     pub fn get_unbond_msgs(
         &mut self,
         deps: &DepsMut,
-    ) -> CustomResult<(Vec<CosmosMsg>, Vec<Attribute>)> {
-        let mut messages: Vec<CosmosMsg> = vec![];
+    ) -> CustomResult<(Vec<CosmosMsg<CustomMsgType>>, Vec<Attribute>)> {
+        let mut messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
         let mut attributes: Vec<Attribute> = vec![attr("action", "arb/execute_unbond_liquidity")];
 
         for lsd in self.lsds.iter_mut() {

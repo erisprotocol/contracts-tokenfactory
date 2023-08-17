@@ -8,15 +8,21 @@ A previous version ([v1.0.0-rc0](https://github.com/st4k3h0us3/steak-contracts/r
 
 ## Contracts
 
-| Contract                               | Description                                              |
-| -------------------------------------- | -------------------------------------------------------- |
-| [`erist-staking-hub`](./contracts/hub) | Manages minting/burning of ampKUJI token and bonded Kuji |
+| Contract                              | Description                                              |
+| ------------------------------------- | -------------------------------------------------------- |
+| [`eris-staking-hub`](./contracts/hub) | Manages minting/burning of ampKUJI token and bonded Kuji |
 
 For the routing of the swap the fin-multi router is used. See <https://github.com/Team-Kujira/fin-multi>
 
 ## Building
 
 For interacting with the smart contract clone <https://github.com/erisprotocol/liquid-staking-scripts> into the same parent folder.
+
+## Scripts
+
+### Run tests without integration
+
+`cargo test -- --skip integration`
 
 ## Changelog
 

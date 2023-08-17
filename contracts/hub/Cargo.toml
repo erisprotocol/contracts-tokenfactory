@@ -1,5 +1,5 @@
 [package]
-name = "eris-staking-hub-tokenfactory-neutron"
+name = "eris-staking-hub-tokenfactory-sei"
 version = "1.7.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"

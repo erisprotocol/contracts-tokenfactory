@@ -33,6 +33,8 @@ cw-storage-plus = "0.15.1"
 schemars = "0.8.1"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
+eris-chain-adapter = { path = "../../../packages/eris-chain-adapter" }
+eris-chain-shared = { path = "../../../packages/eris-chain-shared" }
 
 [dev-dependencies]
 cw-multi-test = "0.13.2"

@@ -18,12 +18,16 @@ use cosmwasm_std::{
     attr, coin, from_binary, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps,
     Response, Uint128, WasmMsg,
 };
-use eris::arb_vault::{
-    Balances, ClaimBalance, Config, ConfigResponse, ExecuteMsg, ExecuteSubMsg, FeeConfig, LpToken,
-    StateDetails, StateResponse, TakeableResponse, UnbondItem, UnbondRequestsResponse,
-    UserInfoResponse, UtilizationMethod,
+use eris::{
+    arb_vault::{
+        Balances, ClaimBalance, Config, ConfigResponse, ExecuteMsg, ExecuteSubMsg, FeeConfig,
+        LpToken, StateDetails, StateResponse, TakeableResponse, UnbondItem, UnbondRequestsResponse,
+        UserInfoResponse, UtilizationMethod,
+    },
+    CustomMsgExt,
 };
 
+use eris_chain_adapter::types::CustomMsgType;
 use eris_chain_shared::chain_trait::ChainInterface;
 use itertools::Itertools;
 
@@ -244,7 +248,8 @@ fn provide_liquidity_zero_throws() {
     assert_eq!(res.to_string(), "Generic error: No funds sent")
 }
 
-fn _provide_liquidity() -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response) {
+fn _provide_liquidity() -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response<CustomMsgType>)
+{
     let mut deps = setup_test();
 
     // pre apply utoken amount
@@ -289,7 +294,8 @@ fn provide_liquidity_success() {
     );
 }
 
-fn _provide_liquidity_again() -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response) {
+fn _provide_liquidity_again(
+) -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response<CustomMsgType>) {
     let (mut deps, _res) = _provide_liquidity();
 
     deps.querier.set_bank_balance(100_000000 + 120_000000);
@@ -556,7 +562,8 @@ fn check_withdrawing() {
     }
 }
 
-fn _unbonding_slow_120() -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response) {
+fn _unbonding_slow_120() -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response<CustomMsgType>)
+{
     // deposit 100
     // deposit 120
     // withdraw 120
@@ -678,7 +685,7 @@ fn withdrawing_liquidity_success() {
 }
 
 fn _unbonding_slow_with_pool_unbonding(
-) -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response) {
+) -> (OwnedDeps<MockStorage, MockApi, CustomQuerier>, Response<CustomMsgType>) {
     let (mut deps, _res) = _provide_liquidity_again();
 
     // arbs executed and created 2 luna
@@ -1898,7 +1905,11 @@ fn execute_arb() {
     assert_eq!(res.messages.len(), 1);
     assert_eq!(
         res.messages[0].msg,
-        native_asset("utoken".to_string(), Uint128::new(8231)).into_msg("fee").unwrap()
+        native_asset("utoken".to_string(), Uint128::new(8231))
+            .into_msg("fee")
+            .unwrap()
+            .to_specific()
+            .unwrap()
     );
 
     let res = execute(

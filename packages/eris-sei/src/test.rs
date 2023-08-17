@@ -3,7 +3,7 @@ use crate::types::{
 };
 use eris_chain_shared::test_trait::TestInterface;
 
-pub struct KujiraTest {}
+pub struct SeiTest {}
 
 impl
     TestInterface<
@@ -13,7 +13,7 @@ impl
         StageType,
         HubChainConfig,
         HubChainConfigInput,
-    > for KujiraTest
+    > for SeiTest
 {
     fn default_chain_config(&self) -> HubChainConfigInput {
         HubChainConfigInput {}

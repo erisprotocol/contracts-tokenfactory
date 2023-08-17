@@ -13,7 +13,8 @@ use eris::hub::{
     SingleSwapConfig, StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, CustomMsgType, DenomType, HubChainConfigInput, WithdrawType,
+    chain, get_balances_hashmap, CustomMsgType, CustomQueryType, DenomType, HubChainConfigInput,
+    WithdrawType,
 };
 use itertools::Itertools;
 
@@ -41,7 +42,11 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 // Instantiation
 //--------------------------------------------------------------------------------------------------
 
-pub fn instantiate(deps: DepsMut, env: Env, msg: InstantiateMsg) -> ContractResult {
+pub fn instantiate(
+    deps: DepsMut<CustomQueryType>,
+    env: Env,
+    msg: InstantiateMsg,
+) -> ContractResult {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     let state = State::default();
@@ -129,7 +134,7 @@ pub fn instantiate(deps: DepsMut, env: Env, msg: InstantiateMsg) -> ContractResu
 /// (e.g. when a single user makes a very big deposit), anyone can invoke `ExecuteMsg::Rebalance`
 /// to balance the delegations.
 pub fn bond(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     receiver: Addr,
     funds: &[Coin],
@@ -181,7 +186,7 @@ pub fn bond(
 }
 
 pub fn harvest(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     validators: Option<Vec<String>>,
     withdrawals: Option<Vec<(WithdrawType, DenomType)>>,
@@ -253,7 +258,7 @@ pub fn harvest(
 
 /// this method will split LP positions into each single position
 pub fn withdraw_lps(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     withdrawals: Vec<(WithdrawType, DenomType)>,
 ) -> ContractResult {
@@ -281,7 +286,11 @@ pub fn withdraw_lps(
 }
 
 /// swaps all unlocked coins to token
-pub fn single_stage_swap(deps: DepsMut, env: Env, stage: Vec<SingleSwapConfig>) -> ContractResult {
+pub fn single_stage_swap(
+    deps: DepsMut<CustomQueryType>,
+    env: Env,
+    stage: Vec<SingleSwapConfig>,
+) -> ContractResult {
     let state = State::default();
     let chain = chain(&env);
     let default_max_spread = state.get_default_max_spread(deps.storage);
@@ -355,7 +364,7 @@ fn validate_no_belief_price(stages: &Vec<Vec<SingleSwapConfig>>) -> Result<(), C
 
 /// This callback is used to take a current snapshot of the balance and add the received balance to the unlocked_coins state after the execution
 fn check_received_coin_msg(
-    deps: &DepsMut,
+    deps: &DepsMut<CustomQueryType>,
     env: &Env,
     stake: StakeToken,
     // offset to account for funds being sent that should be ignored
@@ -391,7 +400,7 @@ fn check_received_coin_msg(
 /// execution.
 /// 2. Same as with `bond`, in the latest implementation we only delegate staking rewards with the
 /// validator that has the smallest delegation amount.
-pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
+pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let state = State::default();
     let fee_config = state.fee_config.load(deps.storage)?;
     let mut unlocked_coins = state.unlocked_coins.load(deps.storage)?;
@@ -471,7 +480,7 @@ pub fn reinvest(deps: DepsMut, env: Env) -> ContractResult {
 
 fn calc_current_exchange_rate(
     total_utoken: Option<u128>,
-    deps: &DepsMut,
+    deps: &DepsMut<CustomQueryType>,
     env: &Env,
     stake: StakeToken,
 ) -> Result<Decimal, ContractError> {
@@ -488,7 +497,7 @@ fn calc_current_exchange_rate(
 }
 
 pub fn callback_received_coins(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     snapshot: Coin,
     snapshot_stake: Coin,
@@ -526,7 +535,7 @@ pub fn callback_received_coins(
 }
 
 fn add_to_received_coins(
-    deps: &DepsMut,
+    deps: &DepsMut<CustomQueryType>,
     contract: Addr,
     snapshot: Coin,
     received_coins: &mut Coins,
@@ -550,7 +559,7 @@ fn add_to_received_coins(
 /// For Gauge mode, searches for all delegations, and if nothing found, use the first validator from the list.
 fn find_new_delegation(
     state: &State,
-    deps: &DepsMut,
+    deps: &DepsMut<CustomQueryType>,
     env: &Env,
     utoken_to_bond: Uint128,
     utoken: &String,
@@ -611,7 +620,7 @@ fn find_new_delegation(
 //--------------------------------------------------------------------------------------------------
 
 pub fn queue_unbond(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     receiver: Addr,
     ustake_to_burn: Uint128,
@@ -659,7 +668,7 @@ pub fn queue_unbond(
         .add_attribute("action", "erishub/queue_unbond"))
 }
 
-pub fn submit_batch(deps: DepsMut, env: Env) -> ContractResult {
+pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let state = State::default();
     let mut stake = state.stake_token.load(deps.storage)?;
     let validators = state.validators.load(deps.storage)?;
@@ -729,7 +738,7 @@ pub fn submit_batch(deps: DepsMut, env: Env) -> ContractResult {
         .add_attribute("action", "erishub/unbond"))
 }
 
-pub fn reconcile(deps: DepsMut, env: Env) -> ContractResult {
+pub fn reconcile(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let state = State::default();
     let stake = state.stake_token.load(deps.storage)?;
     let current_time = env.block.time.seconds();
@@ -793,7 +802,12 @@ pub fn reconcile(deps: DepsMut, env: Env) -> ContractResult {
     Ok(Response::new().add_event(event).add_attribute("action", "erishub/reconcile"))
 }
 
-pub fn withdraw_unbonded(deps: DepsMut, env: Env, user: Addr, receiver: Addr) -> ContractResult {
+pub fn withdraw_unbonded(
+    deps: DepsMut<CustomQueryType>,
+    env: Env,
+    user: Addr,
+    receiver: Addr,
+) -> ContractResult {
     let state = State::default();
     let current_time = env.block.time.seconds();
 
@@ -865,7 +879,7 @@ pub fn withdraw_unbonded(deps: DepsMut, env: Env, user: Addr, receiver: Addr) ->
         .add_attribute("action", "erishub/withdraw_unbonded"))
 }
 
-pub fn tune_delegations(deps: DepsMut, env: Env, sender: Addr) -> ContractResult {
+pub fn tune_delegations(deps: DepsMut<CustomQueryType>, env: Env, sender: Addr) -> ContractResult {
     let state = State::default();
     state.assert_owner(deps.storage, &sender)?;
     let (wanted_delegations, save) =
@@ -892,7 +906,7 @@ pub fn tune_delegations(deps: DepsMut, env: Env, sender: Addr) -> ContractResult
 //--------------------------------------------------------------------------------------------------
 
 pub fn rebalance(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     sender: Addr,
     min_redelegation: Option<Uint128>,
@@ -936,7 +950,11 @@ pub fn rebalance(
         .add_attribute("action", "erishub/rebalance"))
 }
 
-pub fn add_validator(deps: DepsMut, sender: Addr, validator: String) -> ContractResult {
+pub fn add_validator(
+    deps: DepsMut<CustomQueryType>,
+    sender: Addr,
+    validator: String,
+) -> ContractResult {
     let state = State::default();
 
     state.assert_owner(deps.storage, &sender)?;
@@ -956,7 +974,7 @@ pub fn add_validator(deps: DepsMut, sender: Addr, validator: String) -> Contract
 }
 
 pub fn remove_validator(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     sender: Addr,
     validator: String,
@@ -1026,7 +1044,11 @@ pub fn remove_validator(
         .add_attribute("action", "erishub/remove_validator"))
 }
 
-pub fn transfer_ownership(deps: DepsMut, sender: Addr, new_owner: String) -> ContractResult {
+pub fn transfer_ownership(
+    deps: DepsMut<CustomQueryType>,
+    sender: Addr,
+    new_owner: String,
+) -> ContractResult {
     let state = State::default();
 
     state.assert_owner(deps.storage, &sender)?;
@@ -1035,7 +1057,7 @@ pub fn transfer_ownership(deps: DepsMut, sender: Addr, new_owner: String) -> Con
     Ok(Response::new().add_attribute("action", "erishub/transfer_ownership"))
 }
 
-pub fn drop_ownership_proposal(deps: DepsMut, sender: Addr) -> ContractResult {
+pub fn drop_ownership_proposal(deps: DepsMut<CustomQueryType>, sender: Addr) -> ContractResult {
     let state = State::default();
 
     state.assert_owner(deps.storage, &sender)?;
@@ -1044,7 +1066,7 @@ pub fn drop_ownership_proposal(deps: DepsMut, sender: Addr) -> ContractResult {
     Ok(Response::new().add_attribute("action", "erishub/drop_ownership_proposal"))
 }
 
-pub fn accept_ownership(deps: DepsMut, sender: Addr) -> ContractResult {
+pub fn accept_ownership(deps: DepsMut<CustomQueryType>, sender: Addr) -> ContractResult {
     let state = State::default();
 
     let previous_owner = state.owner.load(deps.storage)?;
@@ -1066,7 +1088,7 @@ pub fn accept_ownership(deps: DepsMut, sender: Addr) -> ContractResult {
 
 #[allow(clippy::too_many_arguments)]
 pub fn update_config(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     sender: Addr,
     protocol_fee_contract: Option<String>,
     protocol_reward_fee: Option<Decimal>,

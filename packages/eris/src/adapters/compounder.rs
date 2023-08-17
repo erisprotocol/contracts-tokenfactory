@@ -1,5 +1,6 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, QuerierWrapper, StdResult, WasmMsg};
+use eris_chain_adapter::types::CustomMsgType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -46,7 +47,7 @@ impl Compounder {
         slippage_tolerance: Option<Decimal>,
         lp_token: &Addr,
         receiver: Option<String>,
-    ) -> StdResult<CosmosMsg> {
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         funds.sort_by(|a, b| a.denom.cmp(&b.denom));
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
@@ -67,7 +68,7 @@ impl Compounder {
         into: AssetInfo,
         mut funds: Vec<Coin>,
         receiver: Option<String>,
-    ) -> StdResult<CosmosMsg> {
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         funds.sort_by(|a, b| a.denom.cmp(&b.denom));
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),

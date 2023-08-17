@@ -2,6 +2,7 @@ use astroport::asset::{native_asset_info, AssetInfo};
 use cosmwasm_std::{
     coin, to_binary, Addr, CosmosMsg, Decimal, Deps, QueryRequest, Uint128, WasmMsg, WasmQuery,
 };
+use eris_chain_adapter::types::CustomMsgType;
 use steak::hub::{Batch, PendingBatch, QueryMsg, StateResponse, UnbondRequestsByUserResponseItem};
 use steak::hub_tf::ExecuteMsg;
 
@@ -78,7 +79,7 @@ impl SteakTf {
             .map_err(|a| adapter_error("steak", "query_state", a))
     }
 
-    fn get_unbond_msg(&self, amount: Uint128) -> CustomResult<CosmosMsg> {
+    fn get_unbond_msg(&self, amount: Uint128) -> CustomResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
             funds: vec![coin(amount.u128(), self.denom.to_string())],
@@ -88,7 +89,7 @@ impl SteakTf {
         }))
     }
 
-    fn get_withdraw_unbonded_msg(&mut self) -> CustomResult<CosmosMsg> {
+    fn get_withdraw_unbonded_msg(&mut self) -> CustomResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
             funds: vec![],
@@ -167,7 +168,7 @@ impl LsdAdapter for SteakTf {
         native_asset_info(self.denom.clone())
     }
 
-    fn unbond(&self, _deps: &Deps, amount: Uint128) -> CustomResult<Vec<CosmosMsg>> {
+    fn unbond(&self, _deps: &Deps, amount: Uint128) -> CustomResult<Vec<CosmosMsg<CustomMsgType>>> {
         Ok(vec![self.get_unbond_msg(amount)?])
     }
 
@@ -180,7 +181,11 @@ impl LsdAdapter for SteakTf {
             .sum())
     }
 
-    fn withdraw(&mut self, _deps: &Deps, _amount: Uint128) -> CustomResult<Vec<CosmosMsg>> {
+    fn withdraw(
+        &mut self,
+        _deps: &Deps,
+        _amount: Uint128,
+    ) -> CustomResult<Vec<CosmosMsg<CustomMsgType>>> {
         Ok(vec![self.get_withdraw_unbonded_msg()?])
     }
 

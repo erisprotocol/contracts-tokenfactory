@@ -28,18 +28,8 @@ pub fn instantiate(
     domain::instantiate::instantiate(deps, env, msg)
 }
 
-// #[entry_point]
-// pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> ContractResult {
-//     Err(ContractError::InvalidReplyId(reply.id))
-// }
-
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> ContractResult {
     match msg {
         // Allowed by Execute whitelist
         ExecuteMsg::ExecuteArbitrage {

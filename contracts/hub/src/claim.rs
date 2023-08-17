@@ -1,7 +1,7 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg};
 use eris::hub::ClaimType;
-use eris_chain_adapter::types::CustomMsgType;
+use eris_chain_adapter::types::{CustomMsgType, CustomQueryType};
 
 use crate::{
     error::{ContractError, ContractResult},
@@ -24,7 +24,7 @@ impl ClaimExecuteMsg {
 }
 
 pub fn exec_claim(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     _env: Env,
     info: MessageInfo,
     claims: Vec<ClaimType>,

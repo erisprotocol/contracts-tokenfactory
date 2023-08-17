@@ -2,6 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
     to_binary, Addr, CosmosMsg, QuerierWrapper, StdError, StdResult, Uint128, WasmMsg,
 };
+use eris_chain_adapter::types::CustomQueryType;
 
 /// The maximum amount of voters that can be kicked at once from
 pub const VOTERS_MAX_LIMIT: u32 = 30;
@@ -152,7 +153,7 @@ pub fn get_tune_msg(contract_addr: impl Into<String>) -> StdResult<CosmosMsg> {
 
 /// Queries emp tune info.
 pub fn get_emp_tune_info(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     escrow_addr: impl Into<String>,
 ) -> StdResult<GaugeInfoResponse> {
     let gauge: GaugeInfoResponse = querier.query_wasm_smart(escrow_addr, &QueryMsg::TuneInfo {})?;
@@ -160,7 +161,7 @@ pub fn get_emp_tune_info(
 }
 
 pub fn get_emp_validator_infos(
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     emp_gauge_addr: impl Into<String>,
     period: u64,
 ) -> StdResult<Vec<(String, VotedValidatorInfoResponse)>> {

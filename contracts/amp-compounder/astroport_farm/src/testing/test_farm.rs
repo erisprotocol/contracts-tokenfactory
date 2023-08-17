@@ -7,6 +7,8 @@ use astroport::generator::{
     Cw20HookMsg as GeneratorCw20HookMsg, ExecuteMsg as GeneratorExecuteMsg,
 };
 use eris::adapters::token::Token;
+use eris::CustomMsgExt;
+use eris_chain_adapter::types::CustomMsgType;
 
 use super::helpers::chain_test;
 use super::mock_querier::{mock_dependencies, WasmMockQuerier};
@@ -65,7 +67,7 @@ fn test() -> Result<(), ContractError> {
     Ok(())
 }
 
-fn assert_error(res: Result<Response, ContractError>, expected: &str) {
+fn assert_error(res: Result<Response<CustomMsgType>, ContractError>, expected: &str) {
     match res {
         Err(ContractError::Std(StdError::GenericErr {
             msg,
@@ -378,7 +380,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg)?;
 
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             mint_and_msg(deps, AMP_LP_TOKEN, USER_1, 100000),
             vec![CosmosMsg::Wasm(WasmMsg::Execute {
@@ -426,7 +428,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     });
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             mint_and_msg(deps, AMP_LP_TOKEN, USER_2, 50000),
             vec![CosmosMsg::Wasm(WasmMsg::Execute {
@@ -521,7 +523,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
         execute_unbond_msg(deps.as_mut(), env.clone(), info.clone(), Uint128::from(50000u128))?;
 
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             burn_and_msg(deps, AMP_LP_TOKEN, USER_1, 50000),
             CosmosMsg::Wasm(WasmMsg::Execute {
@@ -581,7 +583,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let res =
         execute_unbond_msg(deps.as_mut(), env.clone(), info.clone(), Uint128::from(50000u128))?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             burn_and_msg(deps, AMP_LP_TOKEN, USER_2, 50000),
             CosmosMsg::Wasm(WasmMsg::Execute {
@@ -678,7 +680,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     );
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone())?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: REWARD_TOKEN.to_string(),
@@ -734,7 +736,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
 
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: REWARD_TOKEN.to_string(),
@@ -799,7 +801,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     deps.querier.set_cw20_balance(LP_TOKEN, MOCK_CONTRACT_ADDR, 10142);
     let res = execute(deps.as_mut(), env.clone(), info, msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             mint_and_msg(deps, AMP_LP_TOKEN, USER_1, 8333),
             vec![CosmosMsg::Wasm(WasmMsg::Execute {
@@ -1000,7 +1002,7 @@ fn bond_delayed_profit() -> Result<(), ContractError> {
     );
 
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             mint_and_msg(&mut deps, AMP_LP_TOKEN, USER_1, 2284),
             vec![CosmosMsg::Wasm(WasmMsg::Execute {
@@ -1025,7 +1027,7 @@ fn mint_and_msg(
     token: &str,
     user: &str,
     amount: u128,
-) -> Vec<CosmosMsg> {
+) -> Vec<CosmosMsg<CustomMsgType>> {
     match amp_lp() {
         AssetInfo::Token {
             ..
@@ -1058,7 +1060,7 @@ fn burn_and_msg(
     token: &str,
     user: &str,
     amount: u128,
-) -> CosmosMsg {
+) -> CosmosMsg<CustomMsgType> {
     match amp_lp() {
         AssetInfo::Token {
             ..
@@ -1084,7 +1086,7 @@ fn execute_unbond_msg(
     env: Env,
     info: MessageInfo,
     amount: Uint128,
-) -> Result<Response, ContractError> {
+) -> Result<Response<CustomMsgType>, ContractError> {
     match amp_lp() {
         AssetInfo::Token {
             ..
@@ -1137,7 +1139,7 @@ fn _deposit_time(
     let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         mint_and_msg(deps, AMP_LP_TOKEN, USER_3, 8333)
     );
 
@@ -1217,7 +1219,7 @@ fn _deposit_time(
     let res =
         execute_unbond_msg(deps.as_mut(), env.clone(), info.clone(), Uint128::from(10311u128))?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: GENERATOR_PROXY.to_string(),
@@ -1289,7 +1291,7 @@ fn compound(
     let info = mock_info(CONTROLLER, &[]);
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: GENERATOR_PROXY.to_string(),
@@ -1297,10 +1299,14 @@ fn compound(
                     lp_tokens: vec![LP_TOKEN.to_string()]
                 })?,
                 funds: vec![],
-            }),
+            })
+            .to_specific()
+            .unwrap(),
             astro()
                 .with_balance(Uint128::from(500u128))
                 .into_msg(FEE_COLLECTOR.to_string())
+                .unwrap()
+                .to_specific()
                 .unwrap(),
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: REWARD_TOKEN.to_string(),
@@ -1368,7 +1374,7 @@ fn compound(
     deps.querier.set_cw20_balance(LP_TOKEN, MOCK_CONTRACT_ADDR, 29901);
     let res = execute(deps.as_mut(), env.clone(), info, msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         [CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: LP_TOKEN.to_string(),
             msg: to_binary(&Cw20ExecuteMsg::Send {

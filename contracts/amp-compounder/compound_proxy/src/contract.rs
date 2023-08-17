@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
-use crate::error::ContractError;
+use crate::error::{ContractError, ContractResult};
 use crate::execute::{compound, handle_callback, multi_swap, update_config};
 use crate::queries::{
     get_lp, get_lp_state, get_lps, get_route, get_routes, query_config, query_supports_swap,
@@ -26,7 +26,7 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let state = State::default();
 
     let factory = if let Some(factory) = msg.factory {
@@ -61,12 +61,7 @@ pub fn instantiate(
 /// ## Description
 /// Exposes execute functions available in the contract.
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> ContractResult {
     match msg {
         ExecuteMsg::Compound {
             rewards,
@@ -120,6 +115,7 @@ pub fn execute(
                 state.ownership_proposal,
             )
             .map_err(|e| e.into())
+            .map(|_| Response::new().add_attribute("action", "propose_new_owner"))
         },
         ExecuteMsg::DropOwnershipProposal {} => {
             let state = State::default();
@@ -127,6 +123,7 @@ pub fn execute(
 
             drop_ownership_proposal(deps, info, config.owner, state.ownership_proposal)
                 .map_err(|e| e.into())
+                .map(|_| Response::new().add_attribute("action", "drop_ownership_proposal"))
         },
         ExecuteMsg::ClaimOwnership {} => {
             let state = State::default();
@@ -141,6 +138,7 @@ pub fn execute(
                 Ok(())
             })
             .map_err(|e| e.into())
+            .map(|_| Response::new().add_attribute("action", "claim_ownership"))
         },
         ExecuteMsg::Callback(msg) => handle_callback(deps, env, info, msg),
     }

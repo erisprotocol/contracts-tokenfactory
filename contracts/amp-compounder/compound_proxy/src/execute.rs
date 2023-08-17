@@ -1,5 +1,5 @@
 use crate::constants::COMMISSION_DENOM;
-use crate::error::ContractError;
+use crate::error::{ContractError, ContractResult};
 use crate::state::{validate_slippage, State};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
@@ -11,11 +11,13 @@ use cosmwasm_std::{
 use cw20::Expiration;
 use eris::adapters::factory::Factory;
 use eris::compound_proxy::{CallbackMsg, ExecuteMsg, LpConfig, PairType};
+use eris::CustomMsgExt;
 
 use astroport::asset::{Asset, AssetInfo, AssetInfoExt};
 use eris::adapters::asset::AssetEx;
 use eris::adapters::pair::Pair;
 use eris::helper::assert_uniq_assets;
+use eris_chain_adapter::types::CustomMsgType;
 
 /// ## Description
 /// Performs rewards compounding to LP token. Sender must do token approval upon calling this function.
@@ -29,7 +31,7 @@ pub fn compound(
     no_swap: Option<bool>,
     slippage_tolerance: Option<Decimal>,
     lp_token: String,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     assert_uniq_assets(&rewards)?;
 
     let state = State::default();
@@ -41,7 +43,7 @@ pub fn compound(
 
     let no_swap = no_swap.unwrap_or(false);
 
-    let mut messages: Vec<CosmosMsg> = vec![];
+    let mut messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
     let mut native_reward_map: HashMap<AssetInfo, Uint128> = HashMap::new();
     let max_spread = state.get_default_max_spread(deps.storage);
     // Swap reward to asset in the pair
@@ -55,16 +57,20 @@ pub fn compound(
             let route_config = state.routes.load(deps.storage, key);
 
             if let Ok(route_config) = route_config {
-                messages.push(route_config.create_swap(&reward, max_spread, None)?);
+                messages.push(route_config.create_swap(&reward, max_spread, None)?.to_specific()?);
             } else if let Some(factory) = &factory {
                 // if factory is set, allowed to query pairs from factory
-                messages.push(factory.create_swap(
-                    &deps.querier,
-                    &reward,
-                    &lp_config.wanted_token,
-                    max_spread,
-                    None,
-                )?);
+                messages.push(
+                    factory
+                        .create_swap(
+                            &deps.querier,
+                            &reward,
+                            &lp_config.wanted_token,
+                            max_spread,
+                            None,
+                        )?
+                        .to_specific()?,
+                );
             } else {
                 return Err(StdError::generic_err(format!(
                     "did not find route {0}-{1}",
@@ -121,13 +127,13 @@ pub fn multi_swap(
     into: AssetInfo,
     rewards: Vec<Asset>,
     receiver: Addr,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     assert_uniq_assets(&rewards)?;
 
     let state = State::default();
     let factory: Option<Factory> = state.config.load(deps.storage)?.factory;
 
-    let mut messages: Vec<CosmosMsg> = vec![];
+    let mut messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
 
     let wanted_token = into;
 
@@ -146,20 +152,24 @@ pub fn multi_swap(
             let route_config = state.routes.load(deps.storage, key);
 
             if let Ok(route_config) = route_config {
-                messages.push(route_config.create_swap(
-                    &reward,
-                    max_spread,
-                    Some(receiver.clone()),
-                )?);
+                messages.push(
+                    route_config
+                        .create_swap(&reward, max_spread, Some(receiver.clone()))?
+                        .to_specific()?,
+                );
             } else if let Some(factory) = &factory {
                 // if factory is set, allowed to query pairs from factory
-                messages.push(factory.create_swap(
-                    &deps.querier,
-                    &reward,
-                    &wanted_token,
-                    max_spread,
-                    Some(receiver.to_string()),
-                )?);
+                messages.push(
+                    factory
+                        .create_swap(
+                            &deps.querier,
+                            &reward,
+                            &wanted_token,
+                            max_spread,
+                            Some(receiver.to_string()),
+                        )?
+                        .to_specific()?,
+                );
             } else {
                 return Err(StdError::generic_err(format!(
                     "did not find route {0}-{1}",
@@ -191,7 +201,7 @@ pub fn handle_callback(
     env: Env,
     info: MessageInfo,
     msg: CallbackMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     // Callback functions can only be called by this contract itself
     if info.sender != env.contract.address {
         return Err(ContractError::Unauthorized {});
@@ -217,16 +227,11 @@ pub fn handle_callback(
 
 /// # Description
 /// Performs optimal swap of assets in the pair contract.
-fn optimal_swap(
-    deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
-    lp_addr: String,
-) -> Result<Response, ContractError> {
+fn optimal_swap(deps: DepsMut, env: Env, _info: MessageInfo, lp_addr: String) -> ContractResult {
     let state = State::default();
     let lp_config = state.lps.load(deps.storage, lp_addr)?;
 
-    let mut messages: Vec<CosmosMsg> = vec![];
+    let mut messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
 
     match lp_config.pair_info.pair_type {
         PairType::Stable {} => {
@@ -260,12 +265,12 @@ fn send_swap_result(
     _info: MessageInfo,
     token: AssetInfo,
     receiver: String,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let amount = token.query_pool(&deps.querier, env.contract.address)?;
     let return_amount = token.with_balance(amount);
 
     Ok(Response::new()
-        .add_message(return_amount.into_msg(receiver)?)
+        .add_message(return_amount.into_msg(receiver)?.to_specific()?)
         .add_attribute("action", "ampc/send_swap_result"))
 }
 
@@ -277,7 +282,7 @@ pub fn calculate_optimal_swap(
     lp_config: &LpConfig,
     asset_a: Asset,
     asset_b: Asset,
-    messages: &mut Vec<CosmosMsg>,
+    messages: &mut Vec<CosmosMsg<CustomMsgType>>,
     max_spread: Decimal,
 ) -> StdResult<(Uint128, Uint128, Uint128, Uint128)> {
     let mut swap_asset_a_amount = Uint128::zero();
@@ -316,12 +321,11 @@ pub fn calculate_optimal_swap(
             )?;
             if !return_b_amount.is_zero() {
                 swap_asset_a_amount = swap_asset.amount;
-                messages.push(Pair(pair_contract).swap_msg(
-                    &swap_asset,
-                    None,
-                    Some(max_spread),
-                    None,
-                )?);
+                messages.push(
+                    Pair(pair_contract)
+                        .swap_msg(&swap_asset, None, Some(max_spread), None)?
+                        .to_specific()?,
+                );
             }
         }
     } else if provide_a_area < provide_b_area {
@@ -345,12 +349,11 @@ pub fn calculate_optimal_swap(
             )?;
             if !return_a_amount.is_zero() {
                 swap_asset_b_amount = swap_asset.amount;
-                messages.push(Pair(pair_contract).swap_msg(
-                    &swap_asset,
-                    None,
-                    Some(max_spread),
-                    None,
-                )?);
+                messages.push(
+                    Pair(pair_contract)
+                        .swap_msg(&swap_asset, None, Some(max_spread), None)?
+                        .to_specific()?,
+                );
             }
         }
     };
@@ -368,7 +371,7 @@ pub fn provide_liquidity(
     receiver: String,
     slippage_tolerance: Option<Decimal>,
     lp_addr: String,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let state = State::default();
     let lp_config = state.lps.load(deps.storage, lp_addr)?;
 
@@ -379,7 +382,7 @@ pub fn provide_liquidity(
     let prev_balance_map: HashMap<_, _> =
         prev_balances.into_iter().map(|a| (a.info, a.amount)).collect();
 
-    let mut messages: Vec<CosmosMsg> = vec![];
+    let mut messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
     let mut provide_assets: Vec<Asset> = vec![];
     let mut funds: Vec<Coin> = vec![];
     for asset in assets.iter() {
@@ -403,12 +406,14 @@ pub fn provide_liquidity(
         }
     }
 
-    let provide_liquidity = Pair(pair_contract).provide_liquidity_msg(
-        provide_assets,
-        Some(slippage_tolerance.unwrap_or(lp_config.slippage_tolerance)),
-        Some(receiver.to_string()),
-        funds,
-    )?;
+    let provide_liquidity = Pair(pair_contract)
+        .provide_liquidity_msg(
+            provide_assets,
+            Some(slippage_tolerance.unwrap_or(lp_config.slippage_tolerance)),
+            Some(receiver.to_string()),
+            funds,
+        )?
+        .to_specific()?;
     messages.push(provide_liquidity);
 
     Ok(Response::new()
@@ -466,7 +471,7 @@ pub fn update_config(
     _env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     match msg {
         ExecuteMsg::UpdateConfig {
             factory,

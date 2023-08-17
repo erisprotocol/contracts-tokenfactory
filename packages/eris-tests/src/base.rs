@@ -5,8 +5,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     attr,
     testing::{MockApi, MockStorage},
-    Addr, Decimal, DepsMut, Empty, Env, GovMsg, IbcMsg, IbcQuery, Reply, Response, StdError,
-    StdResult, Uint128,
+    Addr, CustomQuery, Decimal, DepsMut, Empty, Env, GovMsg, IbcMsg, IbcQuery, Reply, Response,
+    StdError, StdResult, Uint128,
 };
 use cw20::{BalanceResponse, Cw20QueryMsg};
 
@@ -17,7 +17,7 @@ use cw_multi_test::{
 use cw_storage_plus::Item;
 use eris::arb_vault::LsdConfig;
 // use eris::arb_vault::LsdConfig;
-use eris_chain_adapter::types::{test_chain_config, CustomMsgType};
+use eris_chain_adapter::types::{test_chain_config, CustomMsgType, CustomQueryType};
 
 use crate::{arb_contract, modules::types::UsedCustomModule};
 
@@ -85,7 +85,7 @@ pub type CustomApp = App<
     MockApi,
     MockStorage,
     UsedCustomModule,
-    WasmKeeper<CustomMsgType, Empty>,
+    WasmKeeper<CustomMsgType, CustomQueryType>,
     StakeKeeper,
     DistributionKeeper,
     FailingModule<IbcMsg, IbcQuery, Empty>,
@@ -119,16 +119,25 @@ impl BaseErisTestPackage {
         base_pack.init_voting_escrow(router, msg.owner.clone());
         base_pack.init_emp_gauges(router, msg.owner.clone());
         base_pack.init_amp_gauges(router, msg.owner.clone());
-        base_pack.init_prop_gauges(router, msg.owner.clone());
-        // base_pack.init_stader(router, msg.owner.clone());
-        base_pack.init_steak_hub(router, msg.owner.clone());
-        base_pack.init_arb_vault(router, msg.owner.clone());
+
+        base_pack.init_not_supported();
+
         base_pack.init_arb_fake_contract(router, msg.owner.clone());
 
         base_pack.init_hub_delegation_strategy(router, msg.owner, msg.use_uniform_hub);
 
         base_pack
     }
+
+    #[cfg(not(feature = "X-sei-X"))]
+    fn init_not_supported(&self) {
+        self.init_prop_gauges(router, msg.owner.clone());
+        // self.init_stader(router, msg.owner.clone());
+        self.init_steak_hub(router, msg.owner.clone());
+        self.init_arb_vault(router, msg.owner.clone());
+    }
+    #[cfg(feature = "X-sei-X")]
+    fn init_not_supported(&self) {}
 
     // fn init_token(&mut self, router: &mut CustomApp, owner: Addr) {
     //     let contract = Box::new(ContractWrapper::new_with_empty(
@@ -303,6 +312,7 @@ impl BaseErisTestPackage {
         .into()
     }
 
+    #[cfg(not(feature = "X-sei-X"))]
     fn init_prop_gauges(&mut self, router: &mut CustomApp, owner: Addr) {
         let contract = Box::new(ContractWrapper::new(
             eris_gov_prop_gauges::contract::execute,
@@ -331,6 +341,7 @@ impl BaseErisTestPackage {
         .into()
     }
 
+    #[cfg(not(feature = "X-sei-X"))]
     fn init_arb_vault(&mut self, router: &mut CustomApp, owner: Addr) {
         let contract = Box::new(
             ContractWrapper::new_with_empty(
@@ -557,6 +568,7 @@ impl BaseErisTestPackage {
         }
     }
 
+    #[cfg(not(feature = "X-sei-X"))]
     fn init_steak_hub(&mut self, router: &mut CustomApp, owner: Addr) {
         let hub_contract = Box::new(
             ContractWrapper::new(

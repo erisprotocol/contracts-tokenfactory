@@ -16,14 +16,13 @@ pub mod querier;
 pub mod voting_escrow;
 
 mod extensions {
+    use crate::hub::CallbackMsg;
     use cosmwasm_std::{
-        Attribute, CosmosMsg, Decimal, Decimal256, Env, Event, Fraction, OverflowError, Response,
-        StdError, StdResult, Uint128, Uint256,
+        Attribute, Decimal, Decimal256, Env, Event, Fraction, OverflowError, Response, StdError,
+        StdResult, Uint128, Uint256,
     };
     use eris_chain_adapter::types::CustomMsgType;
     use std::{convert::TryInto, str::FromStr};
-
-    use crate::hub::CallbackMsg;
 
     pub trait CustomEvent {
         fn add_optional_attribute(self, attribute: Option<Attribute>) -> Event;
@@ -41,9 +40,49 @@ mod extensions {
         }
     }
 
+    pub trait CustomMsgExt {
+        fn to_specific(self) -> StdResult<cosmwasm_std::CosmosMsg<CustomMsgType>>;
+    }
+
+    impl CustomMsgExt for cosmwasm_std::CosmosMsg {
+        fn to_specific(self) -> StdResult<cosmwasm_std::CosmosMsg<CustomMsgType>> {
+            match self {
+                cosmwasm_std::CosmosMsg::Bank(msg) => Ok(cosmwasm_std::CosmosMsg::Bank(msg)),
+                cosmwasm_std::CosmosMsg::Wasm(msg) => Ok(cosmwasm_std::CosmosMsg::Wasm(msg)),
+                // cosmwasm_std::CosmosMsg::Staking(msg) => Ok(cosmwasm_std::CosmosMsg::Staking(msg)),
+                // cosmwasm_std::CosmosMsg::Distribution(msg) => {
+                //     Ok(cosmwasm_std::CosmosMsg::Distribution(msg))
+                // },
+                cosmwasm_std::CosmosMsg::Ibc(msg) => Ok(cosmwasm_std::CosmosMsg::Ibc(msg)),
+                cosmwasm_std::CosmosMsg::Gov(msg) => Ok(cosmwasm_std::CosmosMsg::Gov(msg)),
+                _ => Err(StdError::generic_err("not supported")),
+            }
+        }
+    }
+
+    pub trait CustomMsgExt2 {
+        fn to_normal(self) -> StdResult<cosmwasm_std::CosmosMsg>;
+    }
+
+    impl CustomMsgExt2 for cosmwasm_std::CosmosMsg<CustomMsgType> {
+        fn to_normal(self) -> StdResult<cosmwasm_std::CosmosMsg> {
+            match self {
+                cosmwasm_std::CosmosMsg::Bank(msg) => Ok(cosmwasm_std::CosmosMsg::Bank(msg)),
+                cosmwasm_std::CosmosMsg::Wasm(msg) => Ok(cosmwasm_std::CosmosMsg::Wasm(msg)),
+                // cosmwasm_std::CosmosMsg::Staking(msg) => Ok(cosmwasm_std::CosmosMsg::Staking(msg)),
+                // cosmwasm_std::CosmosMsg::Distribution(msg) => {
+                //     Ok(cosmwasm_std::CosmosMsg::Distribution(msg))
+                // },
+                cosmwasm_std::CosmosMsg::Ibc(msg) => Ok(cosmwasm_std::CosmosMsg::Ibc(msg)),
+                cosmwasm_std::CosmosMsg::Gov(msg) => Ok(cosmwasm_std::CosmosMsg::Gov(msg)),
+                _ => Err(StdError::generic_err("not supported")),
+            }
+        }
+    }
+
     pub trait CustomResponse<T>: Sized {
-        fn add_optional_message(self, msg: Option<CosmosMsg<T>>) -> Self;
-        fn add_optional_messages(self, msg: Option<Vec<CosmosMsg<T>>>) -> Self;
+        fn add_optional_message(self, msg: Option<cosmwasm_std::CosmosMsg<T>>) -> Self;
+        fn add_optional_messages(self, msg: Option<Vec<cosmwasm_std::CosmosMsg<T>>>) -> Self;
         fn add_callback(self, env: &Env, msg: CallbackMsg) -> StdResult<Self>;
         fn add_optional_callback(self, env: &Env, msg: Option<CallbackMsg>) -> StdResult<Self>;
         fn add_optional_callbacks(
@@ -54,13 +93,16 @@ mod extensions {
     }
 
     impl CustomResponse<CustomMsgType> for Response<CustomMsgType> {
-        fn add_optional_message(self, msg: Option<CosmosMsg<CustomMsgType>>) -> Self {
+        fn add_optional_message(self, msg: Option<cosmwasm_std::CosmosMsg<CustomMsgType>>) -> Self {
             match msg {
                 Some(msg) => self.add_message(msg),
                 None => self,
             }
         }
-        fn add_optional_messages(self, msg: Option<Vec<CosmosMsg<CustomMsgType>>>) -> Self {
+        fn add_optional_messages(
+            self,
+            msg: Option<Vec<cosmwasm_std::CosmosMsg<CustomMsgType>>>,
+        ) -> Self {
             match msg {
                 Some(msgs) => self.add_messages(msgs),
                 None => self,
@@ -132,5 +174,7 @@ mod extensions {
 }
 
 pub use extensions::CustomEvent;
+pub use extensions::CustomMsgExt;
+pub use extensions::CustomMsgExt2;
 pub use extensions::CustomResponse;
 pub use extensions::DecimalCheckedOps;

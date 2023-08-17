@@ -352,7 +352,7 @@ version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d5abeeb891e6d0098402e4d3d042f90451db52651d2fe14b170e69a1dd3e4115"
 dependencies = [
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -376,7 +376,7 @@ checksum = "78d6fc9854ac14e46cb69b0f396547893f93d2847aef975950ebbe73342324f3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -530,6 +530,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-multi-test"
+version = "0.16.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "127c7bb95853b8e828bdab97065c81cb5ddc20f7339180b61b2300565aaa99d1"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-storage-plus 1.0.1",
+ "cw-utils 1.0.1",
+ "derivative",
+ "itertools",
+ "k256",
+ "prost 0.9.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cw-ownable"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -552,7 +571,7 @@ checksum = "a1d3bf2e0f341bb6cc100d7d441d31cf713fbd3ce0c511f91e79f14b40a889af"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -837,7 +856,7 @@ checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -940,7 +959,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-arb-vault-neutron"
+name = "eris-arb-vault-sei"
 version = "1.0.2"
 dependencies = [
  "anyhow",
@@ -963,7 +982,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-astroport-farm-neutron"
+name = "eris-astroport-farm"
 version = "1.4.0"
 dependencies = [
  "astroport 2.8.0",
@@ -988,8 +1007,8 @@ dependencies = [
  "eris-chain-shared",
  "eris-injective",
  "eris-kujira",
- "eris-neutron",
  "eris-osmosis",
+ "eris-sei",
  "eris-whitewhale",
  "schemars",
  "serde",
@@ -1018,6 +1037,8 @@ dependencies = [
  "cw2 0.13.4",
  "cw20 0.13.4",
  "eris",
+ "eris-chain-adapter",
+ "eris-chain-shared",
  "integer-sqrt",
  "proptest 0.10.1",
  "schemars",
@@ -1196,20 +1217,8 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-neutron",
+ "eris-staking-hub-tokenfactory-sei",
  "kujira",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "eris-neutron"
-version = "1.0.0"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "eris-chain-shared",
- "osmosis-std",
  "schemars",
  "serde",
 ]
@@ -1227,7 +1236,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-neutron"
+name = "eris-sei"
+version = "1.0.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "eris-chain-shared",
+ "schemars",
+ "sei-cosmwasm",
+ "serde",
+]
+
+[[package]]
+name = "eris-staking-hub-tokenfactory-sei"
 version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
@@ -1261,24 +1282,26 @@ dependencies = [
  "astroport 2.8.0",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-multi-test 0.16.2",
+ "cw-multi-test 0.16.5",
  "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 0.13.4",
  "cw20-base 0.13.4",
  "eris",
- "eris-arb-vault-neutron",
+ "eris-arb-vault-sei",
  "eris-chain-adapter",
  "eris-gov-amp-gauges",
  "eris-gov-emp-gauges",
  "eris-gov-prop-gauges",
  "eris-gov-voting-escrow",
- "eris-staking-hub-tokenfactory-neutron",
+ "eris-staking-hub-tokenfactory-sei",
  "kujira",
  "osmosis-std",
  "pfc-steak",
  "pfc-steak-hub-tf",
  "reward",
+ "sei-cosmwasm",
+ "sei-integration-tests",
  "staking",
 ]
 
@@ -1556,7 +1579,7 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -1568,7 +1591,7 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -1646,9 +1669,9 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.51"
+version = "1.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d727cae5b39d21da60fa540906919ad737832fe0b1c165da3a34d6548c849d6"
+checksum = "18fb31db3f9bddb2ea821cde30a9f70117e3f119938b5ee630b7403aa6e2ead9"
 dependencies = [
  "unicode-ident",
 ]
@@ -1724,7 +1747,7 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -1737,7 +1760,7 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -1794,9 +1817,9 @@ checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
 
 [[package]]
 name = "quote"
-version = "1.0.23"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8856d8364d252a14d474036ea1358d63c9e6965c8e5c1885c18f73d70bff9c7b"
+checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
 dependencies = [
  "proc-macro2",
 ]
@@ -1984,7 +2007,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde_derive_internals",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -1999,6 +2022,35 @@ dependencies = [
  "pkcs8",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "sei-cosmwasm"
+version = "0.4.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49b4dd7061ee6ea8bb74f775c54876a8609c191bcd5070446ddd83f0bac3c36c"
+dependencies = [
+ "cosmwasm-std",
+ "protobuf 3.2.0",
+ "schemars",
+ "serde",
+ "serde_repr",
+]
+
+[[package]]
+name = "sei-integration-tests"
+version = "0.4.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9998aa7157cbba8bb300a66c2772c0bb5fab5185bca3158c4a90a16f23b65773"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-multi-test 0.16.5",
+ "cw20-base 0.13.4",
+ "schemars",
+ "sei-cosmwasm",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2042,7 +2094,7 @@ checksum = "94ed3a816fb1d101812f83e789f888322c34e291f894f19590dc310963e87a00"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -2053,7 +2105,7 @@ checksum = "85bf8229e7920a9f636479437026331ce11aa132b4dde37d121944a44d6e5f3c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -2065,6 +2117,17 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_repr"
+version = "0.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8725e1dfadb3a50f7e5ce0b1a540466f6ed3fe7a0fca2ac2b8b831d31316bd00"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.29",
 ]
 
 [[package]]
@@ -2119,7 +2182,7 @@ checksum = "1508efa03c362e23817f96cde18abed596a25219a8b2c66e8db33c03543d315b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -2186,6 +2249,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "2.0.29"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c324c494eba9d92503e6f1ef2e6df781e78f6a7705a0202d9801b198807d518a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2215,7 +2289,7 @@ checksum = "1fb327af4685e4d03fa8cbcf1716380da910eeb2bb8be417e7f9fd3fb164f36f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]

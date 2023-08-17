@@ -10,7 +10,7 @@ use crate::{
     bond::{bond, bond_assets, bond_to},
     compound::{compound, stake},
     constants::TOKEN_INSTANTIATE_REPLY,
-    error::ContractError,
+    error::{ContractError, ContractResult},
     execute::register_amp_lp_token,
     ownership::{claim_ownership, drop_ownership_proposal, propose_new_owner},
     queries::{query_config, query_exchange_rates, query_state, query_user_info},
@@ -56,7 +56,7 @@ pub fn instantiate(
     env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     validate_percentage(msg.fee, "fee")?;
     let chain = chain(&env);
 
@@ -105,12 +105,7 @@ pub fn instantiate(
 /// ## Description
 /// Exposes execute functions available in the contract.
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> ContractResult {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
         ExecuteMsg::UpdateConfig {
@@ -220,7 +215,7 @@ fn receive_cw20(
     env: Env,
     info: MessageInfo,
     cw20_msg: Cw20ReceiveMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     match from_binary(&cw20_msg.msg) {
         Ok(Cw20HookMsg::Bond {
             staker_addr,
@@ -259,7 +254,7 @@ pub fn update_config(
     fee: Option<Decimal>,
     fee_collector: Option<String>,
     deposit_profit_delay_s: Option<u64>,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let mut config: Config = CONFIG.load(deps.storage)?;
 
     if info.sender != config.owner {
@@ -300,7 +295,7 @@ pub fn handle_callback(
     env: Env,
     info: MessageInfo,
     msg: CallbackMsg,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     // Callback functions can only be called by this contract itself
     if info.sender != env.contract.address {
         return Err(ContractError::Unauthorized {});

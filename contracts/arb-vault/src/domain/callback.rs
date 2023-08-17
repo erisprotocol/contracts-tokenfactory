@@ -4,7 +4,7 @@ use astroport::asset::{native_asset, AssetInfo, AssetInfoExt};
 use cosmwasm_std::{attr, Decimal, DepsMut, Env, MessageInfo, Response};
 use eris::arb_vault::{CallbackMsg, ExchangeHistory};
 use eris::constants::DAY;
-use eris::CustomResponse;
+use eris::{CustomMsgExt, CustomResponse};
 
 use crate::error::{ContractError, ContractResult};
 use crate::extensions::{BalancesEx, ConfigEx};
@@ -103,7 +103,7 @@ pub fn execute_assert_result(
     } else if new_balances.vault_takeable >= fee_amount {
         // send fees in utoken if takeable allows it.
         let utoken = native_asset(config.utoken, fee_amount);
-        let fee_msg = utoken.into_msg(fee_config.protocol_fee_contract)?;
+        let fee_msg = utoken.into_msg(fee_config.protocol_fee_contract)?.to_specific()?;
 
         (Some(fee_msg), vec![])
     } else {
@@ -114,7 +114,8 @@ pub fn execute_assert_result(
             .adapter
             .asset()
             .with_balance(fee_xamount)
-            .into_msg(fee_config.protocol_fee_contract)?;
+            .into_msg(fee_config.protocol_fee_contract)?
+            .to_specific()?;
 
         (
             Some(fee_msg),

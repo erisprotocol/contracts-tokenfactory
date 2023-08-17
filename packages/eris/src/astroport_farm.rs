@@ -3,6 +3,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use cw20::{Cw20ReceiveMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as Cw20InstantiateMsg;
+use eris_chain_adapter::types::CustomMsgType;
 
 /// This structure describes the parameters for creating a contract.
 #[cw_serde]
@@ -46,7 +47,11 @@ pub struct TokenInit {
 }
 
 impl TokenInit {
-    pub fn instantiate(&self, owner: String, contract: Addr) -> StdResult<CosmosMsg> {
+    pub fn instantiate(
+        &self,
+        owner: String,
+        contract: Addr,
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Instantiate {
             admin: Some(owner), // use the owner as admin for now; can be changed later by a `MsgUpdateAdmin`
             code_id: self.cw20_code_id,
@@ -146,7 +151,7 @@ pub enum CallbackMsg {
 // Modified from
 // https://github.com/CosmWasm/cw-plus/blob/v0.8.0/packages/cw20/src/receiver.rs#L23
 impl CallbackMsg {
-    pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg> {
+    pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: String::from(contract_addr),
             msg: to_binary(&ExecuteMsg::Callback(self.clone()))?,

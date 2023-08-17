@@ -4,6 +4,7 @@ use cosmwasm_std::{
 use cw2::set_contract_version;
 
 use eris::hub::{CallbackMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use eris_chain_adapter::types::CustomQueryType;
 
 use crate::claim::exec_claim;
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
@@ -13,7 +14,7 @@ use crate::{execute, gov, queries};
 
 #[entry_point]
 pub fn instantiate(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
@@ -22,7 +23,12 @@ pub fn instantiate(
 }
 
 #[entry_point]
-pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> ContractResult {
+pub fn execute(
+    deps: DepsMut<CustomQueryType>,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> ContractResult {
     let api = deps.api;
     match msg {
         ExecuteMsg::Bond {
@@ -132,7 +138,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
 }
 
 fn callback(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     env: Env,
     info: MessageInfo,
     callback_msg: CallbackMsg,
@@ -157,7 +163,7 @@ fn callback(
 }
 
 #[entry_point]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps<CustomQueryType>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&queries::config(deps)?),
         QueryMsg::State {} => to_binary(&queries::state(deps, env)?),

@@ -1,5 +1,5 @@
 [package]
-name = "eris-astroport-farm-neutron"
+name = "eris-astroport-farm"
 version = "1.4.0"
 authors = ["Spectrum", "Eris"]
 edition = "2021"

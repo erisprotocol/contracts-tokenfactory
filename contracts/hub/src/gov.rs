@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     CosmosMsg, Decimal, DepsMut, Env, Event, Fraction, GovMsg, MessageInfo, Response,
 };
-use eris_chain_adapter::types::CustomMsgType;
+use eris_chain_adapter::types::{CustomMsgType, CustomQueryType};
 use itertools::Itertools;
 use protobuf::SpecialFields;
 
@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub fn vote(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     _env: Env,
     info: MessageInfo,
     proposal_id: u64,
@@ -32,7 +32,7 @@ pub fn vote(
 }
 
 pub fn vote_weighted(
-    deps: DepsMut,
+    deps: DepsMut<CustomQueryType>,
     _env: Env,
     info: MessageInfo,
     proposal_id: u64,

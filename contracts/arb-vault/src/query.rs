@@ -1,13 +1,9 @@
-use std::ops::Div;
-
 use crate::error::{ContractError, CustomResult};
 use crate::extensions::{BalancesEx, ConfigEx};
 use crate::helpers::calc_fees;
 use crate::state::{State, UnbondHistory};
-
 use astroport::asset::native_asset_info;
 use cosmwasm_std::{Decimal, Deps, Env, Order, StdResult, Uint128};
-
 use cw_storage_plus::Bound;
 use eris::arb_vault::{
     BalancesOptionalDetails, ConfigResponse, ExchangeHistory, ExchangeRatesResponse, StateDetails,
@@ -15,6 +11,7 @@ use eris::arb_vault::{
 };
 use eris::constants::DAY;
 use eris::voting_escrow::{DEFAULT_LIMIT, MAX_LIMIT};
+use std::ops::Div;
 
 pub fn query_config(deps: Deps) -> CustomResult<ConfigResponse> {
     let state = State::default();

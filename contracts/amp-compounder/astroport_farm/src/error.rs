@@ -1,5 +1,9 @@
-use cosmwasm_std::{OverflowError, StdError, Uint128};
+use cosmwasm_std::{OverflowError, Response, StdError, Uint128};
+use eris_chain_adapter::types::CustomMsgType;
 use thiserror::Error;
+
+pub type ContractResult = Result<Response<CustomMsgType>, ContractError>;
+pub type CustomResult<T> = Result<T, ContractError>;
 
 /// ## Description
 /// This enum describes pair contract errors!

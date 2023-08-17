@@ -10,6 +10,7 @@ use eris::hub::{
     UnbondRequestsByBatchResponseItem, UnbondRequestsByUserResponseItem,
     UnbondRequestsByUserResponseItemDetails, WantedDelegationsResponse,
 };
+use eris_chain_adapter::types::CustomQueryType;
 use itertools::Itertools;
 
 use crate::constants::DAY;
@@ -22,7 +23,7 @@ use crate::types::gauges::PeriodGaugeLoader;
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
 
-pub fn config(deps: Deps) -> StdResult<ConfigResponse> {
+pub fn config(deps: Deps<CustomQueryType>) -> StdResult<ConfigResponse> {
     let state = State::default();
 
     let stake = state.stake_token.load(deps.storage)?;
@@ -71,7 +72,7 @@ pub fn config(deps: Deps) -> StdResult<ConfigResponse> {
     })
 }
 
-pub fn state(deps: Deps, env: Env) -> StdResult<StateResponse> {
+pub fn state(deps: Deps<CustomQueryType>, env: Env) -> StdResult<StateResponse> {
     let state = State::default();
 
     let stake_token = state.stake_token.load(deps.storage)?;
@@ -116,7 +117,10 @@ pub fn state(deps: Deps, env: Env) -> StdResult<StateResponse> {
     })
 }
 
-pub fn wanted_delegations(deps: Deps, env: Env) -> StdResult<WantedDelegationsResponse> {
+pub fn wanted_delegations(
+    deps: Deps<CustomQueryType>,
+    env: Env,
+) -> StdResult<WantedDelegationsResponse> {
     let state = State::default();
     let stake_token = state.stake_token.load(deps.storage)?;
 
@@ -136,7 +140,7 @@ pub fn wanted_delegations(deps: Deps, env: Env) -> StdResult<WantedDelegationsRe
 }
 
 pub fn simulate_wanted_delegations(
-    deps: Deps,
+    deps: Deps<CustomQueryType>,
     env: Env,
     period: Option<u64>,
 ) -> StdResult<WantedDelegationsResponse> {
@@ -185,18 +189,18 @@ fn sort_delegations(
         .collect()
 }
 
-pub fn pending_batch(deps: Deps) -> StdResult<PendingBatch> {
+pub fn pending_batch(deps: Deps<CustomQueryType>) -> StdResult<PendingBatch> {
     let state = State::default();
     state.pending_batch.load(deps.storage)
 }
 
-pub fn previous_batch(deps: Deps, id: u64) -> StdResult<Batch> {
+pub fn previous_batch(deps: Deps<CustomQueryType>, id: u64) -> StdResult<Batch> {
     let state = State::default();
     state.previous_batches.load(deps.storage, id)
 }
 
 pub fn previous_batches(
-    deps: Deps,
+    deps: Deps<CustomQueryType>,
     start_after: Option<u64>,
     limit: Option<u32>,
 ) -> StdResult<Vec<Batch>> {
@@ -217,7 +221,7 @@ pub fn previous_batches(
 }
 
 pub fn unbond_requests_by_batch(
-    deps: Deps,
+    deps: Deps<CustomQueryType>,
     id: u64,
     start_after: Option<String>,
     limit: Option<u32>,
@@ -248,7 +252,7 @@ pub fn unbond_requests_by_batch(
 }
 
 pub fn unbond_requests_by_user(
-    deps: Deps,
+    deps: Deps<CustomQueryType>,
     user: String,
     start_after: Option<u64>,
     limit: Option<u32>,
@@ -275,7 +279,7 @@ pub fn unbond_requests_by_user(
 }
 
 pub fn unbond_requests_by_user_details(
-    deps: Deps,
+    deps: Deps<CustomQueryType>,
     user: String,
     start_after: Option<u64>,
     limit: Option<u32>,
@@ -331,7 +335,7 @@ pub fn unbond_requests_by_user_details(
 }
 
 pub fn query_exchange_rates(
-    deps: Deps,
+    deps: Deps<CustomQueryType>,
     _env: Env,
     start_after: Option<u64>,
     limit: Option<u32>,

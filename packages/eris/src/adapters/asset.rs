@@ -6,6 +6,7 @@ use cosmwasm_std::{
     StdResult, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Expiration};
+use eris_chain_adapter::types::CustomMsgType;
 
 pub trait AssetInfosEx {
     fn query_balances(&self, querier: &QuerierWrapper, address: &Addr) -> StdResult<Vec<Asset>>;
@@ -92,25 +93,29 @@ impl AssetsEx for Vec<Asset> {
 }
 
 pub trait AssetEx {
-    fn transfer_msg(&self, to: &Addr) -> StdResult<CosmosMsg>;
-    fn transfer_msg_target(&self, to_addr: &Addr, to_msg: Option<Binary>) -> StdResult<CosmosMsg>;
-    fn transfer_from_msg(&self, from: &Addr, to: &Addr) -> StdResult<CosmosMsg>;
+    fn transfer_msg(&self, to: &Addr) -> StdResult<CosmosMsg<CustomMsgType>>;
+    fn transfer_msg_target(
+        &self,
+        to_addr: &Addr,
+        to_msg: Option<Binary>,
+    ) -> StdResult<CosmosMsg<CustomMsgType>>;
+    fn transfer_from_msg(&self, from: &Addr, to: &Addr) -> StdResult<CosmosMsg<CustomMsgType>>;
     fn increase_allowance_msg(
         &self,
         spender: String,
         expires: Option<Expiration>,
-    ) -> StdResult<CosmosMsg>;
+    ) -> StdResult<CosmosMsg<CustomMsgType>>;
 
     fn deposit_asset(
         &self,
         info: &MessageInfo,
         recipient: &Addr,
-        messages: &mut Vec<CosmosMsg>,
+        messages: &mut Vec<CosmosMsg<CustomMsgType>>,
     ) -> StdResult<()>;
 }
 
 impl AssetEx for Asset {
-    fn transfer_msg(&self, to: &Addr) -> StdResult<CosmosMsg> {
+    fn transfer_msg(&self, to: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         match &self.info {
             AssetInfo::Token {
                 contract_addr,
@@ -134,7 +139,11 @@ impl AssetEx for Asset {
         }
     }
 
-    fn transfer_msg_target(&self, to_addr: &Addr, to_msg: Option<Binary>) -> StdResult<CosmosMsg> {
+    fn transfer_msg_target(
+        &self,
+        to_addr: &Addr,
+        to_msg: Option<Binary>,
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         if let Some(msg) = to_msg {
             match &self.info {
                 AssetInfo::Token {
@@ -164,7 +173,7 @@ impl AssetEx for Asset {
         }
     }
 
-    fn transfer_from_msg(&self, from: &Addr, to: &Addr) -> StdResult<CosmosMsg> {
+    fn transfer_from_msg(&self, from: &Addr, to: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         match &self.info {
             AssetInfo::Token {
                 contract_addr,
@@ -187,7 +196,7 @@ impl AssetEx for Asset {
         &self,
         spender: String,
         expires: Option<Expiration>,
-    ) -> StdResult<CosmosMsg> {
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.info.to_string(),
             msg: to_binary(&Cw20ExecuteMsg::IncreaseAllowance {
@@ -203,7 +212,7 @@ impl AssetEx for Asset {
         &self,
         info: &MessageInfo,
         recipient: &Addr,
-        messages: &mut Vec<CosmosMsg>,
+        messages: &mut Vec<CosmosMsg<CustomMsgType>>,
     ) -> StdResult<()> {
         if self.amount.is_zero() {
             return Ok(());

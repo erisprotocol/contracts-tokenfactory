@@ -33,7 +33,7 @@ pub mod types {
 
     /// queries all balances and converts it to a hashmap
     pub fn get_balances_hashmap<F>(
-        deps: &DepsMut,
+        deps: &DepsMut<CustomQueryType>,
         env: Env,
         _get_denoms: F,
     ) -> StdResult<HashMap<String, Uint128>>
@@ -87,7 +87,7 @@ pub mod types {
 
     /// queries all balances and converts it to a hashmap
     pub fn get_balances_hashmap<F>(
-        deps: &DepsMut,
+        deps: &DepsMut<CustomQueryType>,
         env: Env,
         get_denoms: F,
     ) -> StdResult<HashMap<String, Uint128>>
@@ -152,7 +152,7 @@ pub mod types {
 
     /// queries all balances and converts it to a hashmap
     pub fn get_balances_hashmap<F>(
-        deps: &DepsMut,
+        deps: &DepsMut<CustomQueryType>,
         env: Env,
         get_denoms: F,
     ) -> StdResult<HashMap<String, Uint128>>
@@ -214,7 +214,7 @@ pub mod types {
 
     /// queries all balances and converts it to a hashmap
     pub fn get_balances_hashmap<F>(
-        deps: &DepsMut,
+        deps: &DepsMut<CustomQueryType>,
         env: Env,
         _get_denoms: F,
     ) -> StdResult<HashMap<String, Uint128>>
@@ -228,7 +228,7 @@ pub mod types {
     }
 }
 
-#[cfg(feature = "X-neutron-X")]
+#[cfg(feature = "X-sei-X")]
 pub mod types {
     use cosmwasm_std::DepsMut;
     use cosmwasm_std::Env;
@@ -237,14 +237,15 @@ pub mod types {
     use std::collections::HashMap;
 
     use eris_chain_shared::chain_trait::ChainInterface;
-    use eris_neutron::chain::NeutronChain;
+    use eris_sei::chain::Chain;
 
-    pub use eris_neutron::types::CustomMsgType;
-    pub use eris_neutron::types::DenomType;
-    pub use eris_neutron::types::HubChainConfig;
-    pub use eris_neutron::types::HubChainConfigInput;
-    pub use eris_neutron::types::StageType;
-    pub use eris_neutron::types::WithdrawType;
+    pub use eris_sei::types::CustomMsgType;
+    pub use eris_sei::types::CustomQueryType;
+    pub use eris_sei::types::DenomType;
+    pub use eris_sei::types::HubChainConfig;
+    pub use eris_sei::types::HubChainConfigInput;
+    pub use eris_sei::types::StageType;
+    pub use eris_sei::types::WithdrawType;
 
     pub const CHAIN_TYPE: &str = "neutron";
 
@@ -253,7 +254,7 @@ pub mod types {
         env: &Env,
     ) -> impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig>
     {
-        NeutronChain {
+        Chain {
             contract: env.contract.address.clone(),
         }
     }
@@ -265,7 +266,7 @@ pub mod types {
 
     /// queries all balances and converts it to a hashmap
     pub fn get_balances_hashmap<F>(
-        deps: &DepsMut,
+        deps: &DepsMut<CustomQueryType>,
         env: Env,
         _get_denoms: F,
     ) -> StdResult<HashMap<String, Uint128>>

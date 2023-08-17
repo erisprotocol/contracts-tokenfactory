@@ -2,7 +2,9 @@ use astroport::asset::Asset;
 use cosmwasm_std::{
     attr, Attribute, Coin, CosmosMsg, Decimal, DepsMut, Env, MessageInfo, Response, Uint128,
 };
+use eris_chain_adapter::types::CustomMsgType;
 
+use crate::error::ContractResult;
 use crate::state::{EXCHANGE_HISTORY, STATE};
 use crate::{error::ContractError, state::CONFIG};
 
@@ -22,7 +24,7 @@ pub fn compound(
     info: MessageInfo,
     minimum_receive: Option<Uint128>,
     slippage_tolerance: Option<Decimal>,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let config = CONFIG.load(deps.storage)?;
 
     // Only controller can call this function
@@ -46,7 +48,7 @@ pub fn compound(
 
     let total_fee = config.fee;
 
-    let mut messages: Vec<CosmosMsg> = vec![];
+    let mut messages: Vec<CosmosMsg<CustomMsgType>> = vec![];
     let mut attributes: Vec<Attribute> = vec![];
 
     let mut rewards: Vec<Asset> = vec![];
@@ -135,7 +137,7 @@ pub fn stake(
     _info: MessageInfo,
     prev_balance: Uint128,
     minimum_receive: Option<Uint128>,
-) -> Result<Response, ContractError> {
+) -> ContractResult {
     let config = CONFIG.load(deps.storage)?;
 
     let lp_token = config.lp_token;

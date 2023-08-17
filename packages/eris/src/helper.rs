@@ -6,6 +6,7 @@ use cosmwasm_std::{
     Uint128, Uint256,
 };
 use cw20::Expiration;
+use eris_chain_adapter::types::CustomMsgType;
 
 use crate::adapters::asset::AssetEx;
 
@@ -65,9 +66,9 @@ pub fn funds_or_allowance(
     spender: &Addr,
     assets: &[Asset],
     deposit_info: Option<&MessageInfo>,
-) -> StdResult<(Vec<Coin>, Vec<CosmosMsg>)> {
+) -> StdResult<(Vec<Coin>, Vec<CosmosMsg<CustomMsgType>>)> {
     let mut funds: Vec<Coin> = vec![];
-    let mut msgs: Vec<CosmosMsg> = vec![];
+    let mut msgs: Vec<CosmosMsg<CustomMsgType>> = vec![];
 
     for asset in assets.iter() {
         if let Some(deposit_info) = deposit_info {

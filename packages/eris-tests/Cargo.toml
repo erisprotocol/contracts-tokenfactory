@@ -15,9 +15,9 @@ X-whitewhale-X = []
 X-kujira-X = []
 X-injective-X = []
 X-osmosis-X = []
-X-neutron-X = []
+X-sei-X = []
 
-default = ["X-neutron-X"]
+default = ["X-sei-X"]
 
 [dependencies]
 cw2 = "0.13.2"
@@ -26,11 +26,11 @@ cw20-base = { version = "0.13.2", features = ["library"] }
 cosmwasm-std = "1.1"
 
 cosmwasm-schema = "1.1"
-# cw-multi-test = "0.16.2" 
+cw-multi-test = "0.16.5"
 # cw-multi-test = { git = "https://github.com/CosmWasm/cw-multi-test.git",  default-features = false, features = ["iterator"], rev = "9af32fd42efcf28e9a79987f2c2036f879cd5331"}
-cw-multi-test = { git = "https://github.com/erisprotocol/cw-multi-test.git", default-features = false, features = [
-    "iterator",
-], rev = "5f2f7062187d762b71fd22b91157c4e88de87a64" }
+# cw-multi-test = { git = "https://github.com/erisprotocol/cw-multi-test.git", default-features = false, features = [
+#     "iterator",
+# ], rev = "5f2f7062187d762b71fd22b91157c4e88de87a64" }
 cw-storage-plus = "0.15.1"
 
 astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
@@ -38,8 +38,8 @@ astroport = { git = "https://github.com/astroport-fi/astroport-core.git", defaul
 eris = { path = "../eris" }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 
-eris-arb-vault = { path = "../../contracts/arb-vault", package = "eris-arb-vault-neutron" }
-eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-neutron" }
+eris-arb-vault = { path = "../../contracts/arb-vault", package = "eris-arb-vault-sei" }
+eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-sei" }
 eris-gov-voting-escrow = { path = "../../contracts/amp-governance/voting_escrow" }
 eris-gov-emp-gauges = { path = "../../contracts/amp-governance/emp_gauges" }
 eris-gov-amp-gauges = { path = "../../contracts/amp-governance/amp_gauges" }
@@ -52,5 +52,7 @@ steak = { git = "https://github.com/PFC-developer/steak-contracts.git", package 
 
 kujira = "0.7.13"
 osmosis-std = "0.15.3"
+sei-cosmwasm = { version = "0.4.10" }
+sei-integration-tests = { version = "0.4.10" }
 
 anyhow = "1"

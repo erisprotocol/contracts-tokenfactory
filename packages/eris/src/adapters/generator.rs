@@ -1,6 +1,7 @@
 use astroport::generator::{Cw20HookMsg, ExecuteMsg, PendingTokenResponse, QueryMsg};
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
+use eris_chain_adapter::types::CustomMsgType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -38,7 +39,11 @@ impl Generator {
         )
     }
 
-    pub fn deposit_msg(&self, lp_token: String, amount: Uint128) -> StdResult<CosmosMsg> {
+    pub fn deposit_msg(
+        &self,
+        lp_token: String,
+        amount: Uint128,
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: lp_token,
             funds: vec![],
@@ -50,7 +55,11 @@ impl Generator {
         }))
     }
 
-    pub fn withdraw_msg(&self, lp_token: String, amount: Uint128) -> StdResult<CosmosMsg> {
+    pub fn withdraw_msg(
+        &self,
+        lp_token: String,
+        amount: Uint128,
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
             funds: vec![],
@@ -61,7 +70,7 @@ impl Generator {
         }))
     }
 
-    pub fn claim_rewards_msg(&self, lp_tokens: Vec<String>) -> StdResult<CosmosMsg> {
+    pub fn claim_rewards_msg(&self, lp_tokens: Vec<String>) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
             msg: to_binary(&ExecuteMsg::ClaimRewards {

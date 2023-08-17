@@ -3,6 +3,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use astroport::asset::{Asset, AssetInfo};
 
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
+use eris_chain_adapter::types::CustomMsgType;
 
 use crate::adapters::router::RouterType;
 
@@ -227,7 +228,7 @@ pub enum CallbackMsg {
 // Modified from
 // https://github.com/CosmWasm/cw-plus/blob/v0.8.0/packages/cw20/src/receiver.rs#L23
 impl CallbackMsg {
-    pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg> {
+    pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: String::from(contract_addr),
             msg: to_binary(&ExecuteMsg::Callback(self.clone()))?,

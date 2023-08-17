@@ -9,8 +9,8 @@ use cosmwasm_std::{
     Response, StdResult, Storage, Uint128, WasmMsg,
 };
 use eris::arb_vault::{CallbackMsg, ExecuteSubMsg, LpToken, ValidatedConfig};
-use eris::CustomResponse;
-use eris_chain_adapter::types::chain;
+use eris::{CustomMsgExt, CustomResponse};
+use eris_chain_adapter::types::{chain, CustomMsgType};
 use eris_chain_shared::chain_trait::ChainInterface;
 use itertools::Itertools;
 use std::vec;
@@ -59,7 +59,7 @@ pub fn execute_arbitrage(
         },
     )?;
 
-    let execute_flashloan = CosmosMsg::Wasm(WasmMsg::Execute {
+    let execute_flashloan: CosmosMsg<CustomMsgType> = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: contract_addr.to_string(),
         msg: message.msg.clone(),
         funds: vec![Coin {
@@ -379,16 +379,18 @@ fn create_withdraw_msgs(
     let protocol_fee_msg = if !withdraw_protocol_fee.is_zero() {
         Some(
             native_asset(config.utoken.clone(), withdraw_protocol_fee)
-                .into_msg(fee_config.protocol_fee_contract)?,
+                .into_msg(fee_config.protocol_fee_contract)?
+                .to_specific()?,
         )
     } else {
         None
     };
 
-    let withdraw_msg =
-        native_asset(config.utoken.clone(), receive_amount).into_msg(receiver.clone())?;
+    let withdraw_msg = native_asset(config.utoken.clone(), receive_amount)
+        .into_msg(receiver.clone())?
+        .to_specific()?;
 
-    Ok(Response::new()
+    Ok(Response::<CustomMsgType>::new()
         // send assets to the sender
         .add_message(withdraw_msg)
         // send protocol fee
@@ -411,7 +413,7 @@ fn create_burn_msg(
     state: &State,
     lp_token: &mut LpToken,
     amount: Uint128,
-) -> Result<CosmosMsg, ContractError> {
+) -> Result<CosmosMsg<CustomMsgType>, ContractError> {
     lp_token.total_supply = lp_token.total_supply.checked_sub(amount)?;
     state.lp_token.save(storage, lp_token)?;
     Ok(chain(env).create_burn_msg(lp_token.denom.clone(), amount))
@@ -424,7 +426,7 @@ fn create_mint_msgs(
     lp_token: &mut LpToken,
     recipient: Addr,
     amount: Uint128,
-) -> Result<Vec<CosmosMsg>, ContractError> {
+) -> Result<Vec<CosmosMsg<CustomMsgType>>, ContractError> {
     lp_token.total_supply = lp_token.total_supply.checked_add(amount)?;
     state.lp_token.save(storage, lp_token)?;
     Ok(chain(env).create_mint_msgs(lp_token.denom.clone(), amount, recipient))

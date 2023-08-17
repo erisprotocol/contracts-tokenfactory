@@ -17,6 +17,7 @@ use eris::fees_collector::{
     AssetWithLimit, BalancesResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
     TargetConfig,
 };
+use eris::CustomMsgExt2;
 use std::cmp;
 use std::collections::{HashMap, HashSet};
 
@@ -363,7 +364,8 @@ fn distribute(
 
                         let send_msg = stablecoin
                             .with_balance(amount)
-                            .transfer_msg_target(&target.addr, target.msg)?;
+                            .transfer_msg_target(&target.addr, target.msg)?
+                            .to_normal()?;
                         messages.push(send_msg);
                         attributes.push(("type".to_string(), "fill_up".to_string()));
                         attributes.push(("to".to_string(), target.addr.to_string()));
@@ -379,8 +381,10 @@ fn distribute(
     for target in weighted {
         let amount = total_amount.multiply_ratio(target.weight, total_weight);
         if !amount.is_zero() {
-            let send_msg =
-                stablecoin.with_balance(amount).transfer_msg_target(&target.addr, target.msg)?;
+            let send_msg = stablecoin
+                .with_balance(amount)
+                .transfer_msg_target(&target.addr, target.msg)?
+                .to_normal()?;
             messages.push(send_msg);
             attributes.push(("to".to_string(), target.addr.to_string()));
             attributes.push(("amount".to_string(), amount.to_string()));

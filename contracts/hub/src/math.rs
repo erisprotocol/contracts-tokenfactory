@@ -10,6 +10,7 @@ use eris::{
     hub::{Batch, WantedDelegationsShare},
     DecimalCheckedOps,
 };
+use eris_chain_adapter::types::CustomQueryType;
 
 use crate::{
     helpers::query_all_delegations_amount,
@@ -287,7 +288,7 @@ pub(crate) fn compute_redelegations_for_rebalancing(
 pub(crate) fn get_utoken_per_validator_prepared(
     state: &State,
     storage: &dyn Storage,
-    querier: &QuerierWrapper,
+    querier: &QuerierWrapper<CustomQueryType>,
     contract: &Addr,
     goal: Option<WantedDelegationsShare>,
     utoken: String,

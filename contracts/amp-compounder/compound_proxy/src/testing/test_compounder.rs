@@ -13,6 +13,8 @@ use eris::compound_proxy::{
     CallbackMsg, CompoundSimulationResponse, ExecuteMsg, InstantiateMsg, LpConfig, LpInit,
     PairInfo, PairType, QueryMsg, RouteDelete, RouteInit, RouteResponseItem, RouteTypeResponseItem,
 };
+use eris::CustomMsgExt;
+use eris_chain_adapter::types::CustomMsgType;
 use proptest::std_facade::vec;
 
 use crate::contract::{execute, instantiate, query};
@@ -594,7 +596,7 @@ fn compound() -> Result<(), ContractError> {
 
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         vec![
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
@@ -649,7 +651,7 @@ fn compound() -> Result<(), ContractError> {
     };
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         vec![CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
             funds: vec![],
@@ -710,9 +712,10 @@ fn compound_native_proxy() -> Result<(), ContractError> {
     let pair = Pair(Addr::unchecked("pair0002"));
 
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         vec![
-            pair.swap_msg(&ibc_amount(1000), None, Some(Decimal::percent(10)), None)?,
+            pair.swap_msg(&ibc_amount(1000), None, Some(Decimal::percent(10)), None)?
+                .to_specific()?,
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
                 funds: vec![],
@@ -787,12 +790,13 @@ fn compound_token_path() -> Result<(), ContractError> {
             Some(Decimal::percent(10)),
             None
         )?
+        .to_specific()?
     );
 
     assert_eq!(res.messages[1].msg, transfer);
     assert_eq!(
         res.messages[2].msg,
-        config.create_swap(&astro_amount(109), Decimal::percent(10), None)?
+        config.create_swap(&astro_amount(109), Decimal::percent(10), None)?.to_specific()?
     );
 
     match res.messages[3].msg.clone() {
@@ -963,7 +967,7 @@ fn optimal_swap() -> Result<(), ContractError> {
     let res = execute(deps.as_mut(), env, info, msg)?;
 
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         vec![CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "token".to_string(),
             funds: vec![],
@@ -1011,7 +1015,7 @@ fn provide_liquidity() -> Result<(), ContractError> {
     let info = mock_info(env.contract.address.as_str(), &[]);
     let res = execute(deps.as_mut(), env.clone(), info.clone(), msg.clone())?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         vec![CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "pair_contract_2".to_string(),
             funds: vec![coin(2000000, "ibc/token"), coin(1000000, "uluna"),],
@@ -1033,7 +1037,7 @@ fn provide_liquidity() -> Result<(), ContractError> {
 
     let res = execute(deps.as_mut(), env, info, msg)?;
     assert_eq!(
-        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg>>(),
+        res.messages.into_iter().map(|it| it.msg).collect::<Vec<CosmosMsg<CustomMsgType>>>(),
         vec![CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "pair_contract_2".to_string(),
             funds: vec![coin(1000000, "uluna"),],

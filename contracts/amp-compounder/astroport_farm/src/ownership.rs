@@ -1,5 +1,6 @@
 use cosmwasm_std::{attr, Addr, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
 use cw_storage_plus::Item;
+use eris_chain_adapter::types::CustomMsgType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -39,7 +40,7 @@ pub fn propose_new_owner(
     expires_in: u64,
     owner: Addr,
     proposal: Item<OwnershipProposal>,
-) -> StdResult<Response> {
+) -> StdResult<Response<CustomMsgType>> {
     // permission check
     if info.sender != owner {
         return Err(StdError::generic_err("Unauthorized"));
@@ -86,7 +87,7 @@ pub fn drop_ownership_proposal(
     info: MessageInfo,
     owner: Addr,
     proposal: Item<OwnershipProposal>,
-) -> StdResult<Response> {
+) -> StdResult<Response<CustomMsgType>> {
     // permission check
     if info.sender != owner {
         return Err(StdError::generic_err("Unauthorized"));
@@ -117,7 +118,7 @@ pub fn claim_ownership(
     env: Env,
     proposal: Item<OwnershipProposal>,
     cb: fn(DepsMut, Addr) -> StdResult<()>,
-) -> StdResult<Response> {
+) -> StdResult<Response<CustomMsgType>> {
     let p: OwnershipProposal = proposal
         .load(deps.storage)
         .map_err(|_| StdError::generic_err("Ownership proposal not found"))?;
