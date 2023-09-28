@@ -17,7 +17,7 @@ use eris::{
         wrapper::Wrapper,
     },
     compound_proxy::{LpConfig, LpInit, PairInfo, PairType, RouteInit},
-    CustomMsgExt, CustomMsgExt2,
+    CustomMsgExt2,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
