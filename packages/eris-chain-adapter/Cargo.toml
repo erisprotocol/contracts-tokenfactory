@@ -27,4 +27,4 @@ X-injective-X = []
 X-osmosis-X = []
 X-sei-X = []
 
-default = ["X-sei-X"]
+default = ["X-osmosis-X"]

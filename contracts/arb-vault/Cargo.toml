@@ -1,5 +1,5 @@
 [package]
-name = "eris-arb-vault-sei"
+name = "eris-arb-vault-osmosis"
 version = "1.0.2"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"

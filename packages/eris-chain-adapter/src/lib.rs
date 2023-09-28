@@ -189,6 +189,7 @@ pub mod types {
     use eris_osmosis::chain::OsmosisChain;
 
     pub use eris_osmosis::types::CustomMsgType;
+    pub use eris_osmosis::types::CustomQueryType;
     pub use eris_osmosis::types::DenomType;
     pub use eris_osmosis::types::HubChainConfig;
     pub use eris_osmosis::types::HubChainConfigInput;

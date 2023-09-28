@@ -5,8 +5,8 @@ use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     attr,
     testing::{MockApi, MockStorage},
-    Addr, CustomQuery, Decimal, DepsMut, Empty, Env, GovMsg, IbcMsg, IbcQuery, Reply, Response,
-    StdError, StdResult, Uint128,
+    Addr, Decimal, DepsMut, Empty, Env, GovMsg, IbcMsg, IbcQuery, Reply, Response, StdError,
+    StdResult, Uint128,
 };
 use cw20::{BalanceResponse, Cw20QueryMsg};
 
@@ -120,7 +120,7 @@ impl BaseErisTestPackage {
         base_pack.init_emp_gauges(router, msg.owner.clone());
         base_pack.init_amp_gauges(router, msg.owner.clone());
 
-        base_pack.init_not_supported();
+        base_pack.init_not_supported(router, msg.owner.clone());
 
         base_pack.init_arb_fake_contract(router, msg.owner.clone());
 
@@ -130,11 +130,11 @@ impl BaseErisTestPackage {
     }
 
     #[cfg(not(feature = "X-sei-X"))]
-    fn init_not_supported(&self) {
-        self.init_prop_gauges(router, msg.owner.clone());
+    fn init_not_supported(&mut self, router: &mut CustomApp, owner: Addr) {
+        self.init_prop_gauges(router, owner.clone());
         // self.init_stader(router, msg.owner.clone());
-        self.init_steak_hub(router, msg.owner.clone());
-        self.init_arb_vault(router, msg.owner.clone());
+        self.init_steak_hub(router, owner.clone());
+        self.init_arb_vault(router, owner);
     }
     #[cfg(feature = "X-sei-X")]
     fn init_not_supported(&self) {}

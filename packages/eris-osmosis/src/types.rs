@@ -20,6 +20,7 @@ pub enum StageType {
 
 pub type DenomType = String;
 pub type CustomMsgType = Empty;
+pub type CustomQueryType = Empty;
 pub type CoinType = Coin;
 
 #[cw_serde]
