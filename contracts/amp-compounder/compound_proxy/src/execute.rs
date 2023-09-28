@@ -57,7 +57,9 @@ pub fn compound(
             let route_config = state.routes.load(deps.storage, key);
 
             if let Ok(route_config) = route_config {
-                messages.push(route_config.create_swap(&reward, max_spread, None)?.to_specific()?);
+                for msg in route_config.create_swap(&reward, max_spread, None)? {
+                    messages.push(msg.to_specific()?);
+                }
             } else if let Some(factory) = &factory {
                 // if factory is set, allowed to query pairs from factory
                 messages.push(
@@ -152,11 +154,9 @@ pub fn multi_swap(
             let route_config = state.routes.load(deps.storage, key);
 
             if let Ok(route_config) = route_config {
-                messages.push(
-                    route_config
-                        .create_swap(&reward, max_spread, Some(receiver.clone()))?
-                        .to_specific()?,
-                );
+                for msg in route_config.create_swap(&reward, max_spread, Some(receiver.clone()))? {
+                    messages.push(msg.to_specific()?);
+                }
             } else if let Some(factory) = &factory {
                 // if factory is set, allowed to query pairs from factory
                 messages.push(

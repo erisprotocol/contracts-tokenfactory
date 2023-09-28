@@ -108,6 +108,15 @@ pub fn get_routes(
                             .map(|s| s.to_string())
                             .collect(),
                     },
+                    crate::state::RouteType::Unwrap {
+                        from,
+                        to,
+                        contract,
+                    } => eris::compound_proxy::RouteTypeResponseItem::Unwrap {
+                        from: from.to_string(),
+                        to: to.to_string(),
+                        contract: contract.to_string(),
+                    },
                 },
             })
         })
@@ -137,6 +146,15 @@ pub fn get_route(deps: Deps, from: AssetInfo, to: AssetInfo) -> StdResult<RouteR
             } => eris::compound_proxy::RouteTypeResponseItem::PairProxy {
                 pair_contract: pair_info.contract_addr.to_string(),
                 asset_infos: pair_info.asset_infos.into_iter().map(|s| s.to_string()).collect(),
+            },
+            crate::state::RouteType::Unwrap {
+                from,
+                to,
+                contract,
+            } => eris::compound_proxy::RouteTypeResponseItem::Unwrap {
+                from: from.to_string(),
+                to: to.to_string(),
+                contract: contract.to_string(),
             },
         },
     })

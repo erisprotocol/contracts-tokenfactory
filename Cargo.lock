@@ -1027,7 +1027,7 @@ dependencies = [
 
 [[package]]
 name = "eris-compound-proxy"
-version = "1.6.1"
+version = "1.6.3"
 dependencies = [
  "astroport 2.8.0",
  "cosmwasm-schema",

@@ -125,6 +125,12 @@ pub enum RouteInit {
         single_direction_from: Option<AssetInfo>,
         pair_contract: String,
     },
+
+    Unwrap {
+        from: AssetInfo,
+        to: AssetInfo,
+        contract: String,
+    },
 }
 
 #[cw_serde]
@@ -357,5 +363,10 @@ pub enum RouteTypeResponseItem {
     PairProxy {
         pair_contract: String,
         asset_infos: Vec<String>,
+    },
+    Unwrap {
+        from: String,
+        to: String,
+        contract: String,
     },
 }

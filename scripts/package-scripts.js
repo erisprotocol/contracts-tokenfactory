@@ -6,8 +6,7 @@ module.exports = {
       default: "bash build_release.sh",
     },
     schema: {
-      default:
-        "nps schema.create schema.transform  schema.farm schema.generator",
+      default: "nps schema.create schema.transform  schema.compound",
 
       transform: "ts-node transform.ts",
 
@@ -33,8 +32,8 @@ module.exports = {
       //   "cd .. && json2ts -i contracts/amp-governance/prop_gauges/**/*.json -o ../liquid-staking-scripts/types/prop_gauges",
 
       farm: "cd .. && json2ts -i contracts/amp-compounder/astroport_farm/**/*.json -o ../liquid-staking-scripts/types/tokenfactory/amp-compounder/astroport_farm",
-      // compound:
-      //   "cd .. && json2ts -i contracts/amp-compounder/compound_proxy/**/*.json -o ../liquid-staking-scripts/types/amp-compounder/compound_proxy",
+      compound:
+        "cd .. && json2ts -i contracts/amp-compounder/compound_proxy/**/*.json -o ../liquid-staking-scripts/types/tokenfactory/amp-compounder/compound_proxy",
       // fees: "cd .. && json2ts -i contracts/amp-compounder/fees_collector/**/*.json -o ../liquid-staking-scripts/types/amp-compounder/fees_collector",
       generator:
         "cd .. && json2ts -i contracts/amp-compounder/generator_proxy/**/*.json -o ../liquid-staking-scripts/types/tokenfactory/amp-compounder/generator_proxy",

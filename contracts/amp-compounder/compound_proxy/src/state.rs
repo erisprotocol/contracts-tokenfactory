@@ -10,11 +10,14 @@ use cosmwasm_std::{
 use cw_storage_plus::{Item, Map};
 use eris::{
     adapters::{
+        asset::AssetEx,
         factory::Factory,
         pair::Pair,
         router::{Router, RouterType},
+        wrapper::Wrapper,
     },
     compound_proxy::{LpConfig, LpInit, PairInfo, PairType, RouteInit},
+    CustomMsgExt, CustomMsgExt2,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -54,6 +57,11 @@ pub enum RouteType {
     PairProxy {
         pair_info: PairInfo,
     },
+    Unwrap {
+        from: AssetInfo,
+        to: AssetInfo,
+        contract: Addr,
+    },
 }
 
 impl RouteConfig {
@@ -61,28 +69,47 @@ impl RouteConfig {
         &self,
         offer_asset: &Asset,
         max_spread: Decimal,
-        to: Option<Addr>,
-    ) -> StdResult<CosmosMsg> {
+        receiver: Option<Addr>,
+    ) -> StdResult<Vec<CosmosMsg>> {
         match &self.route_type {
             RouteType::Path {
                 route,
                 router,
                 router_type,
-            } => router.execute_swap_operations_msg(
+            } => Ok(vec![router.execute_swap_operations_msg(
                 offer_asset.clone(),
                 router_type.create_swap_operations(route)?,
                 None,
-                to,
+                receiver,
                 Some(max_spread),
-            ),
+            )?]),
             RouteType::PairProxy {
                 pair_info,
-            } => Pair(pair_info.contract_addr.clone()).swap_msg(
+            } => Ok(vec![Pair(pair_info.contract_addr.clone()).swap_msg(
                 offer_asset,
                 None,
                 Some(max_spread),
-                to.map(|to| to.to_string()),
-            ),
+                receiver.map(|to| to.to_string()),
+            )?]),
+            RouteType::Unwrap {
+                from,
+                to,
+                contract,
+            } => {
+                if *from != offer_asset.info {
+                    return Err(StdError::generic_err("Wrong offer asset"));
+                }
+
+                let mut msgs = vec![Wrapper(contract.clone()).unwrap_msg(offer_asset)?];
+
+                if let Some(receiver) = receiver {
+                    msgs.push(
+                        to.with_balance(offer_asset.amount).transfer_msg(&receiver)?.to_normal()?,
+                    )
+                }
+
+                Ok(msgs)
+            },
         }
     }
 
@@ -108,6 +135,10 @@ impl RouteConfig {
                 pair_info,
                 offer_asset,
             ),
+            RouteType::Unwrap {
+                to,
+                ..
+            } => Ok(to.with_balance(offer_asset.amount)),
         }
     }
 }
@@ -301,6 +332,21 @@ impl<'a> State<'a> {
                     self.checked_save_route(deps.storage, (start, end), &config)?;
                     self.checked_save_route(deps.storage, (end, start), &config)?;
                 }
+            },
+            RouteInit::Unwrap {
+                from,
+                to,
+                contract,
+            } => {
+                self.checked_save_route(
+                    deps.storage,
+                    (&from, &to),
+                    &RouteType::Unwrap {
+                        from: from.clone(),
+                        to: to.clone(),
+                        contract: deps.api.addr_validate(&contract)?,
+                    },
+                )?;
             },
         };
         Ok(())

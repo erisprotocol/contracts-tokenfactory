@@ -795,8 +795,12 @@ fn compound_token_path() -> Result<(), ContractError> {
 
     assert_eq!(res.messages[1].msg, transfer);
     assert_eq!(
-        res.messages[2].msg,
-        config.create_swap(&astro_amount(109), Decimal::percent(10), None)?.to_specific()?
+        vec![res.messages[2].msg.clone()],
+        config
+            .create_swap(&astro_amount(109), Decimal::percent(10), None)?
+            .into_iter()
+            .map(|a| a.to_specific().unwrap())
+            .collect::<Vec<_>>()
     );
 
     match res.messages[3].msg.clone() {
@@ -1131,4 +1135,38 @@ fn test_compound_simulation_path() -> StdResult<()> {
     );
 
     Ok(())
+}
+
+#[allow(clippy::redundant_clone)]
+#[test]
+fn test_add_factory_route() -> StdResult<()> {
+    let mut deps = init_contract(None, None);
+
+    // {
+    //     "path": {
+    //       "route": [
+    //         {
+    //           "native_token": {
+    //             "denom": "ibc/5751B8BCDA688FD0A8EC0B292EEF1CDEAB4B766B63EC632778B196D317C40C3A"
+    //           }
+    //         },
+    //         {
+    //           "native_token": {
+    //             "denom": "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349"
+    //           }
+    //         },
+    //         {
+    //           "native_token": {
+    //             "denom": "factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH"
+    //           }
+    //         }
+    //       ],
+    //       "router_type": "astro_swap",
+    //       "router": "neutron1eeyntmsq448c68ez06jsy6h2mtjke5tpuplnwtjfwcdznqmw72kswnlmm0"
+    //     }
+    //   }
+
+    let state = State::default();
+    state.add_route(&mut deps.as_mut(), RouteInit::Path { router: "neutron1eeyntmsq448c68ez06jsy6h2mtjke5tpuplnwtjfwcdznqmw72kswnlmm0".to_string(), 
+    router_type: RouterType::AstroSwap, route: vec![native_asset_info("ibc/5751B8BCDA688FD0A8EC0B292EEF1CDEAB4B766B63EC632778B196D317C40C3A".to_string()), native_asset_info("factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH".to_string())] })
 }
