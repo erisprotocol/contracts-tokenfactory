@@ -195,14 +195,17 @@ fn get_utoken_for_validator(
 ) -> u128 {
     let mut utoken_for_validator =
         utoken_per_validator.get(&delegation.validator).map(|a| a.u128()).unwrap_or_default();
-    if let Some(add_set) = *add {
-        utoken_for_validator += add_set;
-        *add = None;
-    }
-    if let Some(remove_set) = *remove {
-        if utoken_for_validator >= remove_set {
-            utoken_for_validator -= remove_set;
-            *remove = None;
+
+    if utoken_for_validator > 0 {
+        if let Some(add_set) = *add {
+            utoken_for_validator += add_set;
+            *add = None;
+        }
+        if let Some(remove_set) = *remove {
+            if utoken_for_validator >= remove_set {
+                utoken_for_validator -= remove_set;
+                *remove = None;
+            }
         }
     }
     utoken_for_validator

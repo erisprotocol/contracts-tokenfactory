@@ -18,3 +18,4 @@ amp-compounder has started as a fork of <https://github.com/spectrumprotocol/spe
   - Instead of supporting only a single compound LP, supports a list of LPs
   - Supports zapping from any asset to LP.
   - Support integration of TFM based routes
+  - 1.7.0: Support concentrated zapping
