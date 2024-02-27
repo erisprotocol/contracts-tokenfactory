@@ -2,14 +2,18 @@
 members = [
     "contracts/hub",
     "contracts/alliance-lst",
-    # "contracts/token",
+    "contracts/token",
     # "contracts/amp-governance/*",
     # "contracts/amp-compounder/*",
     "packages/*",
-    # "contracts/arb-vault",
+    "contracts/arb-vault",
 ]
 
-exclude = ["packages/eris-tests"]
+exclude = [
+    "packages/eris-tests",
+    "contracts/amp-governance/*",
+    "contracts/amp-compounder/*",
+]
 
 [profile.release.package.eris]
 opt-level = 3

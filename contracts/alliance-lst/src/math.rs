@@ -79,8 +79,7 @@ pub(crate) fn compute_undelegations(
 
     let mut new_undelegations: Vec<Undelegation> = vec![];
     let mut utoken_available = utoken_to_unbond.u128();
-    for (_, d) in merge_with_validators(current_delegations, validators, utoken).iter().enumerate()
-    {
+    for d in merge_with_validators(current_delegations, validators, utoken).iter() {
         let utoken_for_validator =
             get_utoken_for_validator(&utoken_per_validator, d, &mut add, &mut remove);
 
@@ -179,8 +178,7 @@ pub(crate) fn compute_redelegations_for_rebalancing(
     // redelegated _to_ them. They will be put in `dst_validators` vector
     let mut src_delegations: Vec<Delegation> = vec![];
     let mut dst_delegations: Vec<Delegation> = vec![];
-    for (_, d) in merge_with_validators(current_delegations, validators, utoken).iter().enumerate()
-    {
+    for d in merge_with_validators(current_delegations, validators, utoken).iter() {
         let utoken_for_validator =
             get_utoken_for_validator(&utoken_per_validator, d, &mut add, &mut remove);
 
@@ -355,7 +353,7 @@ pub(crate) fn reconcile_batches(
 
         if !remaining_underflow.is_zero() {
             // the remaining underflow will be applied by oldest batch first.
-            for (_, batch) in batches.iter_mut().enumerate() {
+            for batch in batches.iter_mut() {
                 if !batch.utoken_unclaimed.is_zero() && !remaining_underflow.is_zero() {
                     if batch.utoken_unclaimed >= remaining_underflow {
                         batch.utoken_unclaimed -= remaining_underflow;
@@ -379,7 +377,7 @@ pub(crate) fn reconcile_batches(
 
 /// If all funds are available we still need to mark batches as reconciled
 pub(crate) fn mark_reconciled_batches(batches: &mut [Batch]) {
-    for (_, batch) in batches.iter_mut().enumerate() {
+    for batch in batches.iter_mut() {
         batch.reconciled = true;
     }
 }

@@ -5,10 +5,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::hub::{
-    Batch, CallbackMsg, ClaimType, ConfigResponse, DelegationStrategy, DelegationsResponse,
-    ExchangeRatesResponse, PendingBatch, SingleSwapConfig, StateResponse,
-    UnbondRequestsByBatchResponseItem, UnbondRequestsByUserResponseItem,
-    UnbondRequestsByUserResponseItemDetails, WantedDelegationsResponse,
+    Batch, CallbackMsg, ClaimType, DelegationStrategy, DelegationsResponse, ExchangeRatesResponse,
+    FeeConfig, PendingBatch, SingleSwapConfig, StateResponse, UnbondRequestsByBatchResponseItem,
+    UnbondRequestsByUserResponseItem, UnbondRequestsByUserResponseItemDetails,
+    WantedDelegationsResponse,
 };
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema)]
@@ -48,8 +48,6 @@ pub struct InstantiateMsg {
     pub protocol_reward_fee: Decimal, // "1 is 100%, 0.05 is 5%"
     /// Strategy how delegations should be handled
     pub delegation_strategy: Option<DelegationStrategy>,
-    /// Contract address that is allowed to vote
-    pub vote_operator: Option<String>,
 }
 
 #[cw_serde]
@@ -116,8 +114,6 @@ pub enum ExecuteMsg {
         allow_donations: Option<bool>,
         /// Strategy how delegations should be handled
         delegation_strategy: Option<DelegationStrategy>,
-        /// Update the vote_operator
-        vote_operator: Option<String>,
         /// Update the default max_spread
         default_max_spread: Option<u64>,
 
@@ -204,4 +200,38 @@ pub enum QueryMsg {
 
     #[returns(DelegationsResponse)]
     Delegations {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ConfigResponse {
+    /// Account who can call certain privileged functions
+    pub owner: String,
+    /// Pending ownership transfer, awaiting acceptance by the new owner
+    pub new_owner: Option<String>,
+    /// Underlying staked token
+    pub utoken: String,
+    /// Address of the Stake token
+    pub stake_token: String,
+
+    /// How often the unbonding queue is to be executed, in seconds
+    pub epoch_period: u64,
+    /// The staking module's unbonding time, in seconds
+    pub unbond_period: u64,
+    /// Initial set of validators who will receive the delegations
+    pub validators: Vec<String>,
+
+    /// Information about applied fees
+    pub fee_config: FeeConfig,
+
+    /// Account who can call harvest
+    pub operator: String,
+    /// Stages that must be used by permissionless users
+    pub stages_preset: Vec<Vec<SingleSwapConfig>>,
+    /// withdrawals that must be used by permissionless users
+    pub withdrawals_preset: Vec<(WithdrawType, DenomType)>,
+    /// Specifies wether donations are allowed.
+    pub allow_donations: bool,
+
+    /// Strategy how delegations should be handled
+    pub delegation_strategy: DelegationStrategy, //<String>,
 }

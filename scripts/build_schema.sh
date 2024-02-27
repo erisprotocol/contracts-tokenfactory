@@ -13,17 +13,17 @@ for c in "$projectPath"/contracts/*; do
   fi
 done
 
-for c in "$projectPath"/contracts/amp-compounder/*; do
-  if [[ "$c" != *"README.md" ]]; then
-    (cd $c && cargo schema)
-  fi
-done
+# for c in "$projectPath"/contracts/amp-compounder/*; do
+#   if [[ "$c" != *"README.md" ]]; then
+#     (cd $c && cargo schema)
+#   fi
+# done
 
-for c in "$projectPath"/contracts/amp-governance/*; do
-  if [[ "$c" != *"README.md" ]]; then
-    (cd $c && cargo schema)
-  fi
-done
+# for c in "$projectPath"/contracts/amp-governance/*; do
+#   if [[ "$c" != *"README.md" ]]; then
+#     (cd $c && cargo schema)
+#   fi
+# done
 
 # for c in "$projectPath"/contracts/periphery/*; do
 #   (cd $c && cargo schema)

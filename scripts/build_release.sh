@@ -14,4 +14,4 @@ mkdir -p "../../$folderName-cache/registry"
 docker run --rm -v "/$projectPath":/code \
   --mount type=bind,source=/$projectPath-cache/target,target=/code/target \
   --mount type=bind,source=/$projectPath-cache/registry,target=/usr/local/cargo/registry \
-  cosmwasm/workspace-optimizer:0.12.12
+  cosmwasm/workspace-optimizer:0.15.1

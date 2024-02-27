@@ -74,10 +74,6 @@ pub fn instantiate(
         },
     )?;
 
-    if let Some(vote_operator) = msg.vote_operator {
-        state.vote_operator.save(deps.storage, &deps.api.addr_validate(&vote_operator)?)?;
-    }
-
     // by default donations are set to false
     state.allow_donations.save(deps.storage, &false)?;
     state.validator_proxy.save(deps.storage, &deps.api.addr_validate(&msg.validator_proxy)?)?;
@@ -1116,7 +1112,6 @@ pub fn update_config(
     withdrawals_preset: Option<Vec<(WithdrawType, DenomType)>>,
     allow_donations: Option<bool>,
     delegation_strategy: Option<DelegationStrategy>,
-    vote_operator: Option<String>,
     default_max_spread: Option<u64>,
     epoch_period: Option<u64>,
     unbond_period: Option<u64>,
@@ -1193,10 +1188,6 @@ pub fn update_config(
     }
     if let Some(default_max_spread) = default_max_spread {
         state.default_max_spread.save(deps.storage, &default_max_spread)?;
-    }
-
-    if let Some(vote_operator) = vote_operator {
-        state.vote_operator.save(deps.storage, &deps.api.addr_validate(&vote_operator)?)?;
     }
 
     Ok(Response::new().add_attribute("action", "erishub/update_config"))

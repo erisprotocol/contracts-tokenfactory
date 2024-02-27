@@ -5,9 +5,10 @@ use crate::state::State;
 use crate::types::gauges::PeriodGaugeLoader;
 use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
+use eris::alliance_lst::ConfigResponse;
 use eris::governance_helper::get_period;
 use eris::hub::{
-    Batch, ConfigResponse, DelegationsResponse, ExchangeRatesResponse, PendingBatch, StateResponse,
+    Batch, DelegationsResponse, ExchangeRatesResponse, PendingBatch, StateResponse,
     UnbondRequestsByBatchResponseItem, UnbondRequestsByUserResponseItem,
     UnbondRequestsByUserResponseItemDetails, WantedDelegationsResponse,
 };
@@ -64,7 +65,6 @@ pub fn config(deps: Deps<CustomQueryType>) -> StdResult<ConfigResponse> {
                 validator_count,
             },
         },
-        vote_operator: state.vote_operator.may_load(deps.storage)?.map(|addr| addr.into()),
     })
 }
 

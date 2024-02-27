@@ -32,7 +32,7 @@ pub(super) fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, CustomQueri
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: CustomQuerier::default(),
-        custom_query_type: std::marker::PhantomData::default(),
+        custom_query_type: std::marker::PhantomData,
     }
 }
 
@@ -120,7 +120,6 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, Cus
             protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
             operator: "operator".to_string(),
             delegation_strategy: None,
-            vote_operator: None,
             validator_proxy: "proxy".to_string(),
         },
     )

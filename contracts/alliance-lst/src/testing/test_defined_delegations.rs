@@ -44,7 +44,6 @@ fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, CustomQueryTyp
             delegation_strategy: Some(eris::hub::DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 6000), ("bob".into(), 4000)],
             }),
-            vote_operator: None,
             validator_proxy: "proxy".to_string(),
         },
     )
@@ -162,7 +161,6 @@ fn validate_update() {
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("abc".into(), 1000)],
             }),
-            vote_operator: None,
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
@@ -186,7 +184,6 @@ fn validate_update() {
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000), ("alice".into(), 1000)],
             }),
-            vote_operator: None,
             default_max_spread: None,
 
             epoch_period: None,
@@ -211,7 +208,6 @@ fn validate_update() {
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000)],
             }),
-            vote_operator: None,
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
@@ -235,7 +231,6 @@ fn validate_update() {
             delegation_strategy: Some(DelegationStrategy::Defined {
                 shares_bps: vec![("alice".into(), 1000), ("charlie".into(), 9000)],
             }),
-            vote_operator: None,
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
