@@ -36,6 +36,7 @@ impl StageType {
 pub type DenomType = AssetInfo;
 pub type CustomMsgType = Empty;
 pub type CoinType = Asset;
+pub type CustomQueryType = Empty;
 
 #[cw_serde]
 pub struct HubChainConfigInput {}

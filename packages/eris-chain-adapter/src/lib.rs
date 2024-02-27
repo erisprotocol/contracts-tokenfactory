@@ -62,6 +62,7 @@ pub mod types {
 
     use eris_whitewhale::whitewhale_types::CoinType;
     pub use eris_whitewhale::whitewhale_types::CustomMsgType;
+    pub use eris_whitewhale::whitewhale_types::CustomQueryType;
     pub use eris_whitewhale::whitewhale_types::DenomType;
     pub use eris_whitewhale::whitewhale_types::HubChainConfig;
     pub use eris_whitewhale::whitewhale_types::HubChainConfigInput;
