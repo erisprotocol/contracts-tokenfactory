@@ -656,7 +656,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-alliance-lst-whitewhale"
+name = "eris-alliance-lst-terra"
 version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
@@ -674,7 +674,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-arb-vault-whitewhale"
+name = "eris-arb-vault-terra"
 version = "1.0.2"
 dependencies = [
  "anyhow",
@@ -761,7 +761,7 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-whitewhale",
+ "eris-staking-hub-tokenfactory-terra",
  "kujira",
  "schemars",
  "serde",
@@ -792,7 +792,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-whitewhale"
+name = "eris-staking-hub-tokenfactory-terra"
 version = "1.7.0"
 dependencies = [
  "cosmwasm-schema",
