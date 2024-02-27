@@ -1,7 +1,7 @@
 use std::vec;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, Coin, CosmosMsg, Decimal, StdResult, WasmMsg};
 use kujira::{fin::ExecuteMsg, msg::KujiraMsg};
 
 #[cw_serde]
@@ -17,7 +17,7 @@ impl Fin {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
             funds: vec![offer_asset.clone()],
-            msg: to_binary(&ExecuteMsg::Swap {
+            msg: to_json_binary(&ExecuteMsg::Swap {
                 offer_asset: Some(offer_asset.clone()),
                 belief_price: belief_price.map(|a| a.into()),
                 max_spread: max_spread.map(|a| a.into()),
@@ -44,7 +44,7 @@ pub fn test_swap_msg() {
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "fin".to_string(),
             funds: vec![coin.clone()],
-            msg: to_binary(&ExecuteMsg::Swap {
+            msg: to_json_binary(&ExecuteMsg::Swap {
                 offer_asset: Some(coin.clone()),
                 belief_price: Some(Decimal::from_str("2.3").unwrap().into()),
                 max_spread: Some(Decimal::percent(10).into()),

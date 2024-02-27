@@ -1,0 +1,268 @@
+use std::{collections::HashMap, convert::TryFrom};
+
+use cosmwasm_std::{Addr, Decimal, Env, QuerierWrapper, StdError, StdResult, Storage, Uint128};
+use eris::{
+    alliance_lst::AllianceStakeToken,
+    governance_helper::get_period,
+    helpers::bps::BasicPoints,
+    hub::{DelegationStrategy, WantedDelegationsShare},
+};
+use eris_chain_adapter::types::CustomQueryType;
+use itertools::Itertools;
+
+use crate::{
+    state::State,
+    types::{alliance_delegations::AllianceDelegations, gauges::GaugeLoader, Delegation},
+};
+
+/// Query the amounts of Token a staker is delegating to a specific validator
+pub(crate) fn query_delegation(
+    alliance_delegations: &AllianceDelegations,
+    _querier: &QuerierWrapper<CustomQueryType>,
+    denom: &str,
+    validator: &str,
+    _delegator_addr: &Addr,
+) -> StdResult<Delegation> {
+    Ok(alliance_delegations.query_delegation(validator, denom))
+
+    // let delegation = AllianceQuerier::new(querier).query_delegation(
+    //     denom.to_string(),
+    //     delegator_addr.to_string(),
+    //     validator.to_string(),
+    // );
+
+    // Ok(delegation
+    //     .map(|fd| Delegation {
+    //         validator: validator.to_string(),
+    //         amount: fd.amount.amount.u128(),
+    //         denom: fd.amount.denom,
+    //     })
+    //     .unwrap_or(Delegation {
+    //         validator: validator.to_string(),
+    //         amount: 0,
+    //         denom: "".into(),
+    //     }))
+}
+
+/// Query the amounts of Token a staker is delegating to each of the validators specified
+pub(crate) fn query_delegations(
+    alliance_delegations: &AllianceDelegations,
+    querier: &QuerierWrapper<CustomQueryType>,
+    denom: &str,
+    validators: &[String],
+    delegator_addr: &Addr,
+) -> StdResult<Vec<Delegation>> {
+    validators
+        .iter()
+        .map(|validator| {
+            query_delegation(alliance_delegations, querier, denom, validator, delegator_addr)
+        })
+        .collect()
+}
+
+pub(crate) fn query_all_delegations(
+    alliance_delegations: &AllianceDelegations,
+    _querier: &QuerierWrapper<CustomQueryType>,
+    _delegator_addr: &Addr,
+    utoken: &str,
+) -> StdResult<Vec<Delegation>> {
+    Ok(alliance_delegations.query_all_delegations(utoken))
+
+    // let delegations = state.alliance_delegations.load(deps)
+
+    // let result: Vec<_> = querier
+    //     .query_all_delegationsx(delegator_addr)?
+    //     .into_iter()
+    //     .filter(|d| d.amount.denom == *utoken && !d.amount.amount.is_zero())
+    //     .map(|d| Delegation {
+    //         validator: d.validator,
+    //         amount: d.amount.amount.u128(),
+    //         denom: d.amount.denom,
+    //     })
+    //     .collect();
+
+    // Ok(result)
+}
+
+pub(crate) fn query_all_delegations_amount(stake: &AllianceStakeToken) -> StdResult<u128> {
+    Ok(stake.total_utoken_bonded.u128())
+
+    // // same as query_all_delegations, but will only collect the sum of the delegations
+    // let total_utoken: u128 = querier
+    //     .query_all_delegationsx(delegator_addr)?
+    //     .into_iter()
+    //     .filter(|d| d.amount.denom == *utoken && !d.amount.amount.is_zero())
+    //     .map(|d| d.amount.amount.u128())
+    //     .sum();
+
+    // Ok(total_utoken)
+}
+
+/// Calculates the wanted delegations based on the delegation strategy and the amp + emp gauges
+/// The source of the gauges is flexible via the loader
+/// This is only a read operation, so it can be used from queries aswell
+pub(crate) fn get_wanted_delegations(
+    state: &State,
+    env: &Env,
+    storage: &dyn Storage,
+    querier: &QuerierWrapper<CustomQueryType>,
+    loader: impl GaugeLoader,
+) -> StdResult<(WantedDelegationsShare, bool)> {
+    let delegation_strategy =
+        state.delegation_strategy.may_load(storage)?.unwrap_or(DelegationStrategy::Uniform {});
+
+    match delegation_strategy {
+        DelegationStrategy::Uniform {} => {
+            let validators = state.get_validators(storage, querier)?;
+            let validator_count = Uint128::new(validators.len() as u128);
+            let share_per_validator = Decimal::from_ratio(Uint128::one(), validator_count);
+
+            Ok((
+                WantedDelegationsShare {
+                    tune_time: env.block.time.seconds(),
+                    tune_period: get_period(env.block.time.seconds())?,
+                    shares: validators
+                        .into_iter()
+                        .map(|val| (val, share_per_validator))
+                        .collect_vec(),
+                },
+                // no need to store it
+                false,
+            ))
+        },
+        DelegationStrategy::Defined {
+            shares_bps,
+        } => Ok((
+            WantedDelegationsShare {
+                tune_time: env.block.time.seconds(),
+                tune_period: get_period(env.block.time.seconds())?,
+                shares: shares_bps
+                    .into_iter()
+                    .map(|(validator, bps)| Ok((validator, BasicPoints::try_from(bps)?.decimal())))
+                    .collect::<StdResult<Vec<(String, Decimal)>>>()?,
+            },
+            // store it for get_utoken_per_validator
+            true,
+        )),
+        DelegationStrategy::Gauges {
+            amp_gauges,
+            emp_gauges,
+            amp_factor_bps,
+            min_delegation_bps,
+            max_delegation_bps,
+            validator_count,
+        } => {
+            let min_delegation = BasicPoints::try_from(min_delegation_bps)?.decimal();
+            let max_delegation = BasicPoints::try_from(max_delegation_bps)?.decimal();
+
+            let vamp_factor = BasicPoints::try_from(amp_factor_bps)?.decimal();
+            let emp_factor = Decimal::one().checked_sub(vamp_factor)?;
+
+            let vamp_context = Context::from_amps(&loader, querier, amp_gauges)?;
+            let emp_context = Context::from_emps(&loader, querier, emp_gauges)?;
+
+            let validators: Vec<_> = state
+                .get_validators(storage, querier)?
+                .into_iter()
+                .map(|val| -> StdResult<(String, Decimal, Decimal)> {
+                    let vamp = vamp_context.points.get(&val).copied().unwrap_or_default();
+
+                    let total_share = if let Some(emp_context) = &emp_context {
+                        let vamp_share =
+                            vamp_factor.checked_mul(Decimal::from_ratio(vamp, vamp_context.sum))?;
+
+                        let emp = emp_context.points.get(&val).copied().unwrap_or(Uint128::zero());
+                        let emp_share =
+                            emp_factor.checked_mul(Decimal::from_ratio(emp, emp_context.sum))?;
+
+                        vamp_share.checked_add(emp_share)?
+                    } else {
+                        Decimal::from_ratio(vamp, vamp_context.sum)
+                    };
+
+                    let score = Decimal::min(total_share, max_delegation);
+
+                    Ok((val, score, total_share))
+                })
+                .collect::<StdResult<Vec<_>>>()?
+                .into_iter()
+                .filter(|(_, amount, _)| *amount > min_delegation)
+                .sorted_by(|(_, _, a), (_, _, b)| b.cmp(a)) // Sort in descending order
+                .take(validator_count.into())
+                .collect();
+
+            // normalize missing percentage over all validators
+            let total: Decimal = validators.iter().map(|a| a.1).sum();
+            let validators: Vec<_> = validators
+                .into_iter()
+                .map(|v| -> StdResult<(String, Decimal)> {
+                    let normalized =
+                        v.1.checked_div(total)
+                            .map_err(|_| StdError::generic_err("Could not divide by total"))?;
+
+                    Ok((v.0, normalized))
+                })
+                .collect::<StdResult<Vec<_>>>()?;
+
+            Ok((
+                WantedDelegationsShare {
+                    shares: validators,
+                    tune_time: env.block.time.seconds(),
+                    tune_period: get_period(env.block.time.seconds())?,
+                },
+                true,
+            ))
+        },
+    }
+}
+
+struct Context {
+    pub sum: Uint128,
+    pub points: HashMap<String, Uint128>,
+}
+
+impl Context {
+    pub fn from_emps(
+        loader: &impl GaugeLoader,
+        querier: &QuerierWrapper<CustomQueryType>,
+        emp_gauges: Option<Addr>,
+    ) -> StdResult<Option<Context>> {
+        if let Some(emp_gauges) = emp_gauges {
+            let emp_info = loader.get_emp_tune_info(querier, emp_gauges)?;
+            let emp_sum: Uint128 = emp_info.emp_points.iter().map(|a| a.1).sum();
+            let emp_points: HashMap<_, _> =
+                emp_info.emp_points.into_iter().map(|v| (v.0.to_string(), v.1)).collect();
+
+            if emp_sum.is_zero() {
+                return Err(StdError::generic_err("EMP not tuned."));
+            }
+
+            Ok(Some(Self {
+                sum: emp_sum,
+                points: emp_points,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn from_amps(
+        loader: &impl GaugeLoader,
+        querier: &QuerierWrapper<CustomQueryType>,
+        amp_gauges: Addr,
+    ) -> StdResult<Context> {
+        let vamp_info = loader.get_amp_tune_info(querier, amp_gauges)?;
+        let vamp_sum: Uint128 = vamp_info.vamp_points.iter().map(|a| a.1).sum();
+        let vamp_points: HashMap<_, _> =
+            vamp_info.vamp_points.into_iter().map(|v| (v.0.to_string(), v.1)).collect();
+
+        if vamp_sum.is_zero() {
+            return Err(StdError::generic_err("No vAMP. Vote first before tuning."));
+        }
+
+        Ok(Self {
+            sum: vamp_sum,
+            points: vamp_points,
+        })
+    }
+}

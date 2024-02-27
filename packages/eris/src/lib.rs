@@ -1,5 +1,6 @@
 // pub mod asset;
 pub mod adapters;
+pub mod alliance_lst;
 pub mod amp_gauges;
 pub mod arb_vault;
 pub mod astroport_farm;

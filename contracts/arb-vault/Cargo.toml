@@ -1,5 +1,5 @@
 [package]
-name = "eris-arb-vault-osmosis"
+name = "eris-arb-vault-whitewhale"
 version = "1.0.2"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
@@ -35,5 +35,4 @@ cw-multi-test = { git = "https://github.com/erisprotocol/cw-multi-test.git", def
     "iterator",
 ], rev = "5f2f7062187d762b71fd22b91157c4e88de87a64" }
 anyhow = "1"
-eris-tests = { path = "../../packages/eris-tests" }
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }

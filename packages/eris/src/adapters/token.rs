@@ -1,5 +1,5 @@
 use astroport::querier::{query_supply, query_token_balance};
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 use eris_chain_adapter::types::CustomMsgType;
 
@@ -9,7 +9,7 @@ impl Token {
     pub fn mint(&self, amount: Uint128, receiver: Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Mint {
+            msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                 recipient: receiver.to_string(),
                 amount,
             })?,
@@ -20,7 +20,7 @@ impl Token {
     pub fn burn(&self, amount: Uint128) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Burn {
+            msg: to_json_binary(&Cw20ExecuteMsg::Burn {
                 amount,
             })?,
             funds: vec![],

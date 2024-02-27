@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::{mock_env, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Deps, Env, OwnedDeps,
-    QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
+    coin, from_binary, to_json_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Deps, Env,
+    OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
 use eris_chain_adapter::types::{
     chain, CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType,
@@ -86,7 +86,7 @@ pub(super) fn set_total_stake_supply(
 pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsgType> {
     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
+        msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
             snapshot: coin(amount, MOCK_UTOKEN),
             snapshot_stake: coin(amount_stake, "factory/cosmos2contract/stake"),
         }))

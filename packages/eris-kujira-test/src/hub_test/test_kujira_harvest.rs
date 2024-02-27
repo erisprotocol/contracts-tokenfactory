@@ -2,8 +2,8 @@ use std::vec;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, to_binary, Addr, Coin, CosmosMsg, Decimal, DistributionMsg, OwnedDeps, StdResult, SubMsg,
-    Uint128, WasmMsg,
+    coin, to_json_binary, Addr, Coin, CosmosMsg, Decimal, DistributionMsg, OwnedDeps, StdResult,
+    SubMsg, Uint128, WasmMsg,
 };
 
 use eris::hub::{

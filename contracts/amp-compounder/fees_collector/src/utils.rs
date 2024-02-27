@@ -3,7 +3,7 @@ use crate::state::{Config, BRIDGES};
 use astroport::asset::{Asset, AssetInfo, PairInfo};
 use astroport::querier::query_pair_info;
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Deps, Env, QuerierWrapper, StdResult, Uint128, WasmMsg,
+    to_json_binary, Addr, CosmosMsg, Deps, Env, QuerierWrapper, StdResult, Uint128, WasmMsg,
 };
 use eris::adapters::pair::Pair;
 use eris::fees_collector::ExecuteMsg;
@@ -46,7 +46,7 @@ pub fn build_swap_bridge_msg(
         // Swap bridge assets
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
-            msg: to_binary(&ExecuteMsg::SwapBridgeAssets {
+            msg: to_json_binary(&ExecuteMsg::SwapBridgeAssets {
                 assets: bridge_assets,
                 depth,
             })?,

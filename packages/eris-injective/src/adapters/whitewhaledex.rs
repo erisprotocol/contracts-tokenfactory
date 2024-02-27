@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    coins, to_binary, Addr, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
+    coins, to_json_binary, Addr, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
 
@@ -64,10 +64,10 @@ impl WhiteWhalePair {
             cw_asset::AssetInfoBase::Cw20(cw20) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: cw20.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: self.0.to_string(),
                     amount,
-                    msg: to_binary(&Cw20HookMsg::Swap {
+                    msg: to_json_binary(&Cw20HookMsg::Swap {
                         belief_price,
                         max_spread,
                         to: None,
@@ -77,7 +77,7 @@ impl WhiteWhalePair {
             cw_asset::AssetInfoBase::Native(native) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.0.to_string(),
                 funds: coins(amount.u128(), native.clone()),
-                msg: to_binary(&ExecuteMsg::Swap {
+                msg: to_json_binary(&ExecuteMsg::Swap {
                     offer_asset: Asset {
                         info: AssetInfo::NativeToken {
                             denom: native,
@@ -102,16 +102,16 @@ impl WhiteWhalePair {
             cw_asset::AssetInfoBase::Cw20(cw20) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: cw20.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: self.0.to_string(),
                     amount,
-                    msg: to_binary(&Cw20HookMsg::WithdrawLiquidity {})?,
+                    msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity {})?,
                 })?,
             })),
             cw_asset::AssetInfoBase::Native(native) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.0.to_string(),
                 funds: coins(amount.u128(), native),
-                msg: to_binary(&ExecuteMsg::WithdrawLiquidity {})?,
+                msg: to_json_binary(&ExecuteMsg::WithdrawLiquidity {})?,
             })),
             _ => Err(StdError::generic_err("WhiteWhalePair.withdraw_msg: not supported")),
         }

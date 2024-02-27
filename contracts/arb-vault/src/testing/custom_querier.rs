@@ -2,7 +2,7 @@ use super::cw20_querier::Cw20Querier;
 use super::helpers::err_unsupported_query;
 use cosmwasm_std::testing::{BankQuerier, StakingQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, from_binary, from_slice, to_binary, Coin, Decimal, Empty, Querier, QuerierResult,
+    coin, from_binary, from_slice, to_json_binary, Coin, Decimal, Empty, Querier, QuerierResult,
     QueryRequest, SystemError, SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
@@ -90,7 +90,7 @@ impl CustomQuerier {
                 if contract_addr == "eris" {
                     return match from_binary(msg).unwrap() {
                         eris::hub::QueryMsg::PendingBatch {} => SystemResult::Ok(
-                            to_binary(&eris::hub::PendingBatch {
+                            to_json_binary(&eris::hub::PendingBatch {
                                 id: 3,
                                 ustake_to_burn: Uint128::from(1000u128),
                                 est_unbond_start_time: 123,
@@ -98,7 +98,7 @@ impl CustomQuerier {
                             .into(),
                         ),
                         eris::hub::QueryMsg::PreviousBatch(id) => SystemResult::Ok(
-                            to_binary(&eris::hub::Batch {
+                            to_json_binary(&eris::hub::Batch {
                                 id,
                                 reconciled: id < 2,
                                 total_shares: Uint128::from(1000u128),
@@ -128,10 +128,10 @@ impl CustomQuerier {
                                 })
                             }
 
-                            SystemResult::Ok(to_binary(&res).into())
+                            SystemResult::Ok(to_json_binary(&res).into())
                         },
                         eris::hub::QueryMsg::State {} => SystemResult::Ok(
-                            to_binary(&eris::hub::StateResponse {
+                            to_json_binary(&eris::hub::StateResponse {
                                 total_ustake: Uint128::from(1000u128),
                                 total_utoken: Uint128::from(1100u128),
                                 exchange_rate: Decimal::from_str("1.1").unwrap(),
@@ -147,7 +147,7 @@ impl CustomQuerier {
                 } else if contract_addr == "backbone" {
                     return match from_binary(msg).unwrap() {
                         steak::hub::QueryMsg::PendingBatch {} => SystemResult::Ok(
-                            to_binary(&steak::hub::PendingBatch {
+                            to_json_binary(&steak::hub::PendingBatch {
                                 id: 3,
                                 usteak_to_burn: Uint128::from(1000u128),
                                 est_unbond_start_time: 123,
@@ -155,7 +155,7 @@ impl CustomQuerier {
                             .into(),
                         ),
                         steak::hub::QueryMsg::PreviousBatch(id) => SystemResult::Ok(
-                            to_binary(&steak::hub::Batch {
+                            to_json_binary(&steak::hub::Batch {
                                 id,
                                 reconciled: id < 2,
                                 total_shares: Uint128::from(1000u128),
@@ -167,7 +167,7 @@ impl CustomQuerier {
                         steak::hub::QueryMsg::UnbondRequestsByUser {
                             ..
                         } => SystemResult::Ok(
-                            to_binary(&vec![
+                            to_json_binary(&vec![
                                 steak::hub::UnbondRequestsByUserResponseItem {
                                     id: 1,
                                     shares: self.withdrawable_amount,
@@ -180,7 +180,7 @@ impl CustomQuerier {
                             .into(),
                         ),
                         steak::hub::QueryMsg::State {} => SystemResult::Ok(
-                            to_binary(&steak::hub::StateResponse {
+                            to_json_binary(&steak::hub::StateResponse {
                                 total_usteak: Uint128::from(1000u128),
                                 total_native: Uint128::from(1000u128),
                                 exchange_rate: Decimal::one(),

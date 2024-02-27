@@ -15,8 +15,8 @@ use astroport::asset::{native_asset, native_asset_info, token_asset_info};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::testing::{mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    attr, coin, from_binary, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps, OwnedDeps,
-    Response, Uint128, WasmMsg,
+    attr, coin, from_binary, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps,
+    OwnedDeps, Response, Uint128, WasmMsg,
 };
 use eris::{
     arb_vault::{
@@ -406,7 +406,7 @@ fn throws_if_provided_profit_not_found() {
     let exec_msg = ExecuteMsg::ExecuteArbitrage {
         msg: ExecuteSubMsg {
             contract_addr: None,
-            msg: to_binary(&Empty {}).unwrap(),
+            msg: to_json_binary(&Empty {}).unwrap(),
             funds_amount: Uint128::new(100_000000u128),
         },
         result_token: native_asset_info("eriscw".into()),
@@ -428,7 +428,7 @@ fn throws_if_not_whitelisted_executor() {
     let execute_msg = ExecuteMsg::ExecuteArbitrage {
         msg: ExecuteSubMsg {
             contract_addr: None,
-            msg: to_binary(&Empty {}).unwrap(),
+            msg: to_json_binary(&Empty {}).unwrap(),
             funds_amount: Uint128::new(100_000000u128),
         },
         result_token: native_asset_info("eriscw".into()),
@@ -479,7 +479,7 @@ fn throws_if_not_whitelisted_executor() {
 //     let execute_msg = ExecuteMsg::ExecuteArbitrage {
 //         msg: ExecuteSubMsg {
 //             contract_addr: None,
-//             msg: to_binary(&Empty {}).unwrap(),
+//             msg: to_json_binary(&Empty {}).unwrap(),
 //             funds_amount: Uint128::new(100_000000u128),
 //         },
 //         result_token: native_asset_info("eriscw".into()),
@@ -1650,7 +1650,7 @@ fn execute_arb_throws() {
         msg: ExecuteSubMsg {
             contract_addr: None,
             funds_amount: Uint128::new(1000_000000u128),
-            msg: to_binary("exec_any_swap").unwrap(),
+            msg: to_json_binary("exec_any_swap").unwrap(),
         },
         result_token: native_asset_info("eriscw".into()),
         wanted_profit: Decimal::from_str("0.025").unwrap(),
@@ -1663,7 +1663,7 @@ fn execute_arb_throws() {
         msg: ExecuteSubMsg {
             contract_addr: None,
             funds_amount: Uint128::new(10_000000u128),
-            msg: to_binary("exec_any_swap").unwrap(),
+            msg: to_json_binary("exec_any_swap").unwrap(),
         },
         result_token: token_asset_info(Addr::unchecked("xxx")),
         wanted_profit: Decimal::from_str("0.025").unwrap(),
@@ -1676,7 +1676,7 @@ fn execute_arb_throws() {
         msg: ExecuteSubMsg {
             contract_addr: None,
             funds_amount: Uint128::zero(),
-            msg: to_binary("exec_any_swap").unwrap(),
+            msg: to_json_binary("exec_any_swap").unwrap(),
         },
         result_token: native_asset_info("eriscw".into()),
         wanted_profit: Decimal::from_str("0.025").unwrap(),
@@ -1707,7 +1707,7 @@ fn execute_arb_throws() {
         msg: ExecuteSubMsg {
             contract_addr: Some("eris".to_string()),
             funds_amount: takeable,
-            msg: to_binary("exec_any_swap").unwrap(),
+            msg: to_json_binary("exec_any_swap").unwrap(),
         },
         result_token: native_asset_info("eriscw".into()),
         wanted_profit,
@@ -1751,7 +1751,7 @@ fn execute_arb() {
         msg: ExecuteSubMsg {
             contract_addr: None,
             funds_amount: takeable,
-            msg: to_binary("exec_any_swap").unwrap(),
+            msg: to_json_binary("exec_any_swap").unwrap(),
         },
         result_token: native_asset_info("eriscw".into()),
         wanted_profit,
@@ -1827,7 +1827,7 @@ fn execute_arb() {
         ExecuteMsg::ExecuteArbitrage {
             msg: ExecuteSubMsg {
                 contract_addr: None,
-                msg: to_binary(&Empty {}).unwrap(),
+                msg: to_json_binary(&Empty {}).unwrap(),
                 funds_amount: Uint128::new(100u128),
             },
             result_token: native_asset_info("eriscw".into()),

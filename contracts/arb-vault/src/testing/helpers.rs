@@ -136,7 +136,7 @@ pub fn mock_env() -> Env {
 // }
 
 // fn create_init_params() -> Option<Binary> {
-//     Some(to_binary(&create_default_lsd_configs()).unwrap())
+//     Some(to_json_binary(&create_default_lsd_configs()).unwrap())
 // }
 
 pub fn create_default_init() -> InstantiateMsg {

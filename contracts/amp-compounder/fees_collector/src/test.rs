@@ -2,8 +2,8 @@ use astroport::asset::{native_asset_info, AssetInfo, PairInfo};
 use astroport::factory::PairType;
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, OwnedDeps, Response, StdError,
-    Timestamp, Uint128, WasmMsg,
+    from_binary, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, OwnedDeps, Response,
+    StdError, Timestamp, Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
 use eris::adapters::pair::CustomCw20HookMsg;
@@ -111,7 +111,7 @@ fn test_fillup() -> Result<(), ContractError> {
         vec![CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::DistributeFees {})?,
+            msg: to_json_binary(&ExecuteMsg::DistributeFees {})?,
         }),]
     );
 
@@ -571,7 +571,7 @@ fn collect(
         vec![CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::DistributeFees {})?,
+            msg: to_json_binary(&ExecuteMsg::DistributeFees {})?,
         }),]
     );
 
@@ -590,10 +590,10 @@ fn collect(
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: TOKEN_1.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: "token1token2".to_string(),
                     amount: Uint128::new(1000000u128),
-                    msg: to_binary(&CustomCw20HookMsg::Swap {
+                    msg: to_json_binary(&CustomCw20HookMsg::Swap {
                         belief_price: None,
                         max_spread: Some(Decimal::percent(1)),
                         to: None,
@@ -603,7 +603,7 @@ fn collect(
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
                 funds: vec![],
-                msg: to_binary(&ExecuteMsg::SwapBridgeAssets {
+                msg: to_json_binary(&ExecuteMsg::SwapBridgeAssets {
                     assets: vec![AssetInfo::Token {
                         contract_addr: Addr::unchecked(TOKEN_2)
                     }],
@@ -613,7 +613,7 @@ fn collect(
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
                 funds: vec![],
-                msg: to_binary(&ExecuteMsg::DistributeFees {})?,
+                msg: to_json_binary(&ExecuteMsg::DistributeFees {})?,
             }),
         ]
     );
@@ -642,10 +642,10 @@ fn collect(
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: TOKEN_2.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: "token2ibc".to_string(),
                     amount: Uint128::new(1500000u128),
-                    msg: to_binary(&CustomCw20HookMsg::Swap {
+                    msg: to_json_binary(&CustomCw20HookMsg::Swap {
                         belief_price: None,
                         max_spread: Some(Decimal::percent(1)),
                         to: None,
@@ -655,7 +655,7 @@ fn collect(
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
                 funds: vec![],
-                msg: to_binary(&ExecuteMsg::DistributeFees {})?,
+                msg: to_json_binary(&ExecuteMsg::DistributeFees {})?,
             }),
         ]
     );
@@ -731,7 +731,7 @@ fn distribute_fees_to_contract(
             TargetConfigUnchecked::new_msg(
                 HUB_1.to_string(),
                 1,
-                Some(to_binary(&HubExecuteMsg::Donate {}).unwrap()),
+                Some(to_json_binary(&HubExecuteMsg::Donate {}).unwrap()),
             ),
             TargetConfigUnchecked::new(USER_1.to_string(), 4),
         ]),
@@ -754,7 +754,7 @@ fn distribute_fees_to_contract(
         [
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: HUB_1.to_string(),
-                msg: to_binary(&HubExecuteMsg::Donate {}).unwrap(),
+                msg: to_json_binary(&HubExecuteMsg::Donate {}).unwrap(),
                 funds: vec![Coin {
                     denom: IBC_TOKEN.to_string(),
                     amount: Uint128::from(200000u128),

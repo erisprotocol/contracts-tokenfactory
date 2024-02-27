@@ -8,8 +8,8 @@ use eris::DecimalCheckedOps;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdError,
-    StdResult, Storage, Uint128, WasmMsg,
+    attr, to_json_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response,
+    StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw20::{BalanceResponse, Logo, LogoInfo, MarketingInfoResponse, TokenInfoResponse};
@@ -631,7 +631,7 @@ fn get_push_update_msgs(
             .map(|contract| {
                 Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: contract.to_string(),
-                    msg: to_binary(&PushExecuteMsg::UpdateVote {
+                    msg: to_json_binary(&PushExecuteMsg::UpdateVote {
                         user: sender.to_string(),
                         lock_info: lock_info.clone(),
                     })?,
@@ -880,39 +880,39 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
     match msg {
         QueryMsg::CheckVotersAreBlacklisted {
             voters,
-        } => Ok(to_binary(&check_voters_are_blacklisted(deps, voters)?)?),
+        } => Ok(to_json_binary(&check_voters_are_blacklisted(deps, voters)?)?),
         QueryMsg::BlacklistedVoters {
             start_after,
             limit,
-        } => Ok(to_binary(&get_blacklisted_voters(deps, start_after, limit)?)?),
-        QueryMsg::TotalVamp {} => Ok(to_binary(&get_total_vamp(deps, env, None)?)?),
+        } => Ok(to_json_binary(&get_blacklisted_voters(deps, start_after, limit)?)?),
+        QueryMsg::TotalVamp {} => Ok(to_json_binary(&get_total_vamp(deps, env, None)?)?),
         QueryMsg::UserVamp {
             user,
-        } => Ok(to_binary(&get_user_vamp(deps, env, user, None)?)?),
+        } => Ok(to_json_binary(&get_user_vamp(deps, env, user, None)?)?),
         QueryMsg::TotalVampAt {
             time,
-        } => Ok(to_binary(&get_total_vamp(deps, env, Some(time))?)?),
+        } => Ok(to_json_binary(&get_total_vamp(deps, env, Some(time))?)?),
         QueryMsg::TotalVampAtPeriod {
             period,
-        } => Ok(to_binary(&get_total_vamp_at_period(deps, env, period)?)?),
+        } => Ok(to_json_binary(&get_total_vamp_at_period(deps, env, period)?)?),
         QueryMsg::UserVampAt {
             user,
             time,
-        } => Ok(to_binary(&get_user_vamp(deps, env, user, Some(time))?)?),
+        } => Ok(to_json_binary(&get_user_vamp(deps, env, user, Some(time))?)?),
         QueryMsg::UserVampAtPeriod {
             user,
             period,
-        } => Ok(to_binary(&get_user_vamp_at_period(deps, user, period)?)?),
+        } => Ok(to_json_binary(&get_user_vamp_at_period(deps, user, period)?)?),
         QueryMsg::LockInfo {
             user,
-        } => Ok(to_binary(&get_user_lock_info(deps, &env, user)?)?),
+        } => Ok(to_json_binary(&get_user_lock_info(deps, &env, user)?)?),
         QueryMsg::UserDepositAtHeight {
             user,
             height,
-        } => Ok(to_binary(&get_user_deposit_at_height(deps, user, height)?)?),
+        } => Ok(to_json_binary(&get_user_deposit_at_height(deps, user, height)?)?),
         QueryMsg::Config {} => {
             let config = CONFIG.load(deps.storage)?;
-            Ok(to_binary(&ConfigResponse {
+            Ok(to_json_binary(&ConfigResponse {
                 owner: config.owner.to_string(),
                 guardian_addr: config.guardian_addr,
                 deposit_token_addr: config.deposit_denom.to_string(),
@@ -926,10 +926,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
         },
         QueryMsg::Balance {
             address,
-        } => Ok(to_binary(&get_user_balance(deps, env, address)?)?),
-        QueryMsg::TokenInfo {} => Ok(to_binary(&query_token_info(deps, env)?)?),
-        QueryMsg::MarketingInfo {} => Ok(to_binary(&query_marketing_info(deps)?)?),
-        QueryMsg::DownloadLogo {} => Ok(to_binary(&query_download_logo(deps)?)?),
+        } => Ok(to_json_binary(&get_user_balance(deps, env, address)?)?),
+        QueryMsg::TokenInfo {} => Ok(to_json_binary(&query_token_info(deps, env)?)?),
+        QueryMsg::MarketingInfo {} => Ok(to_json_binary(&query_marketing_info(deps)?)?),
+        QueryMsg::DownloadLogo {} => Ok(to_json_binary(&query_download_logo(deps)?)?),
     }
 }
 

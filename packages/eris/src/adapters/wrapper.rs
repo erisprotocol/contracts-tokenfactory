@@ -1,6 +1,6 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdError, StdResult, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, CosmosMsg, StdError, StdResult, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 
 pub struct Wrapper(pub Addr);
@@ -18,10 +18,10 @@ impl Wrapper {
                 contract_addr,
             } => WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: self.0.to_string(),
                     amount: from.amount,
-                    msg: to_binary(&CustomCw20HookMsg::Unwrap {})?,
+                    msg: to_json_binary(&CustomCw20HookMsg::Unwrap {})?,
                 })?,
                 funds: vec![],
             },

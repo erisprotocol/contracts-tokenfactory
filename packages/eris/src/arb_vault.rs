@@ -2,7 +2,7 @@ use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 
 use cosmwasm_std::{
-    to_binary, Addr, Api, Binary, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
+    to_json_binary, Addr, Api, Binary, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
 };
 use eris_chain_adapter::types::CustomMsgType;
 
@@ -206,7 +206,7 @@ impl CallbackMsg {
     pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: contract_addr.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(self.clone()))?,
+            msg: to_json_binary(&ExecuteMsg::Callback(self.clone()))?,
             funds: vec![],
         }))
     }

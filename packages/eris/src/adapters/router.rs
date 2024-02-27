@@ -1,6 +1,6 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_std::{
-    to_binary, Addr, Coin, CosmosMsg, Decimal, QuerierWrapper, StdError, StdResult, Uint128,
+    to_json_binary, Addr, Coin, CosmosMsg, Decimal, QuerierWrapper, StdError, StdResult, Uint128,
     WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
@@ -173,10 +173,10 @@ impl Router {
                 contract_addr,
             } => WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: self.0.to_string(),
                     amount: offer_asset.amount,
-                    msg: to_binary(&Cw20HookMsg::ExecuteSwapOperations {
+                    msg: to_json_binary(&Cw20HookMsg::ExecuteSwapOperations {
                         operations,
                         minimum_receive,
                         to,
@@ -189,7 +189,7 @@ impl Router {
                 denom,
             } => WasmMsg::Execute {
                 contract_addr: self.0.to_string(),
-                msg: to_binary(&ExecuteMsg::ExecuteSwapOperations {
+                msg: to_json_binary(&ExecuteMsg::ExecuteSwapOperations {
                     operations,
                     minimum_receive,
                     to,

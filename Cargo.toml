@@ -1,13 +1,15 @@
 [workspace]
 members = [
-    # "contracts/hub",
-    "contracts/token",
+    "contracts/hub",
+    "contracts/alliance-lst",
+    # "contracts/token",
     # "contracts/amp-governance/*",
-    "contracts/amp-compounder/*",
+    # "contracts/amp-compounder/*",
     "packages/*",
     # "contracts/arb-vault",
 ]
 
+exclude = ["packages/eris-tests"]
 
 [profile.release.package.eris]
 opt-level = 3

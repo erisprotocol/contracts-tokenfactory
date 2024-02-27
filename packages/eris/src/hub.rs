@@ -2,8 +2,8 @@ use std::{collections::HashSet, convert::TryInto};
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    to_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, QuerierWrapper, StdError, StdResult,
-    Uint128, VoteOption, WasmMsg,
+    to_json_binary, Addr, Api, Coin, CosmosMsg, Decimal, Empty, QuerierWrapper, StdError,
+    StdResult, Uint128, VoteOption, WasmMsg,
 };
 use eris_chain_adapter::types::{
     CustomMsgType, DenomType, HubChainConfigInput, StageType, WithdrawType,
@@ -264,7 +264,7 @@ impl CallbackMsg {
     pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: contract_addr.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(self.clone()))?,
+            msg: to_json_binary(&ExecuteMsg::Callback(self.clone()))?,
             funds: vec![],
         }))
     }
@@ -330,6 +330,11 @@ pub enum QueryMsg {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct DelegationsResponse {
+    pub delegations: Vec<(String, Uint128)>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

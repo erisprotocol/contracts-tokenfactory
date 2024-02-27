@@ -2,8 +2,8 @@ use std::vec;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, to_binary, Addr, Coin, CosmosMsg, Decimal, DistributionMsg, OwnedDeps, StdResult, SubMsg,
-    Uint128, WasmMsg,
+    coin, to_json_binary, Addr, Coin, CosmosMsg, Decimal, DistributionMsg, OwnedDeps, StdResult,
+    SubMsg, Uint128, WasmMsg,
 };
 
 use eris::hub::{
@@ -243,7 +243,7 @@ fn harvesting_with_options() {
         res.messages[3],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::WithdrawLps {
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::WithdrawLps {
                 withdrawals: vec![(WithdrawType::bw("bw1"), BW_DENOM1.into())],
             }))
             .unwrap(),
@@ -255,7 +255,7 @@ fn harvesting_with_options() {
         res.messages[4],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::SingleStageSwap {
                 stage: vec![(
                     StageType::Fin {
                         addr: Addr::unchecked("fin1")
@@ -276,7 +276,7 @@ fn harvesting_with_options() {
         res.messages[6],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
             funds: vec![]
         }))
     );
@@ -327,7 +327,7 @@ fn claim_funds() -> StdResult<()> {
                 amount,
                 denom: denom.to_string(),
             }],
-            msg: to_binary(&BlackwhaleExecuteMsg::WithdrawLiquidity {
+            msg: to_json_binary(&BlackwhaleExecuteMsg::WithdrawLiquidity {
                 amount,
             })?,
         }))
@@ -345,7 +345,7 @@ fn claim_funds() -> StdResult<()> {
                 amount,
                 denom: denom.to_string(),
             }],
-            msg: to_binary(&BowExecuteMsg::Withdraw {})?,
+            msg: to_json_binary(&BowExecuteMsg::Withdraw {})?,
         }))
     );
 

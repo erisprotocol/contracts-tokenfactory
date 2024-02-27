@@ -1,6 +1,6 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use cw20::{Cw20ReceiveMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as Cw20InstantiateMsg;
 use eris_chain_adapter::types::CustomMsgType;
@@ -55,7 +55,7 @@ impl TokenInit {
         Ok(CosmosMsg::Wasm(WasmMsg::Instantiate {
             admin: Some(owner), // use the owner as admin for now; can be changed later by a `MsgUpdateAdmin`
             code_id: self.cw20_code_id,
-            msg: to_binary(&Cw20InstantiateMsg {
+            msg: to_json_binary(&Cw20InstantiateMsg {
                 name: self.name.clone(),
                 symbol: self.symbol.clone(),
                 decimals: self.decimals,
@@ -154,7 +154,7 @@ impl CallbackMsg {
     pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: String::from(contract_addr),
-            msg: to_binary(&ExecuteMsg::Callback(self.clone()))?,
+            msg: to_json_binary(&ExecuteMsg::Callback(self.clone()))?,
             funds: vec![],
         }))
     }

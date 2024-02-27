@@ -3,8 +3,8 @@ use std::str::FromStr;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, DistributionMsg, Event, Fraction,
-    GovMsg, Order, StdError, StdResult, SubMsg, Uint128, VoteOption, WasmMsg,
+    coin, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, DistributionMsg, Event,
+    Fraction, GovMsg, Order, StdError, StdResult, SubMsg, Uint128, VoteOption, WasmMsg,
 };
 use eris::DecimalCheckedOps;
 
@@ -388,7 +388,7 @@ fn harvesting() {
         res.messages[4],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
             funds: vec![]
         }))
     );
@@ -584,7 +584,7 @@ fn queuing_unbond() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::SubmitBatch {}).unwrap(),
+            msg: to_json_binary(&ExecuteMsg::SubmitBatch {}).unwrap(),
             funds: vec![]
         }))
     );

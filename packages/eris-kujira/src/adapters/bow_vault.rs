@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, Addr, Coin, CosmosMsg, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, Coin, CosmosMsg, StdResult, Uint128, WasmMsg};
 use kujira::{denom::Denom, msg::KujiraMsg};
 
 #[cw_serde]
@@ -18,7 +18,7 @@ impl BowVault {
                 amount,
                 denom: denom.to_string(),
             }],
-            msg: to_binary(&BowExecuteMsg::Withdraw {})?,
+            msg: to_json_binary(&BowExecuteMsg::Withdraw {})?,
         }))
     }
 }

@@ -1,8 +1,8 @@
 use std::cmp;
 
 use cosmwasm_std::{
-    attr, to_binary, Addr, Attribute, BankMsg, Coin, CosmosMsg, Decimal, DepsMut, DistributionMsg,
-    Env, Event, Order, Response, StdResult, Uint128, WasmMsg,
+    attr, to_json_binary, Addr, Attribute, BankMsg, Coin, CosmosMsg, Decimal, DepsMut,
+    DistributionMsg, Env, Event, Order, Response, StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use eris::helper::validate_received_funds;
@@ -26,7 +26,8 @@ use crate::helpers::{
 };
 use crate::math::{
     compute_mint_amount, compute_redelegations_for_rebalancing, compute_redelegations_for_removal,
-    compute_unbond_amount, compute_undelegations, mark_reconciled_batches, reconcile_batches,
+    compute_unbond_amount, compute_undelegations, get_utoken_per_validator,
+    mark_reconciled_batches, reconcile_batches,
 };
 use crate::state::State;
 use crate::types::gauges::TuneInfoGaugeLoader;
@@ -567,10 +568,28 @@ fn find_new_delegation(
     let delegation_strategy =
         state.delegation_strategy.may_load(deps.storage)?.unwrap_or(DelegationStrategy::Uniform {});
 
-    let delegations = match delegation_strategy {
+    match delegation_strategy {
         DelegationStrategy::Uniform {} => {
             let validators = state.validators.load(deps.storage)?;
-            query_delegations(&deps.querier, &validators, &env.contract.address)?
+            let delegations = query_delegations(&deps.querier, &validators, &env.contract.address)?;
+
+            // Query the current delegations made to validators, and find the validator with the smallest
+            // delegated amount through a linear search
+            // The code for linear search is a bit uglier than using `sort_by` but cheaper: O(n) vs O(n * log(n))
+            let mut validator = &delegations[0].validator;
+            let mut amount = delegations[0].amount;
+
+            for d in &delegations[1..] {
+                // when using uniform distribution, it is allowed to bond anywhere
+                // otherwise bond only in one of the
+                if d.amount < amount {
+                    validator = &d.validator;
+                    amount = d.amount;
+                }
+            }
+            let new_delegation = Delegation::new(validator, utoken_to_bond.u128(), utoken);
+
+            Ok((new_delegation, delegations))
         },
         DelegationStrategy::Gauges {
             ..
@@ -578,41 +597,40 @@ fn find_new_delegation(
         | DelegationStrategy::Defined {
             ..
         } => {
-            // if we have gauges, only delegate to validators that have delegations, all others are "inactive"
-            let mut delegations =
+            let current_delegations =
                 query_all_delegations(&deps.querier, &env.contract.address, utoken)?;
-            if delegations.is_empty() {
-                let validators = state.validators.load(deps.storage)?;
+            let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
+            let validators = state.validators.load(deps.storage)?;
 
-                if let Some(first_validator) = validators.first() {
-                    delegations = vec![Delegation {
-                        amount: 0,
-                        validator: first_validator.to_string(),
-                        denom: utoken.clone(),
-                    }]
-                } else {
-                    return Err(ContractError::NoValidatorsConfigured);
+            let (map, _, _, _) =
+                get_utoken_per_validator(state, deps.storage, utoken_staked, &validators, None)?;
+
+            let mut validator: Option<String> = None;
+            let mut amount = Uint128::zero();
+
+            for delegation in &current_delegations {
+                let diff = map
+                    .get(&delegation.validator)
+                    .copied()
+                    .unwrap_or_default()
+                    .saturating_sub(Uint128::new(delegation.amount));
+
+                if diff > amount || validator.is_none() {
+                    validator = Some(delegation.validator.clone());
+                    amount = diff;
                 }
             }
-            delegations
+
+            if validator.is_none() {
+                validator = Some(validators.first().unwrap().to_string());
+            }
+
+            let new_delegation =
+                Delegation::new(validator.unwrap().as_str(), utoken_to_bond.u128(), utoken);
+
+            Ok((new_delegation, current_delegations))
         },
-    };
-
-    // Query the current delegations made to validators, and find the validator with the smallest
-    // delegated amount through a linear search
-    // The code for linear search is a bit uglier than using `sort_by` but cheaper: O(n) vs O(n * log(n))
-    let mut validator = &delegations[0].validator;
-    let mut amount = delegations[0].amount;
-
-    for d in &delegations[1..] {
-        if d.amount < amount {
-            validator = &d.validator;
-            amount = d.amount;
-        }
     }
-    let new_delegation = Delegation::new(validator, utoken_to_bond.u128(), utoken);
-
-    Ok((new_delegation, delegations))
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -651,7 +669,7 @@ pub fn queue_unbond(
         start_time = "immediate".to_string();
         msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.into(),
-            msg: to_binary(&ExecuteMsg::SubmitBatch {})?,
+            msg: to_json_binary(&ExecuteMsg::SubmitBatch {})?,
             funds: vec![],
         }));
     }

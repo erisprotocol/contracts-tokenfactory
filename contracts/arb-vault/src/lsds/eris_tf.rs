@@ -1,6 +1,6 @@
 use astroport::asset::{native_asset_info, AssetInfo};
 use cosmwasm_std::{
-    coin, to_binary, Addr, CosmosMsg, Decimal, Deps, QueryRequest, Uint128, WasmMsg, WasmQuery,
+    coin, to_json_binary, Addr, CosmosMsg, Decimal, Deps, QueryRequest, Uint128, WasmMsg, WasmQuery,
 };
 
 use eris::hub::{
@@ -36,7 +36,7 @@ impl ErisTf {
         deps.querier
             .query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.addr.to_string(),
-                msg: to_binary(&QueryMsg::UnbondRequestsByUser {
+                msg: to_json_binary(&QueryMsg::UnbondRequestsByUser {
                     user: self.wallet.to_string(),
                     limit: Some(100u32),
                     start_after: None,
@@ -54,7 +54,7 @@ impl ErisTf {
         deps.querier
             .query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.addr.to_string(),
-                msg: to_binary(&QueryMsg::PreviousBatch(id)).unwrap(),
+                msg: to_json_binary(&QueryMsg::PreviousBatch(id)).unwrap(),
             }))
             .map_err(|a| adapter_error("eris", "query_previous_batch", a))
     }
@@ -66,7 +66,7 @@ impl ErisTf {
         deps.querier
             .query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.addr.to_string(),
-                msg: to_binary(&QueryMsg::PendingBatch {}).unwrap(),
+                msg: to_json_binary(&QueryMsg::PendingBatch {}).unwrap(),
             }))
             .map_err(|a| adapter_error("eris", "query_pending_batch", a))
     }
@@ -75,7 +75,7 @@ impl ErisTf {
         deps.querier
             .query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.addr.to_string(),
-                msg: to_binary(&QueryMsg::State {}).unwrap(),
+                msg: to_json_binary(&QueryMsg::State {}).unwrap(),
             }))
             .map_err(|a| adapter_error("eris", "query_state", a))
     }
@@ -84,7 +84,7 @@ impl ErisTf {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
             funds: vec![coin(amount.u128(), self.denom.to_string())],
-            msg: to_binary(&ExecuteMsg::QueueUnbond {
+            msg: to_json_binary(&ExecuteMsg::QueueUnbond {
                 receiver: None,
             })?,
         }))
@@ -94,7 +94,7 @@ impl ErisTf {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.addr.to_string(),
             funds: vec![],
-            msg: to_binary(&ExecuteMsg::WithdrawUnbonded {
+            msg: to_json_binary(&ExecuteMsg::WithdrawUnbonded {
                 receiver: None,
             })?,
         }))

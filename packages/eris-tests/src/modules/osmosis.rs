@@ -154,7 +154,7 @@ impl Module for OsmosisModule {
         //                 .map(|bz| u128::from_be_bytes(bz.try_into().unwrap()))
         //                 .unwrap_or_default();
 
-        //             Ok(to_binary(&SupplyResponse {
+        //             Ok(to_json_binary(&SupplyResponse {
         //                 amount: denom.coin(&Uint128::from(supply)),
         //             })?)
         //         },
@@ -162,7 +162,7 @@ impl Module for OsmosisModule {
         //     KujiraQuery::Oracle(o) => match o {
         //         OracleQuery::ExchangeRate {
         //             ..
-        //         } => Ok(to_binary(&ExchangeRateResponse {
+        //         } => Ok(to_json_binary(&ExchangeRateResponse {
         //             rate: self.oracle_price,
         //         })?),
         //     },

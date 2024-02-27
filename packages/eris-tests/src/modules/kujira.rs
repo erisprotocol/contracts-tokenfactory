@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use anyhow::Result as AnyResult;
 use cosmwasm_schema::{schemars, serde};
-use cosmwasm_std::{ attr, Addr, BankMsg, CosmosMsg, Decimal, Empty, Event, Uint128};
+use cosmwasm_std::{attr, Addr, BankMsg, CosmosMsg, Decimal, Empty, Event, Uint128};
 
 use cw_multi_test::{AppResponse, BankSudo, CosmosRouter, Module, SudoMsg};
 use eris_chain_adapter::types::CustomMsgType;
@@ -162,7 +162,7 @@ impl Module for KujiraModule {
         //                 .map(|bz| u128::from_be_bytes(bz.try_into().unwrap()))
         //                 .unwrap_or_default();
 
-        //             Ok(to_binary(&SupplyResponse {
+        //             Ok(to_json_binary(&SupplyResponse {
         //                 amount: denom.coin(&Uint128::from(supply)),
         //             })?)
         //         },
@@ -170,7 +170,7 @@ impl Module for KujiraModule {
         //     KujiraQuery::Oracle(o) => match o {
         //         OracleQuery::ExchangeRate {
         //             ..
-        //         } => Ok(to_binary(&ExchangeRateResponse {
+        //         } => Ok(to_json_binary(&ExchangeRateResponse {
         //             rate: self.oracle_price,
         //         })?),
         //     },
