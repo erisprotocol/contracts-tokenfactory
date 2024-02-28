@@ -64,7 +64,11 @@ impl AllianceDelegations {
                 .unwrap_or_default()
                 .checked_sub(Uint128::new(undelegation.amount))?;
 
-            self.delegations.insert(undelegation.validator.clone(), new_value);
+            if new_value.is_zero() {
+                self.delegations.remove(&undelegation.validator);
+            } else {
+                self.delegations.insert(undelegation.validator.clone(), new_value);
+            }
         }
 
         Ok(self)
@@ -82,7 +86,11 @@ impl AllianceDelegations {
                 .unwrap_or_default()
                 .checked_sub(Uint128::new(redelegation.amount))?;
 
-            self.delegations.insert(redelegation.src.clone(), new_value_src);
+            if new_value_src.is_zero() {
+                self.delegations.remove(&redelegation.src);
+            } else {
+                self.delegations.insert(redelegation.src.clone(), new_value_src);
+            }
 
             let new_value_dst = self
                 .delegations

@@ -4,7 +4,7 @@ use cosmwasm_std::{
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::{
-    adapters::whitewhaledex::WhiteWhalePair,
+    adapters::{hub::Hub, whitewhaledex::WhiteWhalePair},
     custom_execute_msg::CustomExecuteMsg,
     types::{CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType},
 };
@@ -83,6 +83,9 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         F: FnOnce() -> StdResult<HubChainConfig>,
     {
         match stage_type {
+            StageType::Eris {
+                addr,
+            } => Hub(addr).bond_msg(denom, amount, None),
             StageType::Dex {
                 addr,
             } => WhiteWhalePair(addr).swap_msg(denom, amount, belief_price, Some(max_spread)),

@@ -22,6 +22,9 @@ impl WithdrawType {
 
 #[cw_serde]
 pub enum StageType {
+    Eris {
+        addr: Addr,
+    },
     Dex {
         addr: Addr,
     },
