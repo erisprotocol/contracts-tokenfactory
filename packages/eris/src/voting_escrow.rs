@@ -98,6 +98,8 @@ pub enum ExecuteMsg {
     UpdateConfig {
         new_guardian: Option<String>,
         push_update_contracts: Option<Vec<String>>,
+        // allows withdrawals of tokens.
+        decomission: Option<bool>,
     },
     /// Set whitelisted logo urls
     SetLogoUrlsWhitelist {

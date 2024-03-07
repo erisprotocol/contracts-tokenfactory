@@ -1,7 +1,7 @@
 use cosmwasm_schema::serde;
 use cosmwasm_std::testing::{mock_env, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, Addr, BlockInfo, ContractInfo, Deps, Env, OwnedDeps, QuerierResult, SystemError,
+    from_json, Addr, BlockInfo, ContractInfo, Deps, Env, OwnedDeps, QuerierResult, SystemError,
     SystemResult, Timestamp,
 };
 use serde::de::DeserializeOwned;
@@ -24,7 +24,7 @@ pub(super) fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, CustomQueri
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: CustomQuerier::default(),
-        custom_query_type: std::marker::PhantomData::default(),
+        custom_query_type: std::marker::PhantomData,
     }
 }
 
@@ -43,7 +43,7 @@ pub(super) fn mock_env_at_timestamp(timestamp: u64) -> Env {
 }
 
 pub(super) fn query_helper<T: DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
 pub(super) fn query_helper_env<T: DeserializeOwned>(
@@ -51,5 +51,5 @@ pub(super) fn query_helper_env<T: DeserializeOwned>(
     msg: QueryMsg,
     timestamp: u64,
 ) -> T {
-    from_binary(&query(deps, mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
 }

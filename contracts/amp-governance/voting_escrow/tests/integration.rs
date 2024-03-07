@@ -358,6 +358,83 @@ fn extend_lock_after_period_by_time() {
     assert_eq!(vp, 1.0);
 }
 
+#[test]
+fn check_decomission() {
+    let mut router = mock_app();
+    let router_ref = &mut router;
+    let helper = Helper::init(router_ref, Addr::unchecked("owner"));
+
+    helper.mint_xastro(router_ref, "user", 200);
+    helper.mint_xastro(router_ref, "user2", 100);
+
+    // Create lock 1 for 3 weeks
+    helper.create_lock(router_ref, "user", WEEK * 3, 100f32).unwrap();
+    let vp = helper.query_total_vp(router_ref).unwrap();
+    assert_eq!(vp, 125.96153);
+
+    // router_ref.update_block(next_block);
+    // router_ref.update_block(|block| block.time = block.time.plus_seconds(WEEK * 1));
+
+    let err = helper.withdraw(router_ref, "user").unwrap_err();
+    assert_eq!(err.root_cause().to_string(), "The lock time has not yet expired");
+
+    let err = helper.update_decomission(router_ref, "user", Some(true)).unwrap_err();
+    assert_eq!(err.root_cause().to_string(), "Unauthorized");
+
+    helper.update_decomission(router_ref, "owner", Some(true)).unwrap();
+
+    let err = helper.extend_lock_time(router_ref, "user", 3 * WEEK).unwrap_err();
+    assert_eq!(
+        err.root_cause().to_string(),
+        "Locks decommissioned, cannot extend or create new ones."
+    );
+
+    let err = helper.create_lock(router_ref, "user2", WEEK * 3, 1f32).unwrap_err();
+    assert_eq!(
+        err.root_cause().to_string(),
+        "Locks decommissioned, cannot extend or create new ones."
+    );
+
+    helper.withdraw(router_ref, "user").unwrap();
+
+    let vp = helper.query_total_vp(router_ref).unwrap();
+    // only lock 2 remaining
+    assert_eq!(vp, 0.0);
+
+    // Lock 1 can be withdrawn
+    // router_ref.update_block(next_block);
+    // router_ref.update_block(|block| block.time = block.time.plus_seconds(WEEK * 6));
+
+    // let vp = helper.query_total_vp(router_ref).unwrap();
+    // assert_eq!(vp, 100.0);
+
+    // // Create lock 2 with very small amount
+    // helper.create_lock(router_ref, "user2", WEEK * 3, 1f32).unwrap();
+
+    // let vp = helper.query_total_vp(router_ref).unwrap();
+    // assert_eq!(vp, 101.25961);
+
+    // // By extending lock time on an expired lock it relocks starting from the current block
+    // helper.extend_lock_time(router_ref, "user", 3 * WEEK).unwrap();
+
+    // let vp = helper.query_total_vp(router_ref).unwrap();
+
+    // // [lock 2] + [lock 1 - same lock length] + [rounding]
+    // assert_eq!(vp, 1.25961 + 125.96153 + 0.00001);
+
+    // let err = helper.withdraw(router_ref, "user").unwrap_err();
+    // assert_eq!(err.root_cause().to_string(), "The lock time has not yet expired");
+
+    // // Lock 1 can be withdrawn again
+    // router_ref.update_block(next_block);
+    // router_ref.update_block(|block| block.time = block.time.plus_seconds(WEEK * 4));
+
+    // helper.withdraw(router_ref, "user").unwrap();
+    // let vp = helper.query_total_vp(router_ref).unwrap();
+    // // only lock 2 remaining
+    // assert_eq!(vp, 1.0);
+}
+
 /// Old Plot for this test case generated at tests/plots/constant_decay.png
 #[test]
 fn voting_constant_decay() {

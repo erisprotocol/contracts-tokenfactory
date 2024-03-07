@@ -1,10 +1,14 @@
 use astroport::common::OwnershipProposal;
-use cosmwasm_schema::cw_serde;
+use cosmwasm_schema::{
+    cw_serde,
+    schemars::JsonSchema,
+    serde::{Deserialize, Serialize},
+};
 use cosmwasm_std::{Addr, Uint128};
 use cw_storage_plus::{Item, Map, SnapshotMap, Strategy};
 
 /// This structure stores the main parameters for the voting escrow contract.
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Config {
     /// Address that's allowed to change contract parameters
     pub owner: Addr,
@@ -16,6 +20,9 @@ pub struct Config {
     pub logo_urls_whitelist: Vec<String>,
     /// The list of contracts to receive updates on user's lock info changes
     pub push_update_contracts: Vec<Addr>,
+    /// Address that can only blacklist vAMP stakers and remove their governance power
+    #[serde(default)]
+    pub decomissioned: Option<bool>,
 }
 
 /// This structure stores points along the checkpoint history for every vAMP staker.

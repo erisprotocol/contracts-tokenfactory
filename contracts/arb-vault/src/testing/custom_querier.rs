@@ -2,8 +2,8 @@ use super::cw20_querier::Cw20Querier;
 use super::helpers::err_unsupported_query;
 use cosmwasm_std::testing::{BankQuerier, StakingQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, from_binary, from_slice, to_json_binary, Coin, Decimal, Empty, Querier, QuerierResult,
-    QueryRequest, SystemError, SystemResult, Uint128, WasmQuery,
+    coin, from_json, to_json_binary, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest,
+    SystemError, SystemResult, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
 use std::str::FromStr;
@@ -21,7 +21,7 @@ pub(super) struct CustomQuerier {
 
 impl Querier for CustomQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let request: QueryRequest<_> = match from_slice(bin_request) {
+        let request: QueryRequest<_> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return Err(SystemError::InvalidRequest {
@@ -83,12 +83,12 @@ impl CustomQuerier {
                 contract_addr,
                 msg,
             }) => {
-                if let Ok(query) = from_binary::<Cw20QueryMsg>(msg) {
+                if let Ok(query) = from_json::<Cw20QueryMsg>(msg) {
                     return self.cw20_querier.handle_query(contract_addr, query);
                 }
 
                 if contract_addr == "eris" {
-                    return match from_binary(msg).unwrap() {
+                    return match from_json(msg).unwrap() {
                         eris::hub::QueryMsg::PendingBatch {} => SystemResult::Ok(
                             to_json_binary(&eris::hub::PendingBatch {
                                 id: 3,
@@ -145,7 +145,7 @@ impl CustomQuerier {
                         _ => err_unsupported_query(msg),
                     };
                 } else if contract_addr == "backbone" {
-                    return match from_binary(msg).unwrap() {
+                    return match from_json(msg).unwrap() {
                         steak::hub::QueryMsg::PendingBatch {} => SystemResult::Ok(
                             to_json_binary(&steak::hub::PendingBatch {
                                 id: 3,

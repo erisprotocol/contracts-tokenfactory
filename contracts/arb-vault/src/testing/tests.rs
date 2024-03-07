@@ -15,7 +15,7 @@ use astroport::asset::{native_asset, native_asset_info, token_asset_info};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::testing::{mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    attr, coin, from_binary, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps,
+    attr, coin, from_json, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Deps,
     OwnedDeps, Response, Uint128, WasmMsg,
 };
 use eris::{
@@ -528,7 +528,7 @@ fn check_withdrawing() {
         }) => {
             assert_eq!(contract_addr, "eris".to_string());
             assert_eq!(funds.len(), 0);
-            let sub_msg: eris::hub::ExecuteMsg = from_binary(&msg).unwrap();
+            let sub_msg: eris::hub::ExecuteMsg = from_json(msg).unwrap();
 
             assert_eq!(
                 sub_msg,
@@ -549,7 +549,7 @@ fn check_withdrawing() {
         }) => {
             assert_eq!(contract_addr, "backbone".to_string());
             assert_eq!(funds.len(), 0);
-            let sub_msg: steak::hub::ExecuteMsg = from_binary(&msg).unwrap();
+            let sub_msg: steak::hub::ExecuteMsg = from_json(msg).unwrap();
 
             assert_eq!(
                 sub_msg,
@@ -1775,7 +1775,7 @@ fn execute_arb() {
                 }]
             );
 
-            let sub_msg: String = from_binary(&msg).unwrap();
+            let sub_msg: String = from_json(msg).unwrap();
             assert_eq!(sub_msg, "exec_any_swap");
         },
         _ => panic!("DO NOT ENTER HERE"),
@@ -1790,7 +1790,7 @@ fn execute_arb() {
         }) => {
             assert_eq!(contract_addr, MOCK_CONTRACT_ADDR.to_string());
             assert_eq!(funds.len(), 0);
-            sub_msg = from_binary(&msg).unwrap();
+            sub_msg = from_json(msg).unwrap();
 
             assert_eq!(
                 sub_msg,
@@ -1967,7 +1967,7 @@ fn execute_arb() {
             assert_eq!(contract_addr, "eris".to_string());
             assert_eq!(funds, vec![coin(eris_amount.u128(), "eriscw")]);
 
-            let sub_msg: eris::hub::ExecuteMsg = from_binary(&msg).unwrap();
+            let sub_msg: eris::hub::ExecuteMsg = from_json(msg).unwrap();
 
             assert_eq!(
                 sub_msg,

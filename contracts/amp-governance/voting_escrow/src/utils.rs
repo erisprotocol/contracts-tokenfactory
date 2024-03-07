@@ -1,4 +1,4 @@
-use crate::error::ContractError;
+use crate::{error::ContractError, state::Config};
 use eris::governance_helper::{MAX_LOCK_TIME, MIN_LOCK_PERIODS, WEEK};
 
 use cosmwasm_std::{Addr, Order, StdResult, Storage, Uint128};
@@ -20,6 +20,13 @@ pub(crate) fn assert_periods_remaining(periods: u64) -> Result<(), ContractError
         Err(ContractError::LockPeriodsError {})
     } else {
         Ok(())
+    }
+}
+
+pub(crate) fn assert_not_decomissioned(config: &Config) -> Result<(), ContractError> {
+    match config.decomissioned {
+        Some(true) => Err(ContractError::DecomissionedError {}),
+        _ => Ok(()),
     }
 }
 

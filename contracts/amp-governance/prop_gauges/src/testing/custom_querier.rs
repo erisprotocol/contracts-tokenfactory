@@ -4,8 +4,8 @@ use std::ops::Mul;
 use cosmwasm_schema::serde::Serialize;
 use cosmwasm_std::testing::{BankQuerier, StakingQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, to_json_binary, Coin, Decimal, Empty, Querier, QuerierResult,
-    QueryRequest, SystemError, Uint128, WasmQuery,
+    from_json, to_json_binary, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest,
+    SystemError, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
 use eris::voting_escrow::{LockInfoResponse, VotingPowerResponse};
@@ -24,7 +24,7 @@ pub(super) struct CustomQuerier {
 
 impl Querier for CustomQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let request: QueryRequest<_> = match from_slice(bin_request) {
+        let request: QueryRequest<_> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return Err(SystemError::InvalidRequest {
@@ -99,11 +99,11 @@ impl CustomQuerier {
                 contract_addr,
                 msg,
             }) => {
-                if let Ok(query) = from_binary::<Cw20QueryMsg>(msg) {
+                if let Ok(query) = from_json::<Cw20QueryMsg>(msg) {
                     return self.cw20_querier.handle_query(contract_addr, query);
                 }
 
-                if let Ok(query) = from_binary::<eris::voting_escrow::QueryMsg>(msg) {
+                if let Ok(query) = from_json::<eris::voting_escrow::QueryMsg>(msg) {
                     return self.handle_vp_query(contract_addr, query);
                 }
 

@@ -1,6 +1,6 @@
 [package]
 name = "eris-gov-voting-escrow"
-version = "1.4.0"
+version = "1.5.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2021"
 repository = "https://github.com/erisprotocol/contracts-terra"
@@ -33,6 +33,8 @@ thiserror = { version = "1.0" }
 eris = { path = "../../../packages/eris" }
 cosmwasm-schema = "1.1"
 astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+schemars = "0.8.1"
 
 [dev-dependencies]
 cw-multi-test = "0.13.2"

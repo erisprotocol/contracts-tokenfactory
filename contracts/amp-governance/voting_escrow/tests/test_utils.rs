@@ -208,6 +208,20 @@ impl Helper {
         )
     }
 
+    pub fn update_decomission(
+        &self,
+        router: &mut App,
+        sender: &str,
+        decomission: Option<bool>
+    ) -> Result<AppResponse> {
+        router.execute_contract(
+            Addr::unchecked(sender),
+            self.voting_instance.clone(),
+            &ExecuteMsg::UpdateConfig { new_guardian: None, push_update_contracts: None, decomission },
+            &[],
+        )
+    }
+
     pub fn query_user_vp(&self, router: &mut App, user: &str) -> StdResult<f32> {
         router
             .wrap()

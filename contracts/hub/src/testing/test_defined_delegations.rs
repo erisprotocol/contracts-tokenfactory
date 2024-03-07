@@ -327,7 +327,7 @@ fn bonding() {
     let mut index = 0;
     assert_eq!(
         res.messages[0],
-        SubMsg::new(Delegation::new("charlie", 12345, MOCK_UTOKEN).to_cosmos_msg())
+        SubMsg::new(Delegation::new("alice", 12345, MOCK_UTOKEN).to_cosmos_msg())
     );
     index += 1;
     for msg in mint_msgs {

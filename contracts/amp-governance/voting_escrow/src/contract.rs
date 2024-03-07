@@ -1,10 +1,5 @@
-use std::collections::HashSet;
-
 use astroport::asset::native_asset;
 use astroport::common::{claim_ownership, drop_ownership_proposal, propose_new_owner};
-use eris::helper::{addr_opt_validate, validate_addresses, validate_received_funds};
-use eris::DecimalCheckedOps;
-
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -13,18 +8,19 @@ use cosmwasm_std::{
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw20::{BalanceResponse, Logo, LogoInfo, MarketingInfoResponse, TokenInfoResponse};
-
 use cw20_base::contract::{
     execute_update_marketing, execute_upload_logo, query_download_logo, query_marketing_info,
 };
 use cw20_base::state::{MinterData, TokenInfo, LOGO, MARKETING_INFO, TOKEN_INFO};
-
 use eris::governance_helper::{get_period, get_periods_count, EPOCH_START, MIN_LOCK_PERIODS, WEEK};
+use eris::helper::{addr_opt_validate, validate_addresses, validate_received_funds};
 use eris::helpers::slope::{adjust_vp_and_slope, calc_coefficient};
 use eris::voting_escrow::{
     BlacklistedVotersResponse, ConfigResponse, ExecuteMsg, InstantiateMsg, LockInfoResponse,
     MigrateMsg, PushExecuteMsg, QueryMsg, VotingPowerResponse, DEFAULT_LIMIT, MAX_LIMIT,
 };
+use eris::DecimalCheckedOps;
+use std::collections::HashSet;
 
 use crate::error::ContractError;
 use crate::marketing_validation::{validate_marketing_info, validate_whitelist_links};
@@ -32,8 +28,9 @@ use crate::state::{
     Config, Lock, Point, BLACKLIST, CONFIG, HISTORY, LAST_SLOPE_CHANGE, LOCKED, OWNERSHIP_PROPOSAL,
 };
 use crate::utils::{
-    assert_blacklist, assert_periods_remaining, assert_time_limits, calc_voting_power,
-    cancel_scheduled_slope, fetch_last_checkpoint, fetch_slope_changes, schedule_slope_change,
+    assert_blacklist, assert_not_decomissioned, assert_periods_remaining, assert_time_limits,
+    calc_voting_power, cancel_scheduled_slope, fetch_last_checkpoint, fetch_slope_changes,
+    schedule_slope_change,
 };
 
 /// Contract name that is used for migration.
@@ -61,6 +58,7 @@ pub fn instantiate(
         logo_urls_whitelist: msg.logo_urls_whitelist.clone(),
         // makes no sense to set during init, as other contracts might not be deployed yet.
         push_update_contracts: vec![],
+        decomissioned: None,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -220,7 +218,8 @@ pub fn execute(
         ExecuteMsg::UpdateConfig {
             new_guardian,
             push_update_contracts,
-        } => execute_update_config(deps, info, new_guardian, push_update_contracts),
+            decomission,
+        } => execute_update_config(deps, info, new_guardian, push_update_contracts, decomission),
 
         ExecuteMsg::CreateLock {
             time,
@@ -460,6 +459,9 @@ fn create_lock(
 
     assert_periods_remaining(periods)?;
 
+    let config = CONFIG.load(deps.storage)?;
+    assert_not_decomissioned(&config)?;
+
     LOCKED.update(deps.storage, user.clone(), env.block.height, |lock_opt| {
         if lock_opt.is_some() && !lock_opt.unwrap().amount.is_zero() {
             return Err(ContractError::LockAlreadyExists {});
@@ -473,8 +475,6 @@ fn create_lock(
     })?;
 
     checkpoint(deps.storage, env.clone(), user.clone(), Some(amount), Some(end))?;
-
-    let config = CONFIG.load(deps.storage)?;
 
     let lock_info = get_user_lock_info(deps.as_ref(), &env, user.to_string())?;
 
@@ -501,6 +501,9 @@ fn deposit_for(
     user: Addr,
     extend_to_min_periods: Option<bool>,
 ) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    assert_not_decomissioned(&config)?;
+
     let mut new_end = None;
     LOCKED.update(deps.storage, user.clone(), env.block.height, |lock_opt| match lock_opt {
         Some(mut lock) if !lock.amount.is_zero() => {
@@ -529,8 +532,6 @@ fn deposit_for(
 
     checkpoint(deps.storage, env.clone(), user.clone(), Some(amount), new_end)?;
 
-    let config = CONFIG.load(deps.storage)?;
-
     let lock_info = get_user_lock_info(deps.as_ref(), &env, user.to_string())?;
 
     Ok(Response::default()
@@ -552,10 +553,12 @@ fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Cont
         .ok_or(ContractError::LockDoesNotExist {})?;
 
     let cur_period = get_period(env.block.time.seconds())?;
-    if lock.end > cur_period {
+    let config = CONFIG.load(deps.storage)?;
+    let is_decomissioned = config.decomissioned.unwrap_or_default();
+
+    if lock.end > cur_period && !is_decomissioned {
         Err(ContractError::LockHasNotExpired {})
     } else {
-        let config = CONFIG.load(deps.storage)?;
         let transfer_msg =
             native_asset(config.deposit_denom.clone(), lock.amount).into_msg(sender.clone())?;
 
@@ -563,30 +566,70 @@ fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Cont
         lock.amount = Uint128::zero();
         LOCKED.save(deps.storage, sender.clone(), &lock, env.block.height)?;
 
-        // We need to checkpoint and eliminate the slope influence on a future lock
-        HISTORY.save(
-            deps.storage,
-            (sender.clone(), cur_period),
-            &Point {
-                power: Uint128::zero(),
-                start: cur_period,
-                end: cur_period,
-                slope: Default::default(),
-                fixed: Uint128::zero(),
-            },
-        )?;
+        if lock.end > cur_period {
+            // early withdraw through decomission. Update voting power same as blacklist.
+            let cur_period_key = cur_period;
+            let last_checkpoint = fetch_last_checkpoint(deps.storage, &sender, cur_period_key)?;
+            if let Some((_, point)) = last_checkpoint {
+                // We need to checkpoint with zero power and zero slope
+                HISTORY.save(
+                    deps.storage,
+                    (sender.clone(), cur_period_key),
+                    &Point {
+                        power: Uint128::zero(),
+                        slope: Default::default(),
+                        start: cur_period,
+                        end: cur_period,
+                        fixed: Uint128::zero(),
+                    },
+                )?;
 
-        // removing funds needs to remove from total checkpoint aswell.
-        checkpoint_total(
-            deps.storage,
-            env.clone(),
-            None,
-            None,
-            None,
-            Some(amount),
-            Default::default(),
-            Default::default(),
-        )?;
+                let cur_power = calc_voting_power(&point, cur_period);
+
+                // User's contribution in the total voting power calculation
+                let reduce_total_vp = cur_power;
+                let old_slopes = point.slope;
+                let old_amount = point.fixed;
+                cancel_scheduled_slope(deps.storage, point.slope, point.end)?;
+
+                checkpoint_total(
+                    deps.storage,
+                    env.clone(),
+                    None,
+                    None,
+                    Some(reduce_total_vp),
+                    Some(old_amount),
+                    old_slopes,
+                    Default::default(),
+                )?;
+            }
+        } else {
+            // We need to checkpoint and eliminate the slope influence on a future lock
+            HISTORY.save(
+                deps.storage,
+                (sender.clone(), cur_period),
+                &Point {
+                    power: Uint128::zero(),
+                    start: cur_period,
+                    end: cur_period,
+                    slope: Default::default(),
+                    fixed: Uint128::zero(),
+                },
+            )?;
+
+            // normal withdraw
+            // removing funds needs to remove from total checkpoint aswell.
+            checkpoint_total(
+                deps.storage,
+                env.clone(),
+                None,
+                None,
+                None,
+                Some(amount),
+                Default::default(),
+                Default::default(),
+            )?;
+        }
 
         let lock_info = get_user_lock_info(deps.as_ref(), &env, sender.to_string());
         let msgs = get_push_update_msgs(config, sender, lock_info)?;
@@ -690,6 +733,7 @@ fn extend_lock_time(
     checkpoint(deps.storage, env.clone(), user.clone(), None, Some(lock.end))?;
 
     let config = CONFIG.load(deps.storage)?;
+    assert_not_decomissioned(&config)?;
 
     let lock_info = get_user_lock_info(deps.as_ref(), &env, user.to_string())?;
 
@@ -840,6 +884,7 @@ fn execute_update_config(
     info: MessageInfo,
     new_guardian: Option<String>,
     push_update_contracts: Option<Vec<String>>,
+    decomission: Option<bool>,
 ) -> Result<Response, ContractError> {
     let mut cfg = CONFIG.load(deps.storage)?;
 
@@ -849,6 +894,12 @@ fn execute_update_config(
 
     if let Some(new_guardian) = new_guardian {
         cfg.guardian_addr = Some(deps.api.addr_validate(&new_guardian)?);
+    }
+
+    if let Some(decomission) = decomission {
+        if decomission {
+            cfg.decomissioned = Some(true);
+        }
     }
 
     if let Some(push_update_contracts) = push_update_contracts {
