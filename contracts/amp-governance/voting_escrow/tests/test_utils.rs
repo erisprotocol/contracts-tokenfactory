@@ -208,16 +208,20 @@ impl Helper {
         )
     }
 
-    pub fn update_decomission(
+    pub fn update_decommissioned(
         &self,
         router: &mut App,
         sender: &str,
-        decomission: Option<bool>
+        decommissioned: Option<bool>,
     ) -> Result<AppResponse> {
         router.execute_contract(
             Addr::unchecked(sender),
             self.voting_instance.clone(),
-            &ExecuteMsg::UpdateConfig { new_guardian: None, push_update_contracts: None, decomission },
+            &ExecuteMsg::UpdateConfig {
+                new_guardian: None,
+                push_update_contracts: None,
+                decommissioned,
+            },
             &[],
         )
     }

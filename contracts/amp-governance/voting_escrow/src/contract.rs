@@ -28,7 +28,7 @@ use crate::state::{
     Config, Lock, Point, BLACKLIST, CONFIG, HISTORY, LAST_SLOPE_CHANGE, LOCKED, OWNERSHIP_PROPOSAL,
 };
 use crate::utils::{
-    assert_blacklist, assert_not_decomissioned, assert_periods_remaining, assert_time_limits,
+    assert_blacklist, assert_not_decommissioned, assert_periods_remaining, assert_time_limits,
     calc_voting_power, cancel_scheduled_slope, fetch_last_checkpoint, fetch_slope_changes,
     schedule_slope_change,
 };
@@ -58,7 +58,7 @@ pub fn instantiate(
         logo_urls_whitelist: msg.logo_urls_whitelist.clone(),
         // makes no sense to set during init, as other contracts might not be deployed yet.
         push_update_contracts: vec![],
-        decomissioned: None,
+        decommissioned: None,
     };
     CONFIG.save(deps.storage, &config)?;
 
@@ -218,8 +218,8 @@ pub fn execute(
         ExecuteMsg::UpdateConfig {
             new_guardian,
             push_update_contracts,
-            decomission,
-        } => execute_update_config(deps, info, new_guardian, push_update_contracts, decomission),
+            decommissioned: decommissioned,
+        } => execute_update_config(deps, info, new_guardian, push_update_contracts, decommissioned),
 
         ExecuteMsg::CreateLock {
             time,
@@ -460,7 +460,7 @@ fn create_lock(
     assert_periods_remaining(periods)?;
 
     let config = CONFIG.load(deps.storage)?;
-    assert_not_decomissioned(&config)?;
+    assert_not_decommissioned(&config)?;
 
     LOCKED.update(deps.storage, user.clone(), env.block.height, |lock_opt| {
         if lock_opt.is_some() && !lock_opt.unwrap().amount.is_zero() {
@@ -502,7 +502,7 @@ fn deposit_for(
     extend_to_min_periods: Option<bool>,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
-    assert_not_decomissioned(&config)?;
+    assert_not_decommissioned(&config)?;
 
     let mut new_end = None;
     LOCKED.update(deps.storage, user.clone(), env.block.height, |lock_opt| match lock_opt {
@@ -554,9 +554,9 @@ fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Cont
 
     let cur_period = get_period(env.block.time.seconds())?;
     let config = CONFIG.load(deps.storage)?;
-    let is_decomissioned = config.decomissioned.unwrap_or_default();
+    let is_decommissioned = config.decommissioned.unwrap_or_default();
 
-    if lock.end > cur_period && !is_decomissioned {
+    if lock.end > cur_period && !is_decommissioned {
         Err(ContractError::LockHasNotExpired {})
     } else {
         let transfer_msg =
@@ -567,7 +567,7 @@ fn withdraw(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Cont
         LOCKED.save(deps.storage, sender.clone(), &lock, env.block.height)?;
 
         if lock.end > cur_period {
-            // early withdraw through decomission. Update voting power same as blacklist.
+            // early withdraw through decommissioned. Update voting power same as blacklist.
             let cur_period_key = cur_period;
             let last_checkpoint = fetch_last_checkpoint(deps.storage, &sender, cur_period_key)?;
             if let Some((_, point)) = last_checkpoint {
@@ -733,7 +733,7 @@ fn extend_lock_time(
     checkpoint(deps.storage, env.clone(), user.clone(), None, Some(lock.end))?;
 
     let config = CONFIG.load(deps.storage)?;
-    assert_not_decomissioned(&config)?;
+    assert_not_decommissioned(&config)?;
 
     let lock_info = get_user_lock_info(deps.as_ref(), &env, user.to_string())?;
 
@@ -884,7 +884,7 @@ fn execute_update_config(
     info: MessageInfo,
     new_guardian: Option<String>,
     push_update_contracts: Option<Vec<String>>,
-    decomission: Option<bool>,
+    decommissioned: Option<bool>,
 ) -> Result<Response, ContractError> {
     let mut cfg = CONFIG.load(deps.storage)?;
 
@@ -896,9 +896,9 @@ fn execute_update_config(
         cfg.guardian_addr = Some(deps.api.addr_validate(&new_guardian)?);
     }
 
-    if let Some(decomission) = decomission {
-        if decomission {
-            cfg.decomissioned = Some(true);
+    if let Some(decommissioned) = decommissioned {
+        if decommissioned {
+            cfg.decommissioned = Some(true);
         }
     }
 
@@ -968,6 +968,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> Result<Binary, ContractErro
                 guardian_addr: config.guardian_addr,
                 deposit_token_addr: config.deposit_denom.to_string(),
                 logo_urls_whitelist: config.logo_urls_whitelist,
+                decommissioned: config.decommissioned.unwrap_or_default(),
                 push_update_contracts: config
                     .push_update_contracts
                     .into_iter()

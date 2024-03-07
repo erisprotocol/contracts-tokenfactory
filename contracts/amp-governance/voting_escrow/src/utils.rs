@@ -23,9 +23,9 @@ pub(crate) fn assert_periods_remaining(periods: u64) -> Result<(), ContractError
     }
 }
 
-pub(crate) fn assert_not_decomissioned(config: &Config) -> Result<(), ContractError> {
-    match config.decomissioned {
-        Some(true) => Err(ContractError::DecomissionedError {}),
+pub(crate) fn assert_not_decommissioned(config: &Config) -> Result<(), ContractError> {
+    match config.decommissioned {
+        Some(true) => Err(ContractError::DecommissionedError {}),
         _ => Ok(()),
     }
 }

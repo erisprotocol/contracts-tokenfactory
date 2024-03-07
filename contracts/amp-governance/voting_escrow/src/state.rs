@@ -22,7 +22,7 @@ pub struct Config {
     pub push_update_contracts: Vec<Addr>,
     /// Address that can only blacklist vAMP stakers and remove their governance power
     #[serde(default)]
-    pub decomissioned: Option<bool>,
+    pub decommissioned: Option<bool>,
 }
 
 /// This structure stores points along the checkpoint history for every vAMP staker.

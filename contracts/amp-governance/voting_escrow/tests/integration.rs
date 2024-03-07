@@ -359,7 +359,7 @@ fn extend_lock_after_period_by_time() {
 }
 
 #[test]
-fn check_decomission() {
+fn check_decommissioned() {
     let mut router = mock_app();
     let router_ref = &mut router;
     let helper = Helper::init(router_ref, Addr::unchecked("owner"));
@@ -378,10 +378,10 @@ fn check_decomission() {
     let err = helper.withdraw(router_ref, "user").unwrap_err();
     assert_eq!(err.root_cause().to_string(), "The lock time has not yet expired");
 
-    let err = helper.update_decomission(router_ref, "user", Some(true)).unwrap_err();
+    let err = helper.update_decommissioned(router_ref, "user", Some(true)).unwrap_err();
     assert_eq!(err.root_cause().to_string(), "Unauthorized");
 
-    helper.update_decomission(router_ref, "owner", Some(true)).unwrap();
+    helper.update_decommissioned(router_ref, "owner", Some(true)).unwrap();
 
     let err = helper.extend_lock_time(router_ref, "user", 3 * WEEK).unwrap_err();
     assert_eq!(

@@ -39,7 +39,7 @@ pub enum ContractError {
     LockPeriodsError {},
 
     #[error("Locks decommissioned, cannot extend or create new ones.")]
-    DecomissionedError {},
+    DecommissionedError {},
 
     #[error("The lock time has not yet expired")]
     LockHasNotExpired {},
