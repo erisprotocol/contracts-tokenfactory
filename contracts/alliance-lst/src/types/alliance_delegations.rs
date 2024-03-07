@@ -17,9 +17,12 @@ impl AllianceDelegations {
     pub fn query_all_delegations(&self, denom: &str) -> Vec<Delegation> {
         self.delegations
             .iter()
-            .map(|(key, val)| Delegation {
+            .map(|(key, amount)| Delegation {
                 validator: key.to_string(),
-                amount: val.u128(),
+                // due to rounding, the alliance module sometimes rounds down by 1
+                // this can be fixed by applying slashings, but this would require running slash detection on many blocks
+                // slash protection only triggeres when the delegations are more than 1 uunit differently.
+                amount: amount.u128().saturating_sub(1),
                 denom: denom.to_string(),
             })
             .collect_vec()
@@ -27,9 +30,12 @@ impl AllianceDelegations {
 
     pub fn query_delegation(&self, validator: &str, denom: &str) -> Delegation {
         match self.delegations.get(validator) {
-            Some(data) => Delegation {
+            Some(amount) => Delegation {
                 validator: validator.to_string(),
-                amount: data.u128(),
+                // due to rounding, the alliance module sometimes rounds down by 1
+                // this can be fixed by applying slashings, but this would require running slash detection on many blocks
+                // slash protection only triggeres when the delegations are more than 1 uunit differently.
+                amount: amount.u128().saturating_sub(1),
                 denom: denom.into(),
             },
             None => Delegation {
