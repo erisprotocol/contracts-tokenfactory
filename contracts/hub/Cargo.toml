@@ -1,10 +1,10 @@
 [package]
-name = "eris-staking-hub-tokenfactory-terra"
-version = "1.7.0"
+name = "eris-staking-hub-tokenfactory-whitewhale"
+version = "1.7.1"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/erisprotocol/contracts-kujira"
+repository = "https://github.com/erisprotocol/contracts-tokenfactory"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

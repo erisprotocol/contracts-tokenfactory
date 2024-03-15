@@ -13,16 +13,18 @@ pub struct AllianceDelegations {
     pub delegations: HashMap<String, Uint128>,
 }
 
+const REDUCTION_AMOUNT: u128 = 1000u128;
+
 impl AllianceDelegations {
     pub fn query_all_delegations(&self, denom: &str) -> Vec<Delegation> {
         self.delegations
             .iter()
             .map(|(key, amount)| Delegation {
                 validator: key.to_string(),
-                // due to rounding, the alliance module sometimes rounds down by 1
+                // due to rounding, the alliance module sometimes rounds down by 1000
                 // this can be fixed by applying slashings, but this would require running slash detection on many blocks
                 // slash protection only triggeres when the delegations are more than 1 uunit differently.
-                amount: amount.u128().saturating_sub(1),
+                amount: amount.u128().saturating_sub(REDUCTION_AMOUNT),
                 denom: denom.to_string(),
             })
             .collect_vec()
@@ -32,10 +34,10 @@ impl AllianceDelegations {
         match self.delegations.get(validator) {
             Some(amount) => Delegation {
                 validator: validator.to_string(),
-                // due to rounding, the alliance module sometimes rounds down by 1
+                // due to rounding, the alliance module sometimes rounds down by 1000
                 // this can be fixed by applying slashings, but this would require running slash detection on many blocks
                 // slash protection only triggeres when the delegations are more than 1 uunit differently.
-                amount: amount.u128().saturating_sub(1),
+                amount: amount.u128().saturating_sub(REDUCTION_AMOUNT),
                 denom: denom.into(),
             },
             None => Delegation {

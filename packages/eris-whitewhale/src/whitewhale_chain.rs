@@ -35,6 +35,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
                     denom: full_denom.to_string(),
                     amount: amount.to_string(),
                 }),
+                mint_to_address: self.contract.to_string(),
             }
             .into(),
             CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
@@ -51,6 +52,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
                 denom: full_denom,
                 amount: amount.to_string(),
             }),
+            burn_from_address: self.contract.to_string(),
         }
         .into()
     }

@@ -602,8 +602,13 @@ fn find_new_delegation(
             let utoken_staked: u128 = current_delegations.iter().map(|d| d.amount).sum();
             let validators = state.validators.load(deps.storage)?;
 
-            let (map, _, _, _) =
-                get_utoken_per_validator(state, deps.storage, utoken_staked, &validators, None)?;
+            let (map, _, _, _) = get_utoken_per_validator(
+                state,
+                deps.storage,
+                Uint128::new(utoken_staked).checked_add(utoken_to_bond)?.u128(),
+                &validators,
+                None,
+            )?;
 
             let mut validator: Option<String> = None;
             let mut amount = Uint128::zero();

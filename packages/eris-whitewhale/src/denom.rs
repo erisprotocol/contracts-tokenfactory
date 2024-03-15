@@ -1,6 +1,5 @@
 use osmosis_std_derive::CosmwasmExt;
-use std::convert::TryFrom;
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
 
 // see https://github.com/notional-labs/wasmd/blob/v0.30.0-sdk469.4/proto/cosmwasm/tokenfactory/v1beta1/tx.proto
 
@@ -45,7 +44,7 @@ pub struct Coin {
     schemars::JsonSchema,
     CosmwasmExt,
 )]
-#[proto_message(type_url = "/cosmwasm.tokenfactory.v1beta1.MsgCreateDenom")]
+#[proto_message(type_url = "/osmosis.tokenfactory.v1beta1.MsgCreateDenom")]
 pub struct MsgCreateDenom {
     #[prost(string, tag = "1")]
     pub sender: ::prost::alloc::string::String,
@@ -53,6 +52,7 @@ pub struct MsgCreateDenom {
     #[prost(string, tag = "2")]
     pub subdenom: ::prost::alloc::string::String,
 }
+
 /// MsgCreateDenomResponse is the return value of MsgCreateDenom
 /// It returns the full string of the newly created denom
 #[derive(
@@ -65,11 +65,12 @@ pub struct MsgCreateDenom {
     schemars::JsonSchema,
     CosmwasmExt,
 )]
-#[proto_message(type_url = "/cosmwasm.tokenfactory.v1beta1.MsgCreateDenomResponse")]
+#[proto_message(type_url = "/osmosis.tokenfactory.v1beta1.MsgCreateDenomResponse")]
 pub struct MsgCreateDenomResponse {
     #[prost(string, tag = "1")]
     pub new_token_denom: ::prost::alloc::string::String,
 }
+
 /// MsgMint is the sdk.Msg type for allowing an admin account to mint
 /// more of a token.  For now, we only support minting to the sender account
 #[derive(
@@ -82,13 +83,16 @@ pub struct MsgCreateDenomResponse {
     schemars::JsonSchema,
     CosmwasmExt,
 )]
-#[proto_message(type_url = "/cosmwasm.tokenfactory.v1beta1.MsgMint")]
+#[proto_message(type_url = "/osmosis.tokenfactory.v1beta1.MsgMint")]
 pub struct MsgMint {
     #[prost(string, tag = "1")]
     pub sender: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
     pub amount: ::core::option::Option<Coin>,
+    #[prost(string, tag = "3")]
+    pub mint_to_address: ::prost::alloc::string::String,
 }
+
 #[derive(
     Clone,
     PartialEq,
@@ -99,8 +103,9 @@ pub struct MsgMint {
     schemars::JsonSchema,
     CosmwasmExt,
 )]
-#[proto_message(type_url = "/cosmwasm.tokenfactory.v1beta1.MsgMintResponse")]
+#[proto_message(type_url = "/osmosis.tokenfactory.v1beta1.MsgMintResponse")]
 pub struct MsgMintResponse {}
+
 /// MsgBurn is the sdk.Msg type for allowing an admin account to burn
 /// a token.  For now, we only support burning from the sender account.
 #[derive(
@@ -113,13 +118,16 @@ pub struct MsgMintResponse {}
     schemars::JsonSchema,
     CosmwasmExt,
 )]
-#[proto_message(type_url = "/cosmwasm.tokenfactory.v1beta1.MsgBurn")]
+#[proto_message(type_url = "/osmosis.tokenfactory.v1beta1.MsgBurn")]
 pub struct MsgBurn {
     #[prost(string, tag = "1")]
     pub sender: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
     pub amount: ::core::option::Option<Coin>,
+    #[prost(string, tag = "3")]
+    pub burn_from_address: ::prost::alloc::string::String,
 }
+
 #[derive(
     Clone,
     PartialEq,
@@ -130,5 +138,5 @@ pub struct MsgBurn {
     schemars::JsonSchema,
     CosmwasmExt,
 )]
-#[proto_message(type_url = "/cosmwasm.tokenfactory.v1beta1.MsgBurnResponse")]
+#[proto_message(type_url = "/osmosis.tokenfactory.v1beta1.MsgBurnResponse")]
 pub struct MsgBurnResponse {}

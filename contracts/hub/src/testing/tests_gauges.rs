@@ -228,7 +228,7 @@ fn bonding() {
     let mut index = 0;
     assert_eq!(
         res.messages[index],
-        SubMsg::new(Delegation::new("alice", 12345, MOCK_UTOKEN).to_cosmos_msg())
+        SubMsg::new(Delegation::new("charlie", 12345, MOCK_UTOKEN).to_cosmos_msg())
     );
     index += 1;
     for msg in mint_msgs {
@@ -366,7 +366,7 @@ fn donating() {
     assert_eq!(res.messages.len(), 2);
     assert_eq!(
         res.messages[0],
-        SubMsg::new(Delegation::new("alice", 12345, MOCK_UTOKEN).to_cosmos_msg())
+        SubMsg::new(Delegation::new("charlie", 12345, MOCK_UTOKEN).to_cosmos_msg())
     );
     assert_eq!(res.messages[1], check_received_coin(100, 0));
 
@@ -563,7 +563,7 @@ fn reinvesting() {
     let delegated = total.saturating_sub(fee);
     assert_eq!(
         res.messages[0].msg,
-        Delegation::new("alice", delegated.u128(), MOCK_UTOKEN).to_cosmos_msg()
+        Delegation::new("bob", delegated.u128(), MOCK_UTOKEN).to_cosmos_msg()
     );
     assert_eq!(
         res.messages[1].msg,

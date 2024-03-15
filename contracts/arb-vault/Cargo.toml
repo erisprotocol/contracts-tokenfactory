@@ -1,10 +1,10 @@
 [package]
-name = "eris-arb-vault-terra"
-version = "1.0.2"
+name = "eris-arb-vault-whitewhale"
+version = "1.0.3"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
-repository = "https://github.com/erisprotocol/contracts-terra"
+repository = "https://github.com/erisprotocol/contracts-tokenfactory"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
