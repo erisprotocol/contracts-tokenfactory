@@ -1,4 +1,4 @@
-use cosmwasm_std::{coins, Addr, CosmosMsg, Decimal, StdResult, Uint128};
+use cosmwasm_std::{Addr, CosmosMsg, Decimal, StdResult, Uint128};
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::{
@@ -28,21 +28,15 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
         amount: Uint128,
         recipient: Addr,
     ) -> Vec<CosmosMsg<CustomMsgType>> {
-        vec![
-            MsgMint {
-                sender: self.contract.to_string(),
-                amount: Some(crate::denom::Coin {
-                    denom: full_denom.to_string(),
-                    amount: amount.to_string(),
-                }),
-                mint_to_address: self.contract.to_string(),
-            }
-            .into(),
-            CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
-                to_address: recipient.to_string(),
-                amount: coins(amount.u128(), full_denom),
+        vec![MsgMint {
+            sender: self.contract.to_string(),
+            amount: Some(crate::denom::Coin {
+                denom: full_denom.to_string(),
+                amount: amount.to_string(),
             }),
-        ]
+            mint_to_address: recipient.to_string(),
+        }
+        .into()]
     }
 
     fn create_burn_msg(&self, full_denom: String, amount: Uint128) -> CosmosMsg<CustomMsgType> {
