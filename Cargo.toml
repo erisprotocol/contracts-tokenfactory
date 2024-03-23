@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "contracts/hub",
+    # "contracts/hub",
     # "contracts/alliance-lst",
     # "contracts/token",
     # "contracts/amp-governance/*",

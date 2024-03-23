@@ -224,6 +224,7 @@ pub fn execute_unbond_user(
             withdraw_amount,
             Decimal::one(),
             Uint128::zero(),
+            true,
         )?
     } else {
         let fee_config = state.fee_config.load(deps.storage)?;
@@ -287,6 +288,7 @@ pub fn execute_withdraw_unbonding_immediate(
         withdraw_amount,
         withdraw_pool_fee_factor,
         withdraw_amount,
+        true,
     )?;
 
     state.unbond_history.remove(deps.storage, key);
@@ -323,6 +325,7 @@ pub fn execute_withdraw_unbonded(deps: DepsMut, env: Env, info: MessageInfo) -> 
         withdraw_amount,
         Decimal::zero(),
         withdraw_amount,
+        false,
     )?;
 
     // remove elements
@@ -344,6 +347,7 @@ fn create_withdraw_msgs(
     withdraw_amount: Uint128,
     withdraw_pool_fee_factor: Decimal,
     take_from_locked: Uint128,
+    immediate: bool,
 ) -> ContractResult {
     if withdraw_amount.is_zero() {
         return Err(ContractError::NoWithdrawableAsset {});
@@ -354,11 +358,13 @@ fn create_withdraw_msgs(
     let locked_after = balance_locked.balance.checked_sub(take_from_locked).unwrap_or_default();
     let available_amount = config.query_utoken_amount(querier, env)?;
 
-    // can only take immediate from not locked amount
-    let takeable = available_amount.checked_sub(locked_after).unwrap_or_default();
+    if immediate {
+        // can only take immediate from not locked amount
+        let takeable = available_amount.checked_sub(locked_after).unwrap_or_default();
 
-    if takeable < withdraw_amount {
-        return Err(ContractError::NotEnoughAssetsInThePool {});
+        if takeable < withdraw_amount {
+            return Err(ContractError::NotEnoughAssetsInThePool {});
+        }
     }
 
     state.balance_locked.save(
