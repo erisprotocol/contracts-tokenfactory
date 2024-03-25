@@ -638,7 +638,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-arb-vault-whitewhale"
+name = "eris-arb-vault-osmosis"
 version = "1.0.4"
 dependencies = [
  "anyhow",
@@ -725,7 +725,7 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-whitewhale",
+ "eris-staking-hub-tokenfactory-osmosis",
  "kujira",
  "schemars",
  "serde",
@@ -756,7 +756,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-whitewhale"
+name = "eris-staking-hub-tokenfactory-osmosis"
 version = "1.7.1"
 dependencies = [
  "cosmwasm-schema",
