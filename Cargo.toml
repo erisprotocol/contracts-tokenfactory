@@ -5,8 +5,9 @@ members = [
     # "contracts/token",
     # "contracts/amp-governance/*",
     # "contracts/amp-compounder/*",
+    "contracts/amp-governance/restake_gauges",
     "packages/*",
-    "contracts/arb-vault",
+    # "contracts/arb-vault",
 ]
 
 exclude = [
@@ -36,3 +37,28 @@ overflow-checks = true
 # codegen-units = 1
 # panic = 'abort'
 # incremental = false
+
+
+[workspace.dependencies]
+cw2 = "0.13.2"
+cw20 = "0.13.2"
+cosmwasm-std = "1.1"
+cw-storage-plus = "0.15.1"
+cw-asset = "2.4.0"
+thiserror = { version = "1.0" }
+itertools = "0.10"
+eris = { path = "packages/eris" }
+eris-chain-adapter = { path = "packages/eris-chain-adapter" }
+eris-chain-shared = { path = "packages/eris-chain-shared" }
+cosmwasm-schema = "1.1"
+astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
+
+cw-multi-test = "0.13.2"
+astroport-generator = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+astroport-pair = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+astroport-factory = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+astroport-token = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+astroport-staking = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+astroport-whitelist = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "bc68bb65cc2f7d5916c1f0ea41de3b19b5b63b62" }
+anyhow = "1"
+proptest = "1.0"

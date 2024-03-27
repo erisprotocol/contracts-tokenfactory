@@ -14,6 +14,7 @@ pub mod helpers;
 pub mod hub;
 pub mod prop_gauges;
 pub mod querier;
+pub mod restake_gauges;
 pub mod voting_escrow;
 
 mod extensions {
