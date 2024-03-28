@@ -2,6 +2,7 @@ use crate::helpers::bps::BasicPoints;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Decimal, Uint128};
 use cosmwasm_std::{StdError, StdResult};
+use cw_asset::AssetInfo;
 use std::collections::HashMap;
 
 /// An enum representing staking hooks.
@@ -38,8 +39,8 @@ pub enum ExecuteMsg {
     StakeChangeHook(StakeChangedHookMsg),
 
     UpdateConfig(UpdateConfigMsg),
-
     UpdateRestakeHub {},
+    WhitelistAssets(HashMap<String, Vec<AssetInfo>>),
 
     // Admin action to remove a user
     RemoveUser {
@@ -71,7 +72,7 @@ pub struct UpdateConfigMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     /// UserInfo returns information about a voter and the validators they voted for
-    #[returns(UserInfoResponse)]
+    #[returns(UserInfoDetailsResponse)]
     UserInfo {
         user: String,
     },
@@ -84,7 +85,7 @@ pub enum QueryMsg {
     #[returns(ConfigResponse)]
     Config {},
     /// PoolInfo returns the latest voting power allocated to a specific pool (generator)
-    #[returns(VotedValidatorInfoResponse)]
+    #[returns(StateResponse)]
     State {},
 }
 
@@ -151,6 +152,13 @@ pub struct UserInfoResponse {
     pub vote_ts: u64,
     pub voting_power: Uint128,
     pub votes: Vec<(String, BasicPoints)>,
+}
+
+#[cw_serde]
+#[derive(Default)]
+pub struct UserInfoDetailsResponse {
+    pub user: Option<UserInfoResponse>,
+    pub staked: Uint128,
 }
 
 #[cw_serde]

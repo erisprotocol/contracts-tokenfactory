@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::str::FromStr;
 
-use crate::adapters::daodao::DaoDao;
+use crate::adapters::daodao::{DaoDao, VotingPowerAtHeightResponse};
 use crate::adapters::restakehub::{AssetDistribution, RestakeHub};
 use crate::error::ContractError;
 use crate::state::{UserInfo, VoteState, CONFIG, OWNERSHIP_PROPOSAL, USER_INFO, VOTE_STATE};
@@ -14,12 +14,12 @@ use cosmwasm_std::{
     Response, StdError, StdResult, Uint128,
 };
 use cw2::{get_contract_version, set_contract_version};
-use cw_asset::AssetInfoUnchecked;
+use cw_asset::{AssetInfo, AssetInfoUnchecked};
 use cw_storage_plus::Bound;
 use eris::helpers::bps::BasicPoints;
 use eris::restake_gauges::{
     Config, ConfigResponse, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, StakeChangedHookMsg,
-    UpdateConfigMsg, UserInfoResponse, UserInfosResponse,
+    UpdateConfigMsg, UserInfoDetailsResponse, UserInfoResponse, UserInfosResponse,
 };
 use eris::CustomResponse;
 use itertools::Itertools;
@@ -88,6 +88,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> E
         } => remove_user(deps, env, info, user),
         ExecuteMsg::UpdateConfig(msg) => update_config(deps, info, msg),
         ExecuteMsg::UpdateRestakeHub {} => update_restake_hub(deps, env),
+        ExecuteMsg::WhitelistAssets(assets) => {
+            whitelist_assets_restake_hub(deps, env, info, assets)
+        },
         ExecuteMsg::ProposeNewOwner {
             new_owner,
             expires_in,
@@ -218,6 +221,8 @@ fn apply_votes_of_user(
 
         if let Some(amount) = vote_state.global_votes.get_mut(&key_string) {
             *amount = amount.checked_add(to_add)?;
+        } else {
+            vote_state.global_votes.insert(key_string, to_add);
         }
     }
 
@@ -234,6 +239,10 @@ fn remove_votes_of_user(
 
         if let Some(amount) = vote_state.global_votes.get_mut(&key_string) {
             *amount = amount.saturating_sub(to_remove);
+
+            if amount.is_zero() {
+                vote_state.global_votes.remove(&key_string);
+            }
         }
     }
 
@@ -325,6 +334,20 @@ fn update_restake_hub(deps: DepsMut, env: Env) -> ExecuteResult {
         .add_attribute("action", "erisrestake/update_restake_hub"))
 }
 
+fn whitelist_assets_restake_hub(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    assets: HashMap<String, Vec<AssetInfo>>,
+) -> ExecuteResult {
+    let config = CONFIG.load(deps.storage)?;
+    config.assert_owner(&info.sender)?;
+
+    Ok(Response::new()
+        .add_message(RestakeHub(config.restake_hub_addr).whitelist_assets_msg(assets)?)
+        .add_attribute("action", "erisrestake/whitelist_assets_restake_hub"))
+}
+
 fn save_and_update_restake_hub_msg(
     deps: DepsMut,
     env: Env,
@@ -359,7 +382,7 @@ fn save_and_update_restake_hub_msg(
             .collect_vec();
         let sum_relevant: Uint128 = relevant_votes.iter().map(|(_, amount)| amount).sum();
 
-        let distirbutions = relevant_votes
+        let mut distirbutions = relevant_votes
             .into_iter()
             .map(|(lp, amount)| {
                 Ok(AssetDistribution {
@@ -369,9 +392,19 @@ fn save_and_update_restake_hub_msg(
             })
             .collect::<StdResult<Vec<_>>>()?;
 
+        let total: Decimal = distirbutions.iter().map(|a| a.distribution).sum();
+
+        if total > Decimal::percent(100) {
+            let remove = total - Decimal::percent(100);
+            distirbutions[0].distribution -= remove;
+        } else {
+            let add = Decimal::percent(100) - total;
+            distirbutions[0].distribution += add;
+        }
+
         vote_state.report_time_s = env.block.time.seconds();
 
-        Some(RestakeHub(config.restake_hub_addr.clone()).vote_msg(distirbutions)?)
+        Some(RestakeHub(config.restake_hub_addr.clone()).set_asset_rewards_msg(distirbutions)?)
     } else {
         None
     };
@@ -437,13 +470,25 @@ fn config(deps: Deps) -> StdResult<ConfigResponse> {
 }
 
 /// Returns user information.
-fn user_info(deps: Deps, user: String) -> StdResult<UserInfoResponse> {
-    let user_addr = deps.api.addr_validate(&user)?;
-    let user = USER_INFO
-        .may_load(deps.storage, &user_addr)?
-        .ok_or_else(|| StdError::generic_err("User not found"))?;
+fn user_info(deps: Deps, address: String) -> StdResult<UserInfoDetailsResponse> {
+    let config = CONFIG.load(deps.storage)?;
 
-    Ok(user)
+    let user_addr = deps.api.addr_validate(&address)?;
+    let user = USER_INFO.may_load(deps.storage, &user_addr)?;
+
+    let daodao = DaoDao(config.hook_sender_addr.clone());
+    let staked = daodao
+        .get_voting_power(&deps.querier, address.to_string())
+        .unwrap_or(VotingPowerAtHeightResponse {
+            height: 0,
+            power: Uint128::zero(),
+        })
+        .power;
+
+    Ok(UserInfoDetailsResponse {
+        user,
+        staked,
+    })
 }
 
 // returns all user votes

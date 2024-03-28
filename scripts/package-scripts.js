@@ -6,7 +6,9 @@ module.exports = {
       default: "bash build_release.sh",
     },
     schema: {
-      default: "nps schema.create schema.transform  schema.alliancelst",
+      default: "nps schema.create schema.transform  schema.restakegauges",
+
+      single: "nps schema.restakegauges_manual schema.restakegauges",
 
       transform: "ts-node transform.ts",
 
@@ -32,6 +34,11 @@ module.exports = {
       //   "cd .. && json2ts -i contracts/amp-governance/emp_gauges/**/*.json -o ../liquid-staking-scripts/types/emp_gauges",
       // propgauges:
       //   "cd .. && json2ts -i contracts/amp-governance/prop_gauges/**/*.json -o ../liquid-staking-scripts/types/prop_gauges",
+      restakegauges:
+        "cd .. && json2ts -i contracts/amp-governance/restake_gauges/schema/raw/*.json -o ../liquid-staking-scripts/types/restake_gauges",
+
+      restakegauges_manual:
+        "cd .. && cd contracts/amp-governance/restake_gauges && cargo schema",
 
       farm: "cd .. && json2ts -i contracts/amp-compounder/astroport_farm/**/*.json -o ../liquid-staking-scripts/types/tokenfactory/amp-compounder/astroport_farm",
       compound:

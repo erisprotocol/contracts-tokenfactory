@@ -1,5 +1,5 @@
 use cosmwasm_schema::write_api;
-use eris::amp_gauges::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use eris::restake_gauges::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 fn main() {
     write_api! {

@@ -12,6 +12,7 @@ pub type WhitelistedAssetsResponse = HashMap<String, Vec<AssetInfo>>;
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    WhitelistAssets(HashMap<String, Vec<AssetInfo>>),
     SetAssetRewardDistribution(Vec<AssetDistribution>),
 }
 
@@ -25,10 +26,21 @@ pub struct AssetDistribution {
 pub struct RestakeHub(pub Addr);
 
 impl RestakeHub {
-    pub fn vote_msg(&self, assets: Vec<AssetDistribution>) -> StdResult<CosmosMsg> {
+    pub fn set_asset_rewards_msg(&self, assets: Vec<AssetDistribution>) -> StdResult<CosmosMsg> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
             msg: to_json_binary(&ExecuteMsg::SetAssetRewardDistribution(assets))?,
+            funds: vec![],
+        }))
+    }
+
+    pub fn whitelist_assets_msg(
+        &self,
+        hash: HashMap<String, Vec<AssetInfo>>,
+    ) -> StdResult<CosmosMsg> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: self.0.to_string(),
+            msg: to_json_binary(&ExecuteMsg::WhitelistAssets(hash))?,
             funds: vec![],
         }))
     }
