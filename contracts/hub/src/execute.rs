@@ -13,7 +13,7 @@ use eris::hub::{
     SingleSwapConfig, StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, AssetInfoExt, CustomMsgType, CustomQueryType, DenomType,
+    chain, get_balances_hashmap, AssetExt, AssetInfoExt, CustomMsgType, CustomQueryType, DenomType,
     HubChainConfigInput, WithdrawType,
 };
 use itertools::Itertools;

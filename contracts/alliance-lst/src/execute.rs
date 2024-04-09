@@ -15,7 +15,7 @@ use eris::hub::{
     UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, AssetInfoExt, CustomMsgType, CustomQueryType, DenomType,
+    chain, get_balances_hashmap, AssetExt, AssetInfoExt, CustomMsgType, CustomQueryType, DenomType,
     HubChainConfig, WithdrawType,
 };
 use itertools::Itertools;

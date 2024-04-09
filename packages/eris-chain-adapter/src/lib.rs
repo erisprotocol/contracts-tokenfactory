@@ -60,6 +60,9 @@ pub mod types {
     use eris_whitewhale::whitewhale_chain::WhiteWhaleChain;
     use eris_whitewhale::whitewhale_types::get_asset;
 
+    pub use eris_whitewhale::whitewhale_types::AssetExt;
+    pub use eris_whitewhale::whitewhale_types::AssetInfoExt;
+
     use eris_whitewhale::whitewhale_types::CoinType;
     pub use eris_whitewhale::whitewhale_types::CustomMsgType;
     pub use eris_whitewhale::whitewhale_types::CustomQueryType;
