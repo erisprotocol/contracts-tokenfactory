@@ -64,6 +64,9 @@ pub enum ContractError {
     #[error("Setting a belief Price is not allowed")]
     BeliefPriceNotAllowed {},
 
+    #[error("Can only set fee payment to the first stage")]
+    FeePaymentNotAllowed {},
+
     #[error("cannot find `instantiate` event")]
     CannotFindInstantiateEvent {},
 

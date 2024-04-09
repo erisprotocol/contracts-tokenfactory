@@ -6,15 +6,15 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use eris::helper::validate_received_funds;
-use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
+use eris::{CustomEvent, CustomMsgExt, CustomResponse, DecimalCheckedOps};
 
 use eris::hub::{
     Batch, CallbackMsg, DelegationStrategy, ExecuteMsg, FeeConfig, InstantiateMsg, PendingBatch,
     SingleSwapConfig, StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, CustomMsgType, CustomQueryType, DenomType, HubChainConfigInput,
-    WithdrawType,
+    chain, get_balances_hashmap, AssetInfoExt, CustomMsgType, CustomQueryType, DenomType,
+    HubChainConfigInput, WithdrawType,
 };
 use itertools::Itertools;
 
@@ -229,11 +229,19 @@ pub fn harvest(
     // 3. Prepare swap stages
     let stages = state.get_or_preset(deps.storage, stages, &state.stages_preset, &sender)?;
     validate_no_utoken_or_ustake_swap(&stages, &stake)?;
+    let mut skip_fee = false;
     let swap_msgs = stages.map(|stages| {
         stages
             .into_iter()
-            .map(|stage| CallbackMsg::SingleStageSwap {
-                stage,
+            .enumerate()
+            .map(|(index, stage)| {
+                skip_fee = skip_fee
+                    || stage.iter().any(|(_, _, _, _, pay_fee)| pay_fee.unwrap_or_default());
+
+                CallbackMsg::SingleStageSwap {
+                    stage,
+                    index,
+                }
             })
             .collect_vec()
     });
@@ -253,7 +261,12 @@ pub fn harvest(
             None,
         )?)
         // 5. restake unlocked_coins
-        .add_callback(&env, CallbackMsg::Reinvest {})?
+        .add_callback(
+            &env,
+            CallbackMsg::Reinvest {
+                skip_fee,
+            },
+        )?
         .add_attribute("action", "erishub/harvest"))
 }
 
@@ -291,6 +304,7 @@ pub fn single_stage_swap(
     deps: DepsMut<CustomQueryType>,
     env: Env,
     stage: Vec<SingleSwapConfig>,
+    index: usize,
 ) -> ContractResult {
     let state = State::default();
     let chain = chain(&env);
@@ -301,20 +315,37 @@ pub fn single_stage_swap(
 
     let mut response = Response::new().add_attribute("action", "erishub/single_stage_swap");
     // iterate all specified swaps of the stage
-    for (stage_type, denom, belief_price, max_amount) in stage {
+    for (stage_type, denom, belief_price, max_amount, fee) in stage {
         let balance = balances.get(&denom.to_string());
         // check if the swap also has a balance in the contract
-        if let Some(balance) = balance {
-            if !balance.is_zero() {
+        if let Some(mut available) = balance.cloned() {
+            if !available.is_zero() {
+                if fee == Some(true) {
+                    if index != 0 {
+                        return Err(ContractError::FeePaymentNotAllowed {});
+                    }
+
+                    let fee_config = state.fee_config.load(deps.storage)?;
+                    let protocol_fee =
+                        fee_config.protocol_reward_fee.checked_mul_uint(available)?;
+                    available = available.saturating_sub(protocol_fee);
+
+                    let send_fee = denom
+                        .with_balance(protocol_fee)
+                        .into_msg(&fee_config.protocol_fee_contract)?
+                        .to_specific()?;
+                    response = response.add_message(send_fee)
+                }
+
                 let used_amount = match max_amount {
                     Some(max_amount) => {
                         if max_amount.is_zero() {
-                            *balance
+                            available
                         } else {
-                            cmp::min(*balance, max_amount)
+                            cmp::min(available, max_amount)
                         }
                     },
-                    None => *balance,
+                    None => available,
                 };
 
                 // create a single swap message add add to submsgs
@@ -341,7 +372,7 @@ fn validate_no_utoken_or_ustake_swap(
 ) -> Result<(), ContractError> {
     if let Some(stages) = stages {
         for stage in stages {
-            for (_addr, denom, _, _) in stage {
+            for (_addr, denom, _, _, _) in stage {
                 if denom.to_string() == stake_token.utoken || denom.to_string() == stake_token.denom
                 {
                     return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
@@ -354,7 +385,7 @@ fn validate_no_utoken_or_ustake_swap(
 
 fn validate_no_belief_price(stages: &Vec<Vec<SingleSwapConfig>>) -> Result<(), ContractError> {
     for stage in stages {
-        for (_, _, belief_price, _) in stage {
+        for (_, _, belief_price, _, _) in stage {
             if belief_price.is_some() {
                 return Err(ContractError::BeliefPriceNotAllowed {});
             }
@@ -401,7 +432,7 @@ fn check_received_coin_msg(
 /// execution.
 /// 2. Same as with `bond`, in the latest implementation we only delegate staking rewards with the
 /// validator that has the smallest delegation amount.
-pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
+pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env, skip_fee: bool) -> ContractResult {
     let state = State::default();
     let fee_config = state.fee_config.load(deps.storage)?;
     let mut unlocked_coins = state.unlocked_coins.load(deps.storage)?;
@@ -418,10 +449,15 @@ pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let mut msgs: Vec<CosmosMsg<CustomMsgType>> = vec![];
 
     let mut total_utoken: Option<u128> = None;
+    let protocol_reward_fee = if skip_fee {
+        Decimal::zero()
+    } else {
+        fee_config.protocol_reward_fee
+    };
 
     for coin in unlocked_coins.iter() {
         let available = coin.amount;
-        let protocol_fee = fee_config.protocol_reward_fee.checked_mul_uint(available)?;
+        let protocol_fee = protocol_reward_fee.checked_mul_uint(available)?;
         let remaining = available.saturating_sub(protocol_fee);
 
         let send_fee = if coin.denom == stake.utoken {

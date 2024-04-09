@@ -4,12 +4,11 @@ use cosmwasm_std::{
     OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
 use eris::alliance_lst::{AllianceStakeToken, ExecuteMsg, InstantiateMsg, QueryMsg};
+use eris::hub::CallbackMsg;
 use eris_chain_adapter::types::{
     chain, CustomMsgType, CustomQueryType, DenomType, HubChainConfig, StageType, WithdrawType,
 };
 use serde::de::DeserializeOwned;
-
-use eris::hub::CallbackMsg;
 
 use crate::contract::{instantiate, query};
 use crate::state::State;

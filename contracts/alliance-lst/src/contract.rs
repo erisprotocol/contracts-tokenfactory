@@ -142,13 +142,16 @@ fn callback(
     }
 
     match callback_msg {
-        CallbackMsg::Reinvest {} => execute::reinvest(deps, env),
+        CallbackMsg::Reinvest {
+            skip_fee,
+        } => execute::reinvest(deps, env, skip_fee),
         CallbackMsg::WithdrawLps {
             withdrawals,
         } => execute::withdraw_lps(deps, env, withdrawals),
         CallbackMsg::SingleStageSwap {
             stage,
-        } => execute::single_stage_swap(deps, env, stage),
+            index,
+        } => execute::single_stage_swap(deps, env, stage, index),
         CallbackMsg::CheckReceivedCoin {
             snapshot,
             snapshot_stake,

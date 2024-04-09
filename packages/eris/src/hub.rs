@@ -17,7 +17,7 @@ use crate::{helper::addr_opt_validate, helpers::bps::BasicPoints};
 // DenomType = Chain specific denom
 // Option<Decimal> = Price
 // Option<Uint128> = max amount, 0 = unlimited
-pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>, Option<Uint128>);
+pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>, Option<Uint128>, Option<bool>);
 
 #[cw_serde]
 pub enum DelegationStrategy<T = String> {
@@ -250,9 +250,12 @@ pub enum CallbackMsg {
     SingleStageSwap {
         // (Used dex, used denom, belief_price)
         stage: Vec<SingleSwapConfig>,
+        index: usize,
     },
     /// Following the swaps, stake the Token acquired to the whitelisted validators
-    Reinvest {},
+    Reinvest {
+        skip_fee: bool,
+    },
 
     CheckReceivedCoin {
         snapshot: Coin,

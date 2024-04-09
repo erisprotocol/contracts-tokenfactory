@@ -1,9 +1,10 @@
+use crate::custom_execute_msg::CustomExecuteMsg;
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api, Coin, StdResult, Uint128};
 use eris_chain_shared::{alliance_query::AllianceQueryWrapper, chain_trait::Validateable};
 
-use crate::custom_execute_msg::CustomExecuteMsg;
+pub use astroport::asset::AssetInfoExt;
 
 #[cw_serde]
 pub enum WithdrawType {
