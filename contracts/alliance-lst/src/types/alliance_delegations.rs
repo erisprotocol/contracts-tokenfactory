@@ -2,11 +2,12 @@ use std::collections::HashMap;
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{StdResult, Storage, Uint128};
+use eris::alliance_lst::Undelegation;
 use itertools::Itertools;
 
-use crate::state::State;
+use crate::{error::ContractError, state::State};
 
-use super::{Delegation, Redelegation, Undelegation};
+use super::{Delegation, Redelegation};
 
 #[cw_serde]
 pub struct AllianceDelegations {
@@ -63,14 +64,17 @@ impl AllianceDelegations {
     pub fn undelegate(
         mut self,
         undelegations: &Vec<Undelegation>,
-    ) -> StdResult<AllianceDelegations> {
+    ) -> Result<AllianceDelegations, ContractError> {
         for undelegation in undelegations {
             let new_value = self
                 .delegations
                 .get(&undelegation.validator)
                 .copied()
-                .unwrap_or_default()
-                .checked_sub(Uint128::new(undelegation.amount))?;
+                .ok_or(ContractError::SubmitBatchFailure(format!(
+                    "validator not found {0}",
+                    undelegation.validator
+                )))?
+                .checked_sub(undelegation.amount)?;
 
             if new_value.is_zero() {
                 self.delegations.remove(&undelegation.validator);

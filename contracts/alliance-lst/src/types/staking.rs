@@ -1,4 +1,5 @@
-use cosmwasm_std::{Addr, BankMsg, Binary, CosmosMsg};
+use cosmwasm_std::{Addr, BankMsg, Binary, CosmosMsg, Uint128};
+use eris::alliance_lst::Undelegation;
 use eris_chain_adapter::types::CustomMsgType;
 
 use terra_proto_rs::{
@@ -80,27 +81,31 @@ impl SendFee {
         })
     }
 }
-
-#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-pub struct Undelegation {
-    pub validator: String,
-    pub amount: u128,
-    pub denom: String,
+pub trait UndelegationExt {
+    fn new(validator: &str, amount: u128) -> Self;
+    fn to_cosmos_msg(
+        &self,
+        delegator: String,
+        denom: impl Into<String>,
+    ) -> CosmosMsg<CustomMsgType>;
 }
 
-impl Undelegation {
-    pub fn new(validator: &str, amount: u128, denom: impl Into<String>) -> Self {
+impl UndelegationExt for Undelegation {
+    fn new(validator: &str, amount: u128) -> Self {
         Self {
             validator: validator.to_string(),
-            amount,
-            denom: denom.into(),
+            amount: Uint128::new(amount),
         }
     }
 
-    pub fn to_cosmos_msg(&self, delegator: String) -> CosmosMsg<CustomMsgType> {
+    fn to_cosmos_msg(
+        &self,
+        delegator: String,
+        denom: impl Into<String>,
+    ) -> CosmosMsg<CustomMsgType> {
         let undelegate_msg = MsgUndelegate {
             amount: Some(Coin {
-                denom: self.denom.clone(),
+                denom: denom.into(),
                 amount: self.amount.to_string(),
             }),
             delegator_address: delegator,

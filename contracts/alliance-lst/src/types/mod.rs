@@ -7,4 +7,6 @@ mod staking;
 
 pub use coins::Coins;
 pub use keys::BooleanKey;
-pub use staking::{withdraw_delegator_reward_msg, Delegation, Redelegation, SendFee, Undelegation};
+pub use staking::{
+    withdraw_delegator_reward_msg, Delegation, Redelegation, SendFee, UndelegationExt,
+};

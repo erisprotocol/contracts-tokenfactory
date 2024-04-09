@@ -87,4 +87,7 @@ pub enum ContractError {
 
     #[error("State has changed, recreate the slashing to apply it. ({0})")]
     StateChanged(String),
+
+    #[error("Submit Batch Failed: {0}")]
+    SubmitBatchFailure(String),
 }

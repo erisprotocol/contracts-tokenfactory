@@ -6,7 +6,7 @@ use cosmwasm_std::{
     Order, Response, StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
-use eris::alliance_lst::{AllianceStakeToken, InstantiateMsg};
+use eris::alliance_lst::{AllianceStakeToken, InstantiateMsg, Undelegation};
 use eris::helper::validate_received_funds;
 use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
 
@@ -30,7 +30,7 @@ use crate::math::{
 use crate::state::State;
 use crate::types::alliance_delegations::AllianceDelegations;
 use crate::types::gauges::TuneInfoGaugeLoader;
-use crate::types::{withdraw_delegator_reward_msg, Coins, Delegation, SendFee};
+use crate::types::{withdraw_delegator_reward_msg, Coins, Delegation, SendFee, UndelegationExt};
 
 use eris_chain_shared::chain_trait::ChainInterface;
 
@@ -713,10 +713,14 @@ pub fn queue_unbond(
         .add_attribute("action", "erishub/queue_unbond"))
 }
 
-pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
+pub fn submit_batch(
+    deps: DepsMut<CustomQueryType>,
+    env: Env,
+    sender: Addr,
+    undelegations: Option<Vec<Undelegation>>,
+) -> ContractResult {
     let state = State::default();
     let mut stake = state.stake_token.load(deps.storage)?;
-    let validators = state.get_validators(deps.storage, &deps.querier)?;
     let unbond_period = state.unbond_period.load(deps.storage)?;
     let pending_batch = state.pending_batch.load(deps.storage)?;
     let alliance_delegations = state.alliance_delegations.load(deps.storage)?;
@@ -726,12 +730,6 @@ pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult 
         return Err(ContractError::SubmitBatchAfter(pending_batch.est_unbond_start_time));
     }
 
-    let delegations = query_all_delegations(
-        &alliance_delegations,
-        &deps.querier,
-        &env.contract.address,
-        &stake.utoken,
-    )?;
     let ustake_supply = stake.total_supply;
 
     let utoken_to_unbond = compute_unbond_amount(
@@ -740,14 +738,36 @@ pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult 
         stake.total_utoken_bonded,
     );
 
-    let new_undelegations = compute_undelegations(
-        &state,
-        deps.storage,
-        utoken_to_unbond,
-        &delegations,
-        validators,
-        &stake.utoken,
-    )?;
+    let new_undelegations = if let Some(undelegations) = undelegations {
+        state.assert_operator(deps.storage, &sender)?;
+
+        let provided_amount: Uint128 = undelegations.iter().map(|a| a.amount).sum();
+        if provided_amount != utoken_to_unbond {
+            return Err(ContractError::SubmitBatchFailure(format!(
+                "provided amount {0} does not equal expected amount {1}",
+                provided_amount, utoken_to_unbond
+            )));
+        }
+
+        undelegations
+    } else {
+        let validators = state.get_validators(deps.storage, &deps.querier)?;
+        let delegations = query_all_delegations(
+            &alliance_delegations,
+            &deps.querier,
+            &env.contract.address,
+            &stake.utoken,
+        )?;
+
+        compute_undelegations(
+            &state,
+            deps.storage,
+            utoken_to_unbond,
+            &delegations,
+            validators,
+            &stake.utoken,
+        )?
+    };
 
     state.previous_batches.save(
         deps.storage,
@@ -771,10 +791,11 @@ pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult 
         },
     )?;
 
+    // validates that the amount is available and validator delegation exists
     alliance_delegations.undelegate(&new_undelegations)?.save(&state, deps.storage)?;
     let undelegate_msgs = new_undelegations
         .into_iter()
-        .map(|d| d.to_cosmos_msg(env.contract.address.to_string()))
+        .map(|d| d.to_cosmos_msg(env.contract.address.to_string(), stake.utoken.clone()))
         .collect::<Vec<_>>();
 
     // apply burn to the stored total supply and save state

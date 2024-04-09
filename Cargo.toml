@@ -1,13 +1,13 @@
 [workspace]
 members = [
     # "contracts/hub",
-    # "contracts/alliance-lst",
+    "contracts/alliance-lst",
     # "contracts/token",
     # "contracts/amp-governance/*",
     # "contracts/amp-compounder/*",
     # "contracts/arb-vault",
     "packages/*",
-    "contracts/amp-governance/restake_gauges",
+    # "contracts/amp-governance/restake_gauges",
 ]
 
 exclude = [

@@ -94,7 +94,9 @@ pub enum ExecuteMsg {
         delegations: Vec<(String, Uint128)>,
     },
     /// Submit the current pending batch of unbonding requests to be unbonded
-    SubmitBatch {},
+    SubmitBatch {
+        undelegations: Option<Vec<Undelegation>>,
+    },
     /// Callbacks; can only be invoked by the contract itself
     Callback(CallbackMsg),
 
@@ -200,6 +202,15 @@ pub enum QueryMsg {
 
     #[returns(DelegationsResponse)]
     Delegations {},
+
+    #[returns(Vec<Undelegation>)]
+    SimulateUndelegations {},
+}
+
+#[cw_serde]
+pub struct Undelegation {
+    pub validator: String,
+    pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

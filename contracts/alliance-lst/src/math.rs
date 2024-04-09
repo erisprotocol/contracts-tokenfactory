@@ -7,7 +7,7 @@ use std::{
 use cosmwasm_std::{attr, Attribute, QuerierWrapper, StdResult, Storage, Uint128};
 
 use eris::{
-    alliance_lst::AllianceStakeToken,
+    alliance_lst::{AllianceStakeToken, Undelegation},
     hub::{Batch, WantedDelegationsShare},
     DecimalCheckedOps,
 };
@@ -16,7 +16,7 @@ use eris_chain_adapter::types::CustomQueryType;
 use crate::{
     helpers::query_all_delegations_amount,
     state::State,
-    types::{Delegation, Redelegation, Undelegation},
+    types::{Delegation, Redelegation, UndelegationExt},
 };
 
 type UtokenPerValidator =
@@ -94,11 +94,7 @@ pub(crate) fn compute_undelegations(
             utoken_available -= utoken_to_undelegate;
 
             if utoken_to_undelegate > 0 {
-                new_undelegations.push(Undelegation::new(
-                    &d.validator,
-                    utoken_to_undelegate,
-                    utoken,
-                ));
+                new_undelegations.push(UndelegationExt::new(&d.validator, utoken_to_undelegate));
             }
 
             if utoken_available == 0 {

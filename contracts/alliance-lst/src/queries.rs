@@ -1,11 +1,13 @@
 use crate::constants::DAY;
-use crate::helpers::get_wanted_delegations;
-use crate::math::get_utoken_per_validator_prepared;
+use crate::helpers::{get_wanted_delegations, query_all_delegations};
+use crate::math::{
+    compute_unbond_amount, compute_undelegations, get_utoken_per_validator_prepared,
+};
 use crate::state::State;
 use crate::types::gauges::PeriodGaugeLoader;
 use cosmwasm_std::{Addr, Decimal, Deps, Env, Order, StdResult, Uint128};
 use cw_storage_plus::Bound;
-use eris::alliance_lst::ConfigResponse;
+use eris::alliance_lst::{ConfigResponse, Undelegation};
 use eris::governance_helper::get_period;
 use eris::hub::{
     Batch, DelegationsResponse, ExchangeRatesResponse, PendingBatch, StateResponse,
@@ -360,4 +362,40 @@ pub fn delegations(deps: Deps<CustomQueryType>, _env: Env) -> StdResult<Delegati
     Ok(DelegationsResponse {
         delegations: delegations.delegations.into_iter().collect_vec(),
     })
+}
+
+pub fn simulate_undelegations(
+    deps: Deps<CustomQueryType>,
+    env: Env,
+) -> StdResult<Vec<Undelegation>> {
+    let state = State::default();
+    let stake = state.stake_token.load(deps.storage)?;
+    let validators = state.get_validators(deps.storage, &deps.querier)?;
+    let pending_batch = state.pending_batch.load(deps.storage)?;
+    let alliance_delegations = state.alliance_delegations.load(deps.storage)?;
+
+    let delegations = query_all_delegations(
+        &alliance_delegations,
+        &deps.querier,
+        &env.contract.address,
+        &stake.utoken,
+    )?;
+    let ustake_supply = stake.total_supply;
+
+    let utoken_to_unbond = compute_unbond_amount(
+        ustake_supply,
+        pending_batch.ustake_to_burn,
+        stake.total_utoken_bonded,
+    );
+
+    let new_undelegations = compute_undelegations(
+        &state,
+        deps.storage,
+        utoken_to_unbond,
+        &delegations,
+        validators,
+        &stake.utoken,
+    )?;
+
+    Ok(new_undelegations)
 }

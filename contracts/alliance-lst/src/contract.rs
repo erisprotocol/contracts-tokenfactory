@@ -71,7 +71,9 @@ pub fn execute(
         } => {
             execute::check_slashing(deps, env, info.sender, delegations, state_total_utoken_bonded)
         },
-        ExecuteMsg::SubmitBatch {} => execute::submit_batch(deps, env),
+        ExecuteMsg::SubmitBatch {
+            undelegations,
+        } => execute::submit_batch(deps, env, info.sender, undelegations),
         ExecuteMsg::Callback(callback_msg) => callback(deps, env, info, callback_msg),
         ExecuteMsg::UpdateConfig {
             protocol_fee_contract,
@@ -197,6 +199,9 @@ pub fn query(deps: Deps<CustomQueryType>, env: Env, msg: QueryMsg) -> StdResult<
             limit,
         } => to_json_binary(&queries::query_exchange_rates(deps, env, start_after, limit)?),
         QueryMsg::Delegations {} => to_json_binary(&queries::delegations(deps, env)?),
+        QueryMsg::SimulateUndelegations {} => {
+            to_json_binary(&queries::simulate_undelegations(deps, env)?)
+        },
     }
 }
 
