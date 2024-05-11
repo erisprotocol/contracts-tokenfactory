@@ -67,6 +67,7 @@ pub fn config(deps: Deps<CustomQueryType>) -> StdResult<ConfigResponse> {
                 validator_count,
             },
         },
+        validator_proxy: state.validator_proxy.load(deps.storage)?.to_string()
     })
 }
 

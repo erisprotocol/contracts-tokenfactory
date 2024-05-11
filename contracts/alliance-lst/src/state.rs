@@ -130,6 +130,19 @@ impl<'a> State<'a> {
         }
     }
 
+    pub fn assert_owner_or_operator(
+        &self,
+        storage: &dyn Storage,
+        sender: &Addr,
+    ) -> Result<(), ContractError> {
+        let operator = self.operator.load(storage)?;
+        if *sender == operator {
+            Ok(())
+        } else {
+            self.assert_owner(storage, sender)
+        }
+    }
+
     pub fn get_or_preset<T>(
         &self,
         storage: &dyn Storage,

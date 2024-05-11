@@ -244,5 +244,7 @@ pub struct ConfigResponse {
     pub allow_donations: bool,
 
     /// Strategy how delegations should be handled
-    pub delegation_strategy: DelegationStrategy, //<String>,
+    pub delegation_strategy: DelegationStrategy,
+
+    pub validator_proxy: String,
 }

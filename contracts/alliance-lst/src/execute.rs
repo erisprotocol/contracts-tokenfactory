@@ -928,7 +928,7 @@ pub fn check_slashing(
     state_total_utoken_bonded: Uint128,
 ) -> ContractResult {
     let state = State::default();
-    state.assert_owner(deps.storage, &sender)?;
+    state.assert_owner_or_operator(deps.storage, &sender)?;
 
     let mut stake_token = state.stake_token.load(deps.storage)?;
     let alliance_delegations = state.alliance_delegations.load(deps.storage)?;

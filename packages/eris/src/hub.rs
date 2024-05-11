@@ -17,6 +17,7 @@ use crate::{helper::addr_opt_validate, helpers::bps::BasicPoints};
 // DenomType = Chain specific denom
 // Option<Decimal> = Price
 // Option<Uint128> = max amount, 0 = unlimited
+// Option<bool> = pay_fee
 pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>, Option<Uint128>, Option<bool>);
 
 #[cw_serde]

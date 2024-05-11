@@ -641,7 +641,7 @@ dependencies = [
 
 [[package]]
 name = "eris-alliance-lst-whitewhale"
-version = "1.7.3"
+version = "1.7.4"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
