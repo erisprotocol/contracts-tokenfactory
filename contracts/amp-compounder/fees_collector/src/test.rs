@@ -2,7 +2,7 @@ use astroport::asset::{native_asset_info, AssetInfo, PairInfo};
 use astroport::factory::PairType;
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, OwnedDeps, Response,
+    from_json, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, OwnedDeps, Response,
     StdError, Timestamp, Uint128, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
@@ -311,7 +311,7 @@ fn config(
     assert!(res.is_ok());
 
     let msg = QueryMsg::Config {};
-    let res: Config = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: Config = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         Config {
@@ -339,7 +339,7 @@ fn config(
     assert!(res.is_ok());
 
     let msg = QueryMsg::Config {};
-    let res: Config = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: Config = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         Config {
@@ -422,7 +422,7 @@ fn owner(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<
     assert_eq!(0, res.messages.len());
 
     // query config
-    let config: Config = from_binary(&query(deps.as_ref(), env.clone(), QueryMsg::Config {})?)?;
+    let config: Config = from_json(&query(deps.as_ref(), env.clone(), QueryMsg::Config {})?)?;
     assert_eq!(OWNER, config.owner);
     Ok(())
 }
@@ -506,7 +506,7 @@ fn bridges(
 
     // query bridges
     let bridges: Vec<(String, String)> =
-        from_binary(&query(deps.as_ref(), env.clone(), QueryMsg::Bridges {})?)?;
+        from_json(&query(deps.as_ref(), env.clone(), QueryMsg::Bridges {})?)?;
     assert_eq!(vec![(TOKEN_1.to_string(), TOKEN_2.to_string())], bridges);
 
     let msg = ExecuteMsg::UpdateBridges {
@@ -521,7 +521,7 @@ fn bridges(
 
     // query bridges
     let bridges: Vec<(String, String)> =
-        from_binary(&query(deps.as_ref(), env.clone(), QueryMsg::Bridges {})?)?;
+        from_json(&query(deps.as_ref(), env.clone(), QueryMsg::Bridges {})?)?;
     assert!(bridges.is_empty());
 
     Ok(())

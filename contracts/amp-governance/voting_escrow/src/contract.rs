@@ -218,7 +218,7 @@ pub fn execute(
         ExecuteMsg::UpdateConfig {
             new_guardian,
             push_update_contracts,
-            decommissioned: decommissioned,
+            decommissioned,
         } => execute_update_config(deps, info, new_guardian, push_update_contracts, decommissioned),
 
         ExecuteMsg::CreateLock {
@@ -1009,7 +1009,7 @@ pub fn check_voters_are_blacklisted(
 /// Returns a list of blacklisted voters.
 ///
 /// * **start_after** is an optional field that specifies whether the function should return
-/// a list of voters starting from a specific address onward.
+///     a list of voters starting from a specific address onward.
 ///
 /// * **limit** max amount of voters addresses to return.
 pub fn get_blacklisted_voters(

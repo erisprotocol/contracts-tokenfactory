@@ -22,7 +22,7 @@ use crate::state::{CONFIG, OWNERSHIP_PROPOSAL, STAKING_STATE};
 use astroport::common::{claim_ownership, drop_ownership_proposal, propose_new_owner};
 use astroport_governance::utils::get_period;
 use cosmwasm_std::{
-    entry_point, from_binary, to_json_binary, Binary, Decimal, Deps, DepsMut, Empty, Env,
+    entry_point, from_json, to_json_binary, Binary, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Response, StdError, Uint128,
 };
 use cw2::set_contract_version;
@@ -158,7 +158,7 @@ fn receive_cw20(
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let staker_addr = deps.api.addr_validate(&cw20_msg.sender)?;
-    match from_binary(&cw20_msg.msg)? {
+    match from_json(&cw20_msg.msg)? {
         Cw20HookMsg::Deposit {} => execute_deposit(deps, env, info, staker_addr, cw20_msg.amount),
         Cw20HookMsg::Stake {} => execute_stake(deps, env, info, staker_addr, cw20_msg.amount),
     }

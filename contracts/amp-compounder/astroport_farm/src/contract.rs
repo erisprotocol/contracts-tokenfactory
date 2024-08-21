@@ -1,6 +1,6 @@
 use astroport::asset::native_asset_info;
 use cosmwasm_std::{
-    attr, coin, entry_point, from_binary, to_json_binary, Binary, Decimal, Deps, DepsMut, Env,
+    attr, coin, entry_point, from_json, to_json_binary, Binary, Decimal, Deps, DepsMut, Env,
     MessageInfo, Reply, Response, StdError, StdResult, SubMsg, Uint128,
 };
 use eris_chain_adapter::types::chain;
@@ -216,7 +216,7 @@ fn receive_cw20(
     info: MessageInfo,
     cw20_msg: Cw20ReceiveMsg,
 ) -> ContractResult {
-    match from_binary(&cw20_msg.msg) {
+    match from_json(&cw20_msg.msg) {
         Ok(Cw20HookMsg::Bond {
             staker_addr,
         }) => bond(deps, env, info, staker_addr.unwrap_or(cw20_msg.sender), cw20_msg.amount),

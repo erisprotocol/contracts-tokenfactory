@@ -3,7 +3,7 @@ use astroport::asset::{
 };
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, from_binary, to_json_binary, Addr, Coin, CosmosMsg, Decimal, StdError, StdResult,
+    coin, from_json, to_json_binary, Addr, Coin, CosmosMsg, Decimal, StdError, StdResult,
     Uint128, Uint256, WasmMsg,
 };
 use cw20::Cw20ExecuteMsg;
@@ -93,7 +93,7 @@ fn proper_initialization() -> StdResult<()> {
     let env = mock_env();
 
     let msg = QueryMsg::Config {};
-    let config: Config = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let config: Config = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         config,
@@ -106,7 +106,7 @@ fn proper_initialization() -> StdResult<()> {
     let msg = QueryMsg::GetLp {
         lp_addr: "liquidity_token".to_string(),
     };
-    let lp_config: LpConfig = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let lp_config: LpConfig = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         lp_config.pair_info,
@@ -122,7 +122,7 @@ fn proper_initialization() -> StdResult<()> {
         start_after: None,
         limit: None,
     };
-    let lp_configs: Vec<LpConfig> = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let lp_configs: Vec<LpConfig> = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         lp_configs,
@@ -156,7 +156,7 @@ fn proper_initialization() -> StdResult<()> {
         start_after: None,
         limit: None,
     };
-    let routes: Vec<RouteResponseItem> = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let routes: Vec<RouteResponseItem> = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         routes,
@@ -270,7 +270,7 @@ fn add_remove_lps() -> StdResult<()> {
         start_after: None,
         limit: None,
     };
-    let lp_configs: Vec<LpConfig> = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let lp_configs: Vec<LpConfig> = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         lp_configs,
@@ -336,7 +336,7 @@ fn add_remove_lps() -> StdResult<()> {
         start_after: None,
         limit: None,
     };
-    let lp_configs: Vec<LpConfig> = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let lp_configs: Vec<LpConfig> = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         lp_configs,
@@ -400,7 +400,7 @@ fn add_remove_routes() -> StdResult<()> {
         start_after: None,
         limit: None,
     };
-    let routes: Vec<RouteResponseItem> = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let routes: Vec<RouteResponseItem> = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         routes,
@@ -473,7 +473,7 @@ fn add_remove_routes() -> StdResult<()> {
         start_after: None,
         limit: None,
     };
-    let routes: Vec<RouteResponseItem> = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let routes: Vec<RouteResponseItem> = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         routes,
@@ -554,7 +554,7 @@ fn add_tfm_route() -> StdResult<()> {
         from: astro(),
         to: whale(),
     };
-    let route: RouteResponseItem = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let route: RouteResponseItem = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         route,
@@ -812,7 +812,7 @@ fn compound_token_path() -> Result<(), ContractError> {
             assert_eq!(contract_addr, env.contract.address.to_string());
             assert_eq!(funds.len(), 0);
 
-            let sub_msg: ExecuteMsg = from_binary(&msg).unwrap();
+            let sub_msg: ExecuteMsg = from_json(&msg).unwrap();
 
             assert_eq!(
                 sub_msg,
@@ -1088,7 +1088,7 @@ fn test_compound_simulation_proxy() -> StdResult<()> {
         rewards: vec![astro_amount(100)],
     };
 
-    let res: CompoundSimulationResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: CompoundSimulationResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         res,
@@ -1121,7 +1121,7 @@ fn test_compound_simulation_path() -> StdResult<()> {
         rewards: vec![astro_amount(100)],
     };
 
-    let res: CompoundSimulationResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: CompoundSimulationResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
 
     assert_eq!(
         res,

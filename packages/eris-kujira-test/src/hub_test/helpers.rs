@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{mock_env, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, from_binary, to_json_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Deps, Env,
+    coin, from_json, to_json_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Deps, Env,
     OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
 };
 use eris_chain_adapter::types::{
@@ -49,7 +49,7 @@ pub(super) fn mock_env_at_timestamp(timestamp: u64) -> Env {
 }
 
 pub(super) fn query_helper<T: DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(&query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
 pub(super) fn query_helper_env<T: DeserializeOwned>(
@@ -57,7 +57,7 @@ pub(super) fn query_helper_env<T: DeserializeOwned>(
     msg: QueryMsg,
     timestamp: u64,
 ) -> T {
-    from_binary(&query(deps, mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
+    from_json(&query(deps, mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
 }
 
 pub(super) fn get_stake_full_denom() -> String {

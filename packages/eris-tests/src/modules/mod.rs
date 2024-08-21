@@ -58,6 +58,17 @@ pub mod types {
         UsedCustomModule::default()
     }
 }
+#[cfg(feature = "X-nibiru-X")]
+pub mod types {
+    use cosmwasm_std::Empty;
+    use cw_multi_test::FailingModule;
+
+    pub type UsedCustomModule = FailingModule<Empty, Empty, Empty>;
+
+    pub fn init_custom() -> UsedCustomModule {
+        UsedCustomModule::default()
+    }
+}
 
 #[cfg(feature = "X-injective-X")]
 pub mod types {

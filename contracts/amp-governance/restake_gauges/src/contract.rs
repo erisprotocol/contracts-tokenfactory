@@ -140,8 +140,8 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> E
 /// The function returns [`Response`] in case of success or [`ContractError`] in case of errors.
 ///
 /// * **votes** is a vector of pairs ([`String`], [`u16`]).
-/// Tuple consists of pool address and percentage of user's voting power for a given pool.
-/// Percentage should be in BPS form.
+///     Tuple consists of pool address and percentage of user's voting power for a given pool.
+///     Percentage should be in BPS form.
 fn handle_vote(
     deps: DepsMut,
     env: Env,

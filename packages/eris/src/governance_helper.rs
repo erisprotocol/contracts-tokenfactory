@@ -1,6 +1,4 @@
-use std::convert::TryInto;
-
-use cosmwasm_std::{Decimal, Fraction, OverflowError, StdError, StdResult, Uint128, Uint256};
+use cosmwasm_std::{StdError, StdResult, Uint128};
 
 /// Seconds in one week. It is intended for period number calculation.
 // mainnet: 7 * 86400
@@ -35,35 +33,35 @@ pub fn get_periods_count(interval: u64) -> u64 {
     interval / WEEK
 }
 
-/// This trait was implemented to eliminate Decimal rounding problems.
-trait DecimalRoundedCheckedMul {
-    fn checked_mul(self, other: Uint128) -> Result<Uint128, OverflowError>;
-}
+// /// This trait was implemented to eliminate Decimal rounding problems.
+// trait DecimalRoundedCheckedMul {
+//     fn checked_mul(self, other: Uint128) -> Result<Uint128, OverflowError>;
+// }
 
-impl DecimalRoundedCheckedMul for Decimal {
-    fn checked_mul(self, other: Uint128) -> Result<Uint128, OverflowError> {
-        if self.is_zero() || other.is_zero() {
-            return Ok(Uint128::zero());
-        }
-        let numerator = other.full_mul(self.numerator());
-        let multiply_ratio = numerator / Uint256::from(self.denominator());
-        if multiply_ratio > Uint256::from(Uint128::MAX) {
-            Err(OverflowError::new(cosmwasm_std::OverflowOperation::Mul, self, other))
-        } else {
-            let mut result: Uint128 = multiply_ratio.try_into().unwrap();
-            let rem: Uint128 = numerator
-                .checked_rem(Uint256::from(self.denominator()))
-                .unwrap()
-                .try_into()
-                .unwrap();
-            // 0.5 in Decimal
-            if rem.u128() >= 500000000000000000_u128 {
-                result += Uint128::from(1_u128);
-            }
-            Ok(result)
-        }
-    }
-}
+// impl DecimalRoundedCheckedMul for Decimal {
+//     fn checked_mul(self, other: Uint128) -> Result<Uint128, OverflowError> {
+//         if self.is_zero() || other.is_zero() {
+//             return Ok(Uint128::zero());
+//         }
+//         let numerator = other.full_mul(self.numerator());
+//         let multiply_ratio = numerator / Uint256::from(self.denominator());
+//         if multiply_ratio > Uint256::from(Uint128::MAX) {
+//             Err(OverflowError::new(cosmwasm_std::OverflowOperation::Mul, self, other))
+//         } else {
+//             let mut result: Uint128 = multiply_ratio.try_into().unwrap();
+//             let rem: Uint128 = numerator
+//                 .checked_rem(Uint256::from(self.denominator()))
+//                 .unwrap()
+//                 .try_into()
+//                 .unwrap();
+//             // 0.5 in Decimal
+//             if rem.u128() >= 500000000000000000_u128 {
+//                 result += Uint128::from(1_u128);
+//             }
+//             Ok(result)
+//         }
+//     }
+// }
 
 /// Main function used to calculate a user's voting power at a specific period as: previous_power - slope*(x - previous_x).
 pub fn calc_voting_power(

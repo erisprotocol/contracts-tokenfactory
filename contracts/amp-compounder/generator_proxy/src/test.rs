@@ -19,7 +19,7 @@ use astroport_governance::voting_escrow::{
 };
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, to_json_binary, Addr, CosmosMsg, Decimal, OwnedDeps, Response, StdError,
+    from_json, to_json_binary, Addr, CosmosMsg, Decimal, OwnedDeps, Response, StdError,
     Timestamp, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
@@ -177,7 +177,7 @@ fn config(
     assert!(res.is_ok());
 
     let msg = QueryMsg::Config {};
-    let res: Config = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: Config = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         Config {
@@ -212,14 +212,14 @@ fn deposit(
         lp_token: LP_TOKEN.to_string(),
         user: USER1.to_string(),
     };
-    let res: Uint128 = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: Uint128 = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(res, Uint128::zero());
 
     let msg = QueryMsg::PendingToken {
         lp_token: LP_TOKEN.to_string(),
         user: USER1.to_string(),
     };
-    let res: PendingTokenResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: PendingTokenResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(res.pending, Uint128::zero());
     assert_eq!(res.pending_on_proxy, None);
 
@@ -301,7 +301,7 @@ fn deposit(
         lp_token: LP_TOKEN.to_string(),
         user: USER1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -392,7 +392,7 @@ fn deposit(
     let msg = QueryMsg::PoolInfo {
         lp_token: LP_TOKEN.to_string(),
     };
-    let res: PoolInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: PoolInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         PoolInfo {
@@ -413,7 +413,7 @@ fn deposit(
     let msg = QueryMsg::RewardInfo {
         token: ASTRO_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -426,7 +426,7 @@ fn deposit(
     let msg = QueryMsg::RewardInfo {
         token: REWARD_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -480,7 +480,7 @@ fn deposit(
         lp_token: LP_TOKEN.to_string(),
         user: USER2.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -506,7 +506,7 @@ fn deposit(
     let msg = QueryMsg::PoolInfo {
         lp_token: LP_TOKEN.to_string(),
     };
-    let res: PoolInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: PoolInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         PoolInfo {
@@ -556,14 +556,14 @@ fn claim_rewards(
         lp_token: LP_TOKEN.to_string(),
         user: USER1.to_string(),
     };
-    let res: Uint128 = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: Uint128 = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(res, Uint128::from(100u128));
 
     let msg = QueryMsg::PendingToken {
         lp_token: LP_TOKEN.to_string(),
         user: USER1.to_string(),
     };
-    let res: PendingTokenResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: PendingTokenResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(res.pending, Uint128::from(18u128));
     assert_eq!(
         res.pending_on_proxy,
@@ -644,7 +644,7 @@ fn claim_rewards(
     let msg = QueryMsg::PoolInfo {
         lp_token: LP_TOKEN.to_string(),
     };
-    let res: PoolInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: PoolInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         PoolInfo {
@@ -665,7 +665,7 @@ fn claim_rewards(
     let msg = QueryMsg::RewardInfo {
         token: ASTRO_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -678,7 +678,7 @@ fn claim_rewards(
     let msg = QueryMsg::RewardInfo {
         token: REWARD_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -712,7 +712,7 @@ fn claim_rewards(
         lp_token: LP_TOKEN.to_string(),
         user: USER1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -732,7 +732,7 @@ fn claim_rewards(
     let msg = QueryMsg::RewardInfo {
         token: ASTRO_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -745,7 +745,7 @@ fn claim_rewards(
     let msg = QueryMsg::RewardInfo {
         token: REWARD_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -887,7 +887,7 @@ fn withdraw(
     let msg = QueryMsg::PoolInfo {
         lp_token: LP_TOKEN.to_string(),
     };
-    let res: PoolInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: PoolInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         PoolInfo {
@@ -906,7 +906,7 @@ fn withdraw(
         lp_token: LP_TOKEN.to_string(),
         user: USER1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -974,7 +974,7 @@ fn stake(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<
     let msg = QueryMsg::RewardInfo {
         token: ASTRO_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -985,7 +985,7 @@ fn stake(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<
     );
 
     let msg = QueryMsg::StakingState {};
-    let res: StakingState = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakingState = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakingState {
@@ -1001,7 +1001,7 @@ fn stake(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<
     let msg = QueryMsg::StakerInfo {
         user: USER1.to_string(),
     };
-    let res: StakerInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakerInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakerInfoResponse {
@@ -1069,7 +1069,7 @@ fn unstake(
     assert!(res.is_ok());
 
     let msg = QueryMsg::StakingState {};
-    let res: StakingState = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakingState = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakingState {
@@ -1085,7 +1085,7 @@ fn unstake(
     let msg = QueryMsg::StakerInfo {
         user: USER1.to_string(),
     };
-    let res: StakerInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakerInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakerInfoResponse {
@@ -1211,7 +1211,7 @@ fn unstake(
     let msg = QueryMsg::RewardInfo {
         token: ASTRO_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -1222,7 +1222,7 @@ fn unstake(
     );
 
     let msg = QueryMsg::StakingState {};
-    let res: StakingState = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakingState = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakingState {
@@ -1245,7 +1245,7 @@ fn unstake(
     let msg = QueryMsg::StakerInfo {
         user: USER1.to_string(),
     };
-    let res: StakerInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakerInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakerInfoResponse {
@@ -1282,7 +1282,7 @@ fn unstake(
     );
 
     let msg = QueryMsg::StakingState {};
-    let res: StakingState = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakingState = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakingState {
@@ -1298,7 +1298,7 @@ fn unstake(
     let msg = QueryMsg::StakerInfo {
         user: USER1.to_string(),
     };
-    let res: StakerInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakerInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakerInfoResponse {
@@ -1326,7 +1326,7 @@ fn claim_income(
     let msg = QueryMsg::StakerInfo {
         user: USER2.to_string(),
     };
-    let res: StakerInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakerInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakerInfoResponse {
@@ -1350,7 +1350,7 @@ fn claim_income(
     let msg = QueryMsg::RewardInfo {
         token: ASTRO_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {
@@ -1363,7 +1363,7 @@ fn claim_income(
     let msg = QueryMsg::StakerInfo {
         user: USER2.to_string(),
     };
-    let res: StakerInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StakerInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StakerInfoResponse {
@@ -1402,7 +1402,7 @@ fn send_income(
     let msg = QueryMsg::RewardInfo {
         token: ASTRO_TOKEN.to_string(),
     };
-    let res: RewardInfo = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: RewardInfo = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         RewardInfo {

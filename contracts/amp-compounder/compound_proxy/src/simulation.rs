@@ -4,7 +4,7 @@ use crate::{execute::calculate_optimal_swap, state::State};
 use astroport::{asset::AssetInfo, pair::StablePoolConfig, querier::query_token_precision, U256};
 
 use astroport::querier::query_supply;
-use cosmwasm_std::{from_binary, Addr, CosmosMsg, Deps, StdError, StdResult, Uint128};
+use cosmwasm_std::{from_json, Addr, CosmosMsg, Deps, StdError, StdResult, Uint128};
 
 use eris::adapters::factory::Factory;
 use eris::compound_proxy::{CompoundSimulationResponse, PairType};
@@ -175,7 +175,7 @@ pub fn query_compound_simulation(
                         .params
                         .ok_or_else(|| StdError::generic_err("params not found"))?;
 
-                    let stable_pool_config: StablePoolConfig = from_binary(&params)?;
+                    let stable_pool_config: StablePoolConfig = from_json(&params)?;
                     let amp = stable_pool_config.amp * Uint128::from(AMP_PRECISION);
                     let leverage = u64::try_from(amp.u128() * u128::from(N_COINS))
                         .map_err(|_| StdError::generic_err("Overflow in leverage"))?;

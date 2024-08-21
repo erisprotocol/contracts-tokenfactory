@@ -25,6 +25,7 @@ pub struct UndelegationCacheItem {
     pub token_amount: Uint128,
     pub reconciled: bool,
     pub exchange_rate: Decimal,
+    #[allow(dead_code)]
     pub batch_id: u64,
 }
 

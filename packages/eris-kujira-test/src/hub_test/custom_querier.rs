@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{BankQuerier, StakingQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_slice, Addr, Coin, Empty, FullDelegation, Querier, QuerierResult, QueryRequest,
+    from_json, Addr, Coin, Empty, FullDelegation, Querier, QuerierResult, QueryRequest,
     SystemError, WasmQuery,
 };
 
@@ -16,7 +16,7 @@ pub(super) struct CustomQuerier {
 
 impl Querier for CustomQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let request: QueryRequest<_> = match from_slice(bin_request) {
+        let request: QueryRequest<_> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return Err(SystemError::InvalidRequest {
@@ -56,7 +56,7 @@ impl CustomQuerier {
                 msg,
                 ..
             }) => {
-                // if let Ok(query) = from_binary::<Cw20QueryMsg>(msg) {
+                // if let Ok(query) = from_json::<Cw20QueryMsg>(msg) {
                 //     return self.cw20_querier.handle_query(contract_addr, query);
                 // }
 

@@ -17,7 +17,7 @@ X-injective-X = []
 X-osmosis-X = []
 X-sei-X = []
 
-default = ["X-whitewhale-X"]
+default = ["X-nibiru-X"]
 
 [dependencies]
 cw2 = "0.13.2"
@@ -38,8 +38,8 @@ astroport = { git = "https://github.com/astroport-fi/astroport-core.git", defaul
 eris = { path = "../eris" }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 
-eris-arb-vault = { path = "../../contracts/arb-vault", package = "eris-arb-vault-whitewhale" }
-eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-whitewhale" }
+eris-arb-vault = { path = "../../contracts/arb-vault", package = "eris-arb-vault-nibiru" }
+eris-staking-hub = { path = "../../contracts/hub", package = "eris-staking-hub-tokenfactory-nibiru" }
 eris-gov-voting-escrow = { path = "../../contracts/amp-governance/voting_escrow" }
 eris-gov-emp-gauges = { path = "../../contracts/amp-governance/emp_gauges" }
 eris-gov-amp-gauges = { path = "../../contracts/amp-governance/amp_gauges" }

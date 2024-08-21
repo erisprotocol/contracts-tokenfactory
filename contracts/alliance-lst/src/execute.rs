@@ -442,10 +442,10 @@ fn check_received_coin_msg(
 
 /// NOTE:
 /// 1. When delegation Token here, we don't need to use a `SubMsg` to handle the received coins,
-/// because we have already withdrawn all claimable staking rewards previously in the same atomic
-/// execution.
+///    because we have already withdrawn all claimable staking rewards previously in the same atomic
+///    execution.
 /// 2. Same as with `bond`, in the latest implementation we only delegate staking rewards with the
-/// validator that has the smallest delegation amount.
+///    validator that has the smallest delegation amount.
 pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env, skip_fee: bool) -> ContractResult {
     let state = State::default();
     let fee_config = state.fee_config.load(deps.storage)?;

@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, Addr, BlockInfo, ContractInfo, Deps, Env, QuerierResult, SystemError,
-    SystemResult, Timestamp,
+    from_json, Addr, BlockInfo, ContractInfo, Deps, Env, QuerierResult, SystemError, SystemResult,
+    Timestamp,
 };
 use eris::astroport_farm::QueryMsg;
 use eris_chain_adapter::types::{
@@ -34,7 +34,7 @@ pub(super) fn _mock_env_at_timestamp(timestamp: u64) -> Env {
 }
 
 pub(super) fn _query_helper<T: DeserializeOwned>(deps: Deps, msg: QueryMsg) -> T {
-    from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
 pub(super) fn _query_helper_env<T: DeserializeOwned>(
@@ -42,7 +42,7 @@ pub(super) fn _query_helper_env<T: DeserializeOwned>(
     msg: QueryMsg,
     timestamp: u64,
 ) -> T {
-    from_binary(&query(deps, _mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
+    from_json(query(deps, _mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
 }
 
 pub fn chain_test(

@@ -68,13 +68,13 @@ pub fn instantiate(
 /// * **ExecuteMsg::TunePools** Launches pool tuning
 ///
 /// * **ExecuteMsg::ChangePoolsLimit { limit }** Changes the number of pools which are eligible
-/// to receive allocation points
+///     to receive allocation points
 ///
 /// * **ExecuteMsg::UpdateConfig { blacklisted_voters_limit }** Changes the number of blacklisted
-/// voters that can be kicked at once
+///     voters that can be kicked at once
 ///
 /// * **ExecuteMsg::ProposeNewOwner { owner, expires_in }** Creates a new request to change
-/// contract ownership.
+///     contract ownership.
 ///
 /// * **ExecuteMsg::DropOwnershipProposal {}** Removes a request to change contract ownership.
 ///
@@ -213,8 +213,8 @@ fn init_prop(
 /// The function returns [`Response`] in case of success or [`ContractError`] in case of errors.
 ///
 /// * **votes** is a vector of pairs ([`String`], [`u16`]).
-/// Tuple consists of pool address and percentage of user's voting power for a given pool.
-/// Percentage should be in BPS form.
+///     Tuple consists of pool address and percentage of user's voting power for a given pool.
+///     Percentage should be in BPS form.
 fn handle_vote(
     deps: DepsMut,
     env: Env,

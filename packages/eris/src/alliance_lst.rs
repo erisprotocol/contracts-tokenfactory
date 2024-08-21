@@ -4,6 +4,7 @@ use eris_chain_adapter::types::{DenomType, WithdrawType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+#[allow(unused_imports)]
 use crate::hub::{
     Batch, CallbackMsg, ClaimType, DelegationStrategy, DelegationsResponse, ExchangeRatesResponse,
     FeeConfig, PendingBatch, SingleSwapConfig, StateResponse, UnbondRequestsByBatchResponseItem,

@@ -1,8 +1,8 @@
 use cosmwasm_std::testing::{MockApi, MockStorage};
 use cosmwasm_std::{
-    from_binary, from_slice, to_json_binary, Addr, BalanceResponse, BankQuery, Binary, Coin,
-    ContractResult, Empty, OwnedDeps, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
-    SystemResult, Uint128, WasmQuery,
+    from_json, to_json_binary, Addr, BalanceResponse, BankQuery, Binary, Coin, ContractResult,
+    Empty, OwnedDeps, Querier, QuerierResult, QueryRequest, StdResult, SystemError, SystemResult,
+    Uint128, WasmQuery,
 };
 use std::collections::HashMap;
 
@@ -91,7 +91,7 @@ impl WasmMockQuerier {
     }
 
     fn execute_wasm_query(&self, contract_addr: &str, msg: &Binary) -> StdResult<Binary> {
-        match from_binary(msg)? {
+        match from_json(msg)? {
             MockQueryMsg::Balance {
                 address,
             } => {
@@ -158,7 +158,7 @@ enum MockQueryMsg {
 impl Querier for WasmMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<Empty> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {

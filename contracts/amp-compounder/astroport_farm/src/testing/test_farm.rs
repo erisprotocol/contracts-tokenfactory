@@ -14,7 +14,7 @@ use super::helpers::chain_test;
 use super::mock_querier::{mock_dependencies, WasmMockQuerier};
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    attr, coin, from_binary, to_json_binary, Addr, Coin, CosmosMsg, Decimal, DepsMut, Env, Event,
+    attr, coin, from_json, to_json_binary, Addr, Coin, CosmosMsg, Decimal, DepsMut, Env, Event,
     MessageInfo, OwnedDeps, Reply, Response, StdError, SubMsgResponse, Timestamp, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, Expiration};
@@ -153,7 +153,7 @@ fn create(
 
     // query config
     let msg = QueryMsg::Config {};
-    let res: ConfigResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: ConfigResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         ConfigResponse {
@@ -235,7 +235,7 @@ fn config(
     assert!(res.is_ok());
 
     let msg = QueryMsg::Config {};
-    let res: ConfigResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: ConfigResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         ConfigResponse {
@@ -263,7 +263,7 @@ fn config(
     assert!(res.is_ok());
 
     let msg = QueryMsg::Config {};
-    let res: ConfigResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: ConfigResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         ConfigResponse {
@@ -346,7 +346,7 @@ fn owner(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<
 
     // query config
     let config: ConfigResponse =
-        from_binary(&query(deps.as_ref(), env.clone(), QueryMsg::Config {})?)?;
+        from_json(&query(deps.as_ref(), env.clone(), QueryMsg::Config {})?)?;
     assert_eq!(OWNER, config.owner);
     Ok(())
 }
@@ -403,7 +403,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -452,7 +452,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_2.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -467,7 +467,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::State {
         addr: None,
     };
-    let res: StateResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StateResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StateResponse {
@@ -490,7 +490,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -505,7 +505,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_2.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -552,7 +552,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -567,7 +567,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_2.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -612,7 +612,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_2.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -627,7 +627,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -826,7 +826,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::UserInfo {
         addr: USER_1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -841,7 +841,7 @@ fn bond(deps: &mut OwnedDeps<MockStorage, MockApi, WasmMockQuerier>) -> Result<(
     let msg = QueryMsg::State {
         addr: None,
     };
-    let res: StateResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: StateResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         StateResponse {
@@ -918,7 +918,7 @@ fn bond_delayed_profit() -> Result<(), ContractError> {
     compound(&mut deps, 300)?;
     compound(&mut deps, DAY)?;
 
-    let exchange_rates: ExchangeRatesResponse = from_binary(&query(
+    let exchange_rates: ExchangeRatesResponse = from_json(&query(
         deps.as_ref(),
         mock_env(),
         QueryMsg::ExchangeRates {
@@ -943,7 +943,7 @@ fn bond_delayed_profit() -> Result<(), ContractError> {
     assert_eq!(exchange_rates.apr.map(|a| a.to_string()), Some("0.598598598598598598".to_string()));
 
     // query single value
-    let exchange_rates: ExchangeRatesResponse = from_binary(&query(
+    let exchange_rates: ExchangeRatesResponse = from_json(&query(
         deps.as_ref(),
         mock_env(),
         QueryMsg::ExchangeRates {
@@ -1150,7 +1150,7 @@ fn _deposit_time(
     let msg = QueryMsg::UserInfo {
         addr: USER_3.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -1167,7 +1167,7 @@ fn _deposit_time(
     let msg = QueryMsg::UserInfo {
         addr: USER_3.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -1182,7 +1182,7 @@ fn _deposit_time(
     let msg = QueryMsg::UserInfo {
         addr: USER_1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -1200,7 +1200,7 @@ fn _deposit_time(
     let msg = QueryMsg::UserInfo {
         addr: USER_3.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {
@@ -1247,7 +1247,7 @@ fn _deposit_time(
     let msg = QueryMsg::UserInfo {
         addr: USER_1.to_string(),
     };
-    let res: UserInfoResponse = from_binary(&query(deps.as_ref(), env.clone(), msg)?)?;
+    let res: UserInfoResponse = from_json(&query(deps.as_ref(), env.clone(), msg)?)?;
     assert_eq!(
         res,
         UserInfoResponse {

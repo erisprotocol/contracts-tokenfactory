@@ -1,6 +1,6 @@
 // use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 // use cosmwasm_std::{
-//     from_binary, from_slice, to_json_binary, Addr, Coin, Decimal, OwnedDeps, Querier, QuerierResult,
+//     from_json, to_json_binary, Addr, Coin, Decimal, OwnedDeps, Querier, QuerierResult,
 //     QueryRequest, SystemError, SystemResult, Timestamp, Uint128, WasmQuery,
 // };
 // use prism_protocol::vault::{
@@ -81,7 +81,7 @@
 // impl Querier for WasmMockQuerier {
 //     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
 //         // MockQuerier doesn't support Custom, so we ignore it completely
-//         let request: QueryRequest<TerraQueryWrapper> = match from_slice(bin_request) {
+//         let request: QueryRequest<TerraQueryWrapper> = match from_json(bin_request) {
 //             Ok(v) => v,
 //             Err(e) => {
 //                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -129,7 +129,7 @@
 //                 msg,
 //             }) => {
 //                 if contract_addr == "prism" {
-//                     match from_binary(msg).unwrap() {
+//                     match from_json(msg).unwrap() {
 //                         PrismQueryMsg::UnbondRequests {
 //                             address,
 //                             ..
@@ -180,7 +180,7 @@
 //                         _ => panic!("DO NOT ENTER HERE"),
 //                     }
 //                 } else if contract_addr == "steak" {
-//                     match from_binary(msg).unwrap() {
+//                     match from_json(msg).unwrap() {
 //                         SteakQueryMsg::PendingBatch {} => SystemResult::Ok(
 //                             to_json_binary(&steak::PendingBatch {
 //                                 id: 3,
@@ -226,7 +226,7 @@
 //                         _ => panic!("DO NOT ENTER HERE"),
 //                     }
 //                 } else if contract_addr == "anchor" {
-//                     match from_binary(msg).unwrap() {
+//                     match from_json(msg).unwrap() {
 //                         AnchorQueryMsg::UnbondRequests {
 //                             address,
 //                             ..
@@ -294,7 +294,7 @@
 //                         _ => panic!("DO NOT ENTER HERE"),
 //                     }
 //                 } else if contract_addr == "stader" {
-//                     match from_binary(msg).unwrap() {
+//                     match from_json(msg).unwrap() {
 //                         StaderQueries::GetUserUndelegationRecords {
 //                             ..
 //                         } => SystemResult::Ok(
@@ -344,7 +344,7 @@
 //                         ),
 //                     }
 //                 } else if contract_addr == "factory" {
-//                     match from_binary(msg).unwrap() {
+//                     match from_json(msg).unwrap() {
 //                         FactoryQueryMsg::IsWhitelistedExecutor {
 //                             contract_addr,
 //                         } => SystemResult::Ok(
@@ -386,7 +386,7 @@
 //                         _ => panic!("DO NOT ENTER HERE"),
 //                     }
 //                 } else {
-//                     match from_binary(msg).unwrap() {
+//                     match from_json(msg).unwrap() {
 //                         Cw20QueryMsg::TokenInfo {} => {
 //                             let balances: &HashMap<String, Uint128> =
 //                                 match self.token_querier.balances.get(contract_addr) {
