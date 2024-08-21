@@ -2,6 +2,7 @@ use osmosis_std_derive::CosmwasmExt;
 use std::convert::{TryFrom, TryInto};
 
 // see https://github.com/notional-labs/wasmd/blob/v0.30.0-sdk469.4/proto/cosmwasm/tokenfactory/v1beta1/tx.proto
+// see https://github.com/NibiruChain/nibiru/blob/main/proto/nibiru/tokenfactory/v1/tx.proto
 
 /// Coin defines a token with a denomination and an amount.
 ///
@@ -90,7 +91,7 @@ pub struct MsgMint {
     #[prost(message, optional, tag = "2")]
     pub amount: ::core::option::Option<Coin>,
     #[prost(string, tag = "3")]
-    pub mint_to_address: ::prost::alloc::string::String,
+    pub mint_to: ::prost::alloc::string::String,
 }
 
 #[derive(
@@ -104,7 +105,10 @@ pub struct MsgMint {
     CosmwasmExt,
 )]
 #[proto_message(type_url = "/nibiru.tokenfactory.v1.MsgMintResponse")]
-pub struct MsgMintResponse {}
+pub struct MsgMintResponse {
+    #[prost(string, tag = "1")]
+    pub mint_to: ::prost::alloc::string::String,
+}
 
 /// MsgBurn is the sdk.Msg type for allowing an admin account to burn
 /// a token.  For now, we only support burning from the sender account.
@@ -125,7 +129,7 @@ pub struct MsgBurn {
     #[prost(message, optional, tag = "2")]
     pub amount: ::core::option::Option<Coin>,
     #[prost(string, tag = "3")]
-    pub burn_from_address: ::prost::alloc::string::String,
+    pub burn_from: ::prost::alloc::string::String,
 }
 
 #[derive(

@@ -32,7 +32,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
                 denom: full_denom.to_string(),
                 amount: amount.to_string(),
             }),
-            mint_to_address: recipient.to_string(),
+            mint_to: recipient.to_string(),
         }
         .into()]
     }
@@ -44,7 +44,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
                 denom: full_denom,
                 amount: amount.to_string(),
             }),
-            burn_from_address: self.contract.to_string(),
+            burn_from: self.contract.to_string(),
         }
         .into()
     }
