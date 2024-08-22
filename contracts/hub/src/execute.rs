@@ -119,7 +119,9 @@ pub fn instantiate(
         },
     )?;
 
-    Ok(Response::new().add_message(chain.create_denom_msg(full_denom, sub_denom)))
+    Ok(Response::new()
+        .add_message(chain.create_denom_msg(full_denom.clone(), sub_denom))
+        .add_attribute("denom", full_denom))
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -12,6 +12,10 @@ pub struct Chain {
 }
 
 impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig> for Chain {
+    fn get_token_denom(&self, contract_addr: impl Into<String>, sub_denom: String) -> String {
+        format!("tf/{0}/{1}", contract_addr.into(), sub_denom)
+    }
+
     fn create_denom_msg(&self, _full_denom: String, subdenom: String) -> CosmosMsg<CustomMsgType> {
         MsgCreateDenom {
             sender: self.contract.to_string(),
@@ -28,6 +32,7 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
     ) -> Vec<CosmosMsg<CustomMsgType>> {
         vec![MsgMint {
             sender: self.contract.to_string(),
+
             amount: Some(crate::denom::Coin {
                 denom: full_denom.to_string(),
                 amount: amount.to_string(),
