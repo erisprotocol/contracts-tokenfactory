@@ -17,6 +17,9 @@ pub mod types {
     pub use eris_kujira::kujira_types::StageType;
     pub use eris_kujira::kujira_types::WithdrawType;
 
+    pub use eris_kujira::kujira_types::AssetExt;
+    pub use eris_kujira::kujira_types::AssetInfoExt;
+
     pub const CHAIN_TYPE: &str = "kujira";
 
     #[inline(always)]
