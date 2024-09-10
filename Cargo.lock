@@ -1031,7 +1031,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-alliance-lst-nibiru"
+name = "eris-alliance-lst-kujira"
 version = "1.7.4"
 dependencies = [
  "cosmwasm-schema",
@@ -1049,7 +1049,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-arb-vault-nibiru"
+name = "eris-arb-vault-kujira"
 version = "1.0.4"
 dependencies = [
  "anyhow",
@@ -1307,7 +1307,7 @@ dependencies = [
  "eris-chain-adapter",
  "eris-chain-shared",
  "eris-kujira",
- "eris-staking-hub-tokenfactory-nibiru",
+ "eris-staking-hub-tokenfactory-kujira",
  "kujira",
  "schemars",
  "serde",
@@ -1372,7 +1372,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-staking-hub-tokenfactory-nibiru"
+name = "eris-staking-hub-tokenfactory-kujira"
 version = "1.7.1"
 dependencies = [
  "cosmwasm-schema",

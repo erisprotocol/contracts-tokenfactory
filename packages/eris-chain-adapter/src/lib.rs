@@ -10,6 +10,7 @@ pub mod types {
     use eris_kujira::kujira_chain::KujiraChain;
 
     pub use eris_kujira::kujira_types::CustomMsgType;
+    pub use eris_kujira::kujira_types::CustomQueryType;
     pub use eris_kujira::kujira_types::DenomType;
     pub use eris_kujira::kujira_types::HubChainConfig;
     pub use eris_kujira::kujira_types::HubChainConfigInput;

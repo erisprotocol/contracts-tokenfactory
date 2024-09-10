@@ -1,5 +1,5 @@
 [package]
-name = "eris-arb-vault-nibiru"
+name = "eris-arb-vault-kujira"
 version = "1.0.4"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
