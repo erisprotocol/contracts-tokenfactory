@@ -106,36 +106,4 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
             },
         }
     }
-
-    // fn create_multi_swap_router_msgs(
-    //     &self,
-    //     router_type: MultiSwapRouterType,
-    //     assets: Vec<CoinType>,
-    // ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>> {
-    //     let funds: Vec<Coin> =
-    //         assets.iter().map(|asset| asset.to_coin()).collect::<StdResult<_>>()?;
-
-    //     match router_type {
-    //         MultiSwapRouterType::Manta {
-    //             addr,
-    //             msg,
-    //         } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
-    //             contract_addr: addr.to_string(),
-    //             funds,
-    //             msg: to_json_binary(&msg)?,
-    //         })]),
-    //     }
-    // }
-
-    // fn equals_asset_info(
-    //     &self,
-    //     denom: &DenomType,
-    //     asset_info: &astroport::asset::AssetInfo,
-    // ) -> bool {
-    //     denom == asset_info
-    // }
-
-    // fn get_coin(&self, denom: DenomType, amount: Uint128) -> CoinType {
-    //     denom.with_balance(amount)
-    // }
 }

@@ -318,6 +318,7 @@ pub mod types {
 
     use eris_terra::chain::Chain;
     pub use eris_terra::types::get_asset;
+    pub use eris_terra::types::AssetExt;
     pub use eris_terra::types::AssetInfoExt;
     pub use eris_terra::types::CoinType;
     pub use eris_terra::types::CustomMsgType;

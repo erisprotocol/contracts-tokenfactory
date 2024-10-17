@@ -1,7 +1,7 @@
 use crate::custom_execute_msg::CustomExecuteMsg;
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, Coin, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, Coin, CosmosMsg, StdResult, Uint128};
 use eris_chain_shared::{alliance_query::AllianceQueryWrapper, chain_trait::Validateable};
 
 pub use astroport::asset::AssetInfoExt;
@@ -85,3 +85,14 @@ impl Validateable<HubChainConfig> for HubChainConfigInput {
 
 #[cw_serde]
 pub struct HubChainConfig {}
+
+pub trait AssetExt {
+    /// simplifies converting an AssetInfo to an Asset with balance
+    fn into_msg(self, receiver: &Addr) -> StdResult<CosmosMsg>;
+}
+
+impl AssetExt for Asset {
+    fn into_msg(self, receiver: &Addr) -> StdResult<CosmosMsg> {
+        self.into_msg(receiver)
+    }
+}
